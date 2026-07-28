@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Курьерский сервис · Диспетчерская БДР</title>
+<title>Курьерская доставка — план и факт</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -18,18 +18,17 @@
     --grid-line: rgba(148,163,196,.05);
     --s1:#0e131d;
     --s2:#121927;
-    --s3:#17202f;
     --line:rgba(148,163,196,.10);
     --line-strong:rgba(148,163,196,.22);
     --text-hi:#f3f5fb;
-    --text:#aab3cc;
-    --text-dim:#697190;
+    --text:#c3cbe0;
+    --text-dim:#8892ad;
     --plan:#39d98a;
-    --plan-soft:rgba(57,217,138,.12);
+    --plan-soft:rgba(57,217,138,.13);
     --fact:#ff8a3d;
-    --fact-soft:rgba(255,138,61,.13);
+    --fact-soft:rgba(255,138,61,.14);
     --danger:#ff5d78;
-    --danger-soft:rgba(255,93,120,.13);
+    --danger-soft:rgba(255,93,120,.14);
     --good:#39d98a;
     --warn:#ffc857;
     --radius:16px;
@@ -47,174 +46,163 @@
       var(--bg);
     color:var(--text);
     font-family:var(--sans);
+    font-size:15px;
     min-height:100vh;
     padding:30px 22px 70px;
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:1320px;margin:0 auto;}
+  .wrap{max-width:1360px;margin:0 auto;}
   a{color:inherit;}
-
   ::-webkit-scrollbar{height:8px; width:8px;}
   ::-webkit-scrollbar-thumb{background:var(--line-strong); border-radius:4px;}
 
   /* ---------------- header ---------------- */
   header{
-    display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap;
-    margin-bottom:28px; padding-bottom:22px; border-bottom:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap;
+    margin-bottom:26px; padding-bottom:18px; border-bottom:1px solid var(--line);
   }
   .brand-eyebrow{
-    font-family:var(--mono); font-size:10.5px; letter-spacing:.18em; text-transform:uppercase;
-    color:var(--fact); margin:0 0 10px; display:flex; align-items:center; gap:8px; font-weight:600;
+    font-family:var(--mono); font-size:11.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--fact); margin:0 0 5px; display:flex; align-items:center; gap:8px; font-weight:600;
   }
   .live-dot{position:relative; width:7px;height:7px;border-radius:50%;background:var(--fact);}
   .live-dot::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1px solid var(--fact);opacity:.5;animation:pulse 2.2s ease-out infinite;}
   @keyframes pulse{0%{transform:scale(.4);opacity:.7;}100%{transform:scale(1.8);opacity:0;}}
-  h1{font-size:30px; font-weight:800; margin:0; letter-spacing:-.02em; color:var(--text-hi); line-height:1.15;}
-  h1 em{font-style:normal; color:var(--text-dim); font-weight:600;}
-  .meta{text-align:right; font-family:var(--mono); font-size:11.5px; color:var(--text-dim); line-height:1.7;}
+  h1{font-size:21px; font-weight:800; margin:0; letter-spacing:-.01em; color:var(--text-hi); line-height:1.2;}
+  .meta{text-align:right; font-family:var(--mono); font-size:12px; color:var(--text-dim); line-height:1.7;}
   .meta b{color:var(--text);}
-  .controls{display:flex; align-items:center; gap:10px; margin-top:10px; justify-content:flex-end;}
+  .controls{display:flex; align-items:center; gap:10px; margin-top:8px; justify-content:flex-end;}
   button.refresh{
-    font-family:var(--sans); font-size:12.5px; font-weight:700; color:#0a0e17;
+    font-family:var(--sans); font-size:13px; font-weight:700; color:#0a0e17;
     background:linear-gradient(135deg, var(--fact), #ffb060); border:none; border-radius:9px; padding:9px 15px;
     cursor:pointer; display:flex; align-items:center; gap:7px; transition:transform .15s ease, box-shadow .15s ease;
     box-shadow:0 4px 18px -6px rgba(255,138,61,.55);
   }
-  button.refresh:hover{transform:translateY(-1px); box-shadow:0 6px 22px -6px rgba(255,138,61,.7);}
+  button.refresh:hover{transform:translateY(-1px);}
   button.refresh:disabled{opacity:.5; cursor:default; transform:none;}
   .spin{display:inline-block; width:11px; height:11px; border-radius:50%;
     border:2px solid rgba(10,14,23,.3); border-top-color:#0a0e17; animation:spin .8s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
 
   #status-banner{
-    display:none; margin-bottom:22px; padding:13px 16px; border-radius:10px;
+    display:none; margin-bottom:22px; padding:14px 17px; border-radius:10px;
     background:var(--danger-soft); border:1px solid rgba(255,93,120,.35);
-    color:#ffd7de; font-size:13px; line-height:1.55;
+    color:#ffd7de; font-size:14px; line-height:1.6;
   }
 
-  /* ---------------- section labels ---------------- */
   .section-label{
-    display:flex; align-items:center; gap:10px; margin:34px 0 14px;
-    font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); font-weight:600;
+    display:flex; align-items:center; gap:10px; margin:36px 0 15px;
+    font-family:var(--mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); font-weight:600;
   }
   .section-label::after{content:""; flex:1; height:1px; background:var(--line);}
   .section-label .n{color:var(--fact);}
 
   /* ---------------- insights ---------------- */
-  .insights{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:12px;}
+  .insights{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:13px;}
   .insight{
     background:linear-gradient(165deg, var(--s2), var(--s1));
-    border:1px solid var(--line); border-radius:var(--radius-sm); padding:15px 16px;
-    display:flex; gap:12px; align-items:flex-start;
+    border:1px solid var(--line); border-radius:var(--radius-sm); padding:16px 17px;
+    display:flex; gap:13px; align-items:flex-start;
   }
   .insight .ic{
-    flex:none; width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    flex:none; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center;
     background:var(--tone-soft, var(--fact-soft)); color:var(--tone, var(--fact));
   }
-  .insight .ic svg{width:16px; height:16px;}
-  .insight .body{font-size:12.5px; line-height:1.55; color:var(--text);}
+  .insight .ic svg{width:17px; height:17px;}
+  .insight .body{font-size:14px; line-height:1.6; color:var(--text);}
   .insight .body b{color:var(--text-hi); font-weight:700;}
   .insight.tone-good{--tone:var(--good); --tone-soft:var(--plan-soft);}
   .insight.tone-bad{--tone:var(--danger); --tone-soft:var(--danger-soft);}
-  .insight.tone-warn{--tone:var(--warn); --tone-soft:rgba(255,200,87,.13);}
-  .insight.tone-neutral{--tone:#9aa5c4; --tone-soft:rgba(154,165,196,.13);}
+  .insight.tone-warn{--tone:var(--warn); --tone-soft:rgba(255,200,87,.14);}
+  .insight.tone-neutral{--tone:#aab4d1; --tone-soft:rgba(154,165,196,.14);}
+
+  /* ---------------- breakeven banner ---------------- */
+  .breakeven{
+    background:linear-gradient(135deg, var(--s2), var(--s1));
+    border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px;
+    display:grid; grid-template-columns:1fr 1fr auto; gap:24px; align-items:center;
+  }
+  .be-stat .be-label{font-size:12px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px;}
+  .be-stat .be-value{font-family:var(--mono); font-size:30px; font-weight:700; color:var(--text-hi); line-height:1;}
+  .be-stat.plan .be-value{color:var(--plan);}
+  .be-stat.fact .be-value{color:var(--fact);}
+  .be-stat .be-sub{margin-top:7px; font-size:13px; color:var(--text-dim);}
+  .be-delta{text-align:center; padding-left:20px; border-left:1px solid var(--line);}
+  .be-delta .n{font-family:var(--mono); font-size:34px; font-weight:800;}
+  .be-delta .n.good{color:var(--good);} .be-delta .n.bad{color:var(--danger);}
+  .be-delta .lbl{font-size:12px; color:var(--text-dim); margin-top:4px;}
+  @media (max-width:820px){ .breakeven{grid-template-columns:1fr; text-align:left;} .be-delta{border-left:none; border-top:1px solid var(--line); padding:16px 0 0;} }
 
   /* ---------------- KPI cards ---------------- */
   .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
   .kpi{
     position:relative; overflow:hidden;
     background:linear-gradient(165deg, var(--s2), var(--s1));
-    border:1px solid var(--line); border-radius:var(--radius); padding:19px 19px 16px;
+    border:1px solid var(--line); border-radius:var(--radius); padding:20px 20px 17px;
   }
   .kpi::before{
     content:""; position:absolute; top:0; left:0; right:0; height:2px;
     background:linear-gradient(90deg, var(--kpi-accent,var(--fact)), transparent 85%);
   }
-  .kpi-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;}
-  .kpi .label{font-size:11px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.05em; max-width:70%;}
-  .kpi .spark{width:74px; height:28px; flex:none;}
-  .kpi .value{font-family:var(--mono); font-size:27px; font-weight:700; letter-spacing:-.01em; color:var(--text-hi); line-height:1;}
+  .kpi-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:13px;}
+  .kpi .label{font-size:12px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.04em; max-width:68%;}
+  .kpi .spark{width:78px; height:30px; flex:none;}
+  .kpi .value{font-family:var(--mono); font-size:29px; font-weight:700; letter-spacing:-.01em; color:var(--text-hi); line-height:1;}
   .kpi .row{margin-top:11px; display:flex; align-items:center; gap:7px; flex-wrap:wrap;}
-  .badge{font-family:var(--mono); font-size:11px; font-weight:700; padding:3px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;}
+  .badge{font-family:var(--mono); font-size:12px; font-weight:700; padding:3px 9px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;}
   .badge svg{width:10px;height:10px;}
   .badge.good{background:var(--plan-soft); color:var(--good);}
   .badge.bad{background:var(--danger-soft); color:var(--danger);}
-  .badge.neutral{background:rgba(255,255,255,.06); color:var(--text-dim);}
-  .kpi .foot{font-size:11.5px; color:var(--text-dim);}
-
-  /* ---------------- route tracker ---------------- */
-  .route-card{
-    background:linear-gradient(165deg, var(--s2), var(--s1));
-    border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px;
-  }
-  .route-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;}
-  .route-head h3{margin:0; font-size:13.5px; font-weight:700; color:var(--text-hi); display:flex; align-items:center; gap:8px;}
-  .route-head h3 svg{width:16px;height:16px; color:var(--fact);}
-  .route-eta{font-family:var(--mono); font-size:12px; color:var(--text-dim); text-align:right;}
-  .route-eta b{color:var(--text-hi);}
-  .route-eta .delta-good{color:var(--good);}
-  .route-eta .delta-bad{color:var(--danger);}
-  .route-rail{position:relative; height:58px; margin:20px 6px 0;}
-  .route-line-bg{position:absolute; top:26px; left:0; right:0; height:2px; background:var(--line-strong); border-radius:2px;}
-  .route-line-fill{position:absolute; top:26px; left:0; height:2px; border-radius:2px;
-    background:linear-gradient(90deg, var(--plan), var(--fact)); box-shadow:0 0 12px rgba(255,138,61,.45); transition:width .7s ease;}
-  .route-dot{position:absolute; top:22px; width:9px; height:9px; border-radius:50%; transform:translateX(-50%); background:#232c40; border:2px solid var(--line-strong);}
-  .route-dot.done{background:var(--fact); border-color:#3a2313;}
-  .route-marker{position:absolute; top:2px; transform:translate(-50%,0); transition:left .7s ease;}
-  .route-marker svg{width:20px; height:20px; filter:drop-shadow(0 3px 8px rgba(255,138,61,.55));}
-  .route-flag{position:absolute; top:8px; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center;}
-  .route-flag .pin{width:8px;height:8px;border-radius:50%; background:var(--plan); box-shadow:0 0 0 3px rgba(57,217,138,.18);}
-  .route-labels{position:absolute; top:36px; width:100%; font-family:var(--mono); font-size:10px; color:var(--text-dim);}
-  .route-labels span{position:absolute; transform:translateX(-50%); white-space:nowrap;}
+  .kpi .foot{font-size:12.5px; color:var(--text-dim); margin-top:7px;}
 
   /* ---------------- charts ---------------- */
-  .charts{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:0;}
+  .charts{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
   .chart-card{
     background:linear-gradient(165deg, var(--s2), var(--s1));
-    border:1px solid var(--line); border-radius:var(--radius); padding:19px 21px 12px;
+    border:1px solid var(--line); border-radius:var(--radius); padding:21px 22px 14px;
   }
+  .chart-card.full{grid-column:1/-1;}
   .chart-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2px; gap:10px;}
-  .chart-head h3{margin:0; font-size:13.5px; font-weight:700; color:var(--text-hi);}
-  .chart-head p{margin:3px 0 0; font-size:11.5px; color:var(--text-dim);}
-  .legend-inline{display:flex; gap:13px; font-family:var(--mono); font-size:10.5px; color:var(--text-dim); flex:none; padding-top:2px;}
-  .legend-inline .sw{display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:5px; vertical-align:middle;}
-  .chart-wrap{position:relative; height:220px; margin-top:8px;}
+  .chart-head h3{margin:0; font-size:15px; font-weight:700; color:var(--text-hi);}
+  .chart-head p{margin:4px 0 0; font-size:12.5px; color:var(--text-dim);}
+  .legend-inline{display:flex; gap:14px; font-family:var(--mono); font-size:11.5px; color:var(--text-dim); flex:none; padding-top:3px;}
+  .legend-inline .sw{display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:5px; vertical-align:middle;}
+  .chart-wrap{position:relative; height:260px; margin-top:10px;}
 
   /* ---------------- table ---------------- */
   .table-card{
     background:linear-gradient(165deg, var(--s2), var(--s1));
-    border:1px solid var(--line); border-radius:var(--radius); padding:19px 21px;
+    border:1px solid var(--line); border-radius:var(--radius); padding:21px 22px;
   }
-  .table-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;}
-  .table-head h3{margin:0; font-size:13.5px; font-weight:700; color:var(--text-hi);}
+  .table-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;}
+  .table-head h3{margin:0; font-size:15px; font-weight:700; color:var(--text-hi);}
   .filter-btns{display:flex; gap:6px;}
   .filter-btns button{
-    font-family:var(--sans); font-size:12px; font-weight:600; color:var(--text-dim);
-    background:transparent; border:1px solid var(--line-strong); border-radius:7px; padding:6px 13px; cursor:pointer;
-    transition:all .15s ease;
+    font-family:var(--sans); font-size:13px; font-weight:600; color:var(--text-dim);
+    background:transparent; border:1px solid var(--line-strong); border-radius:7px; padding:6px 14px; cursor:pointer;
   }
   .filter-btns button.active{background:var(--text-hi); color:#0a0e17; border-color:var(--text-hi);}
   .table-scroll{overflow-x:auto;}
-  table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12.5px; min-width:980px;}
+  table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:13.5px; min-width:1020px;}
   thead th{
-    text-align:right; font-weight:600; color:var(--text-dim); font-size:10px;
-    text-transform:uppercase; letter-spacing:.04em; padding:9px 11px; border-bottom:1px solid var(--line-strong);
+    text-align:right; font-weight:600; color:var(--text-dim); font-size:11px;
+    text-transform:uppercase; letter-spacing:.03em; padding:10px 12px; border-bottom:1px solid var(--line-strong);
     position:sticky; top:0; background:var(--s2);
   }
   thead th:first-child, thead th:nth-child(2){text-align:left;}
-  tbody td{padding:8px 11px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap;}
+  tbody td{padding:9px 12px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap;}
   tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:600; color:var(--text);}
   tbody tr:hover{background:rgba(255,255,255,.025);}
   .type-badge{
-    display:inline-block; padding:2px 8px; border-radius:20px; font-size:10px; font-weight:700;
+    display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:700;
     font-family:var(--mono); text-transform:uppercase; letter-spacing:.03em;
   }
   .type-badge.plan{background:var(--plan-soft); color:var(--plan);}
   .type-badge.fact{background:var(--fact-soft); color:var(--fact);}
-  .cell-pct{border-radius:5px; padding:2px 7px; font-weight:700;}
+  .cell-pct{border-radius:5px; padding:2px 8px; font-weight:700;}
   .mom-up{color:var(--good);} .mom-down{color:var(--danger);} .mom-flat{color:var(--text-dim);}
 
-  footer{margin-top:28px; text-align:center; font-family:var(--mono); font-size:11px; color:var(--text-dim);}
+  footer{margin-top:28px; text-align:center; font-family:var(--mono); font-size:12px; color:var(--text-dim);}
 
   @media (max-width:980px){
     .kpis{grid-template-columns:repeat(2,1fr);}
@@ -228,8 +216,8 @@
 
   <header>
     <div>
-      <p class="brand-eyebrow"><span class="live-dot"></span>БДР · план / факт · live из Google Sheets</p>
-      <h1>Курьерский сервис <em>— диспетчерская проекта</em></h1>
+      <p class="brand-eyebrow"><span class="live-dot"></span>БДР · план и факт · live из Google Sheets</p>
+      <h1>Курьерская доставка — план и факт</h1>
     </div>
     <div>
       <div class="meta">Источник: <b>Google Sheets</b> · «Свод план-факт»<br>Обновлено: <b id="updated-at">—</b></div>
@@ -239,29 +227,51 @@
 
   <div id="status-banner"></div>
 
-  <div class="section-label"><span class="n">01</span> Аналитика периода</div>
+  <div class="section-label"><span class="n">01</span> Причины отклонений</div>
   <div class="insights" id="insights-grid"></div>
 
-  <div class="section-label"><span class="n">02</span> Ключевые показатели</div>
+  <div class="section-label"><span class="n">02</span> Точка безубыточности</div>
+  <div class="breakeven" id="breakeven-block"></div>
+
+  <div class="section-label"><span class="n">03</span> Ключевые показатели</div>
   <section class="kpis" id="kpi-grid"></section>
 
-  <div class="section-label"><span class="n">03</span> Погашение займа</div>
-  <div class="route-card">
-    <div class="route-head">
-      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h11l3 4h4v-4l-3-5H3v5Z"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg> Маршрут погашения</h3>
-      <div class="route-eta" id="route-eta">—</div>
-    </div>
-    <div class="route-rail" id="route-rail"></div>
-  </div>
-
-  <div class="section-label"><span class="n">04</span> Динамика по месяцам</div>
+  <div class="section-label"><span class="n">04</span> Доходы, расходы и структура затрат</div>
   <section class="charts">
     <div class="chart-card">
       <div class="chart-head">
-        <div><h3>Выручка: план vs факт</h3><p>Столбцы — план, линия — факт, область — разрыв</p></div>
+        <div><h3>Выручка</h3><p>План (столбцы) vs факт (линия)</p></div>
         <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
       </div>
       <div class="chart-wrap"><canvas id="chart-revenue"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div><h3>Расходы</h3><p>План (столбцы) vs факт (линия)</p></div>
+        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-expenses"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div><h3>Прибыль нарастающим итогом</h3><p>Пересечение нуля — точка безубыточности</p></div>
+        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-cumprofit"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div><h3>Структура расходов</h3><p id="structure-sub">По статьям, последний факт. месяц</p></div>
+        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-structure"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div><h3>Средний чек</h3><p>Юнит-экономика, ₽ / заказ</p></div>
+        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-check"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-head">
@@ -269,20 +279,6 @@
         <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
       </div>
       <div class="chart-wrap"><canvas id="chart-margin"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-head">
-        <div><h3>Юнит-экономика</h3><p>Средний чек, ₽ / заказ</p></div>
-        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
-      </div>
-      <div class="chart-wrap"><canvas id="chart-check"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-head">
-        <div><h3>Остаток займа</h3><p>Сплошная — план/факт, пунктир — прогноз по темпу факта</p></div>
-        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт/прогноз</span></div>
-      </div>
-      <div class="chart-wrap"><canvas id="chart-loan"></canvas></div>
     </div>
   </section>
 
@@ -300,7 +296,7 @@
       <table>
         <thead><tr>
           <th>Дата</th><th>Тип</th><th>Заказы</th><th>Выручка</th><th>Δ MoM</th><th>Расходы</th>
-          <th>Чистая прибыль</th><th>Маржа</th><th>Накопительно</th><th>Займ (конец)</th><th>% к плану</th>
+          <th>Чистая прибыль</th><th>Маржа</th><th>Накопительно</th><th>% к плану</th>
         </tr></thead>
         <tbody id="table-body"></tbody>
       </table>
@@ -320,15 +316,15 @@ const ICONS = {
   down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8l6 6 4-4 6 8"/><path d="M14 18h6v-6"/></svg>',
   target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".7" fill="currentColor"/></svg>',
   alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
-  scale: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 7 3 15a4 4 0 0 0 8 0L7 7ZM17 7l-4 8a4 4 0 0 0 8 0l-4-8ZM5 7h14"/></svg>',
-  pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg>',
-  truck: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 6a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v3h3.2a1 1 0 0 1 .86.49l2.8 4.67c.09.15.14.32.14.5V17a1 1 0 0 1-1 1h-1.3a2.6 2.6 0 0 1-5.1 0H9.4a2.6 2.6 0 0 1-5.1 0H3a1 1 0 0 1-1-1V6Zm14 4v3.2l2.2.01L16.6 10H16Z"/></svg>',
 };
 
 const FIELD_MAP = {
   date:'Дата', type:'Тип', orders:'Кол-во заказов, шт', avgCheck:'Ср чек (с НДС), руб',
-  revenue:'Выручка (с НДС), руб', expenses:'Расходы, руб',
-  profitBeforeTax:'Прибыль до налогообложения, руб', netProfit:'Чистая прибыль, руб.',
+  revenue:'Выручка (с НДС), руб',
+  partnerPrice:'Партнерский прайс, руб.', royalty:'Роялти, руб.',
+  salary:'ЗП с ФОТ менеджера сервиса', salaryTax:'Зарплатные налоги', bonus:'Премии с продаж/прибыли',
+  loanInterest:'Проценты по займу, руб.', vatOut:'НДС исходящий, руб.', vatIn:'НДС вход, руб.',
+  expenses:'Расходы, руб', profitBeforeTax:'Прибыль до налогообложения, руб', netProfit:'Чистая прибыль, руб.',
   cumProfit:'Прибыль накопительно, руб', periodNo:'Номер периода (мес.)',
   loanStart:'Займ на начало периода', loanEnd:'Займ на конец периода',
 };
@@ -359,9 +355,15 @@ function extractRowsFromGviz(json){
     const type = get('type');
     const revenue = get('revenue');
     if (!date || !type || revenue == null) continue;
+    const orders = get('orders');
+    let avgCheck = get('avgCheck');
+    // defensive fallback: some conversions lose/zero this column — reconstruct from revenue/orders
+    if ((avgCheck == null || avgCheck === 0) && orders) avgCheck = revenue / orders;
     rows.push({
-      date, type,
-      orders:get('orders'), avgCheck:get('avgCheck'), revenue,
+      date, type, orders, avgCheck, revenue,
+      partnerPrice:get('partnerPrice'), royalty:get('royalty'), salary:get('salary'),
+      salaryTax:get('salaryTax'), bonus:get('bonus'), loanInterest:get('loanInterest'),
+      vatOut:get('vatOut'), vatIn:get('vatIn'),
       expenses:get('expenses'), profitBeforeTax:get('profitBeforeTax'),
       netProfit:get('netProfit'), cumProfit:get('cumProfit'),
       loanStart:get('loanStart'), loanEnd:get('loanEnd'), periodNo:get('periodNo'),
@@ -371,7 +373,6 @@ function extractRowsFromGviz(json){
   return rows;
 }
 
-// JSONP: works from file:// where fetch()/CORS is blocked.
 function loadGvizJSONP(timeoutMs){
   return new Promise((resolve, reject) => {
     const cbName = 'gvizCB_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
@@ -391,7 +392,6 @@ function loadGvizJSONP(timeoutMs){
   });
 }
 
-// ---------------- formatting ----------------
 function fmtDate(d){ return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`; }
 function fmtMon(d){ return `${RU_MONTHS[d.getMonth()]}.${String(d.getFullYear()).slice(2)}`; }
 function fmtRub(n, compact){
@@ -415,8 +415,7 @@ function sparklinePath(values, w, h, pad){
   const min = Math.min(...vals), max = Math.max(...vals);
   const span = (max-min) || 1;
   const n = values.length;
-  let d = '';
-  let lastPt = null;
+  let d = ''; let lastPt = null;
   values.forEach((v,i) => {
     if (v==null || isNaN(v)) return;
     const x = pad + (i/(n-1)) * (w-2*pad);
@@ -427,12 +426,12 @@ function sparklinePath(values, w, h, pad){
   return {path:d, last:lastPt};
 }
 function sparklineSVG(values, color){
-  const w=74,h=28,pad=3;
+  const w=78,h=30,pad=3;
   const {path,last} = sparklinePath(values,w,h,pad);
   if (!path) return '';
   return `<svg class="spark" viewBox="0 0 ${w} ${h}">
     <path d="${path}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    ${last?`<circle cx="${last.x.toFixed(1)}" cy="${last.y.toFixed(1)}" r="2.2" fill="${color}"/>`:''}
+    ${last?`<circle cx="${last.x.toFixed(1)}" cy="${last.y.toFixed(1)}" r="2.3" fill="${color}"/>`:''}
   </svg>`;
 }
 
@@ -467,98 +466,121 @@ function render(){
   const lastFact = factRows[factRows.length-1] || null;
   const planByDate = {}; planRows.forEach(r=>planByDate[+r.date]=r);
 
+  const be = computeBreakEven(planRows, factRows, lastFact);
+
   const steps = [
-    ['Insights', () => renderInsights(planRows, factRows, lastFact, planByDate)],
+    ['Insights', () => renderInsights(planRows, factRows, lastFact, planByDate, be)],
+    ['Breakeven', () => renderBreakeven(be)],
     ['KPI', () => renderKPIs(planRows, factRows, lastFact, planByDate)],
-    ['Route', () => renderRoute(planRows, factRows, lastFact)],
-    ['Charts', () => renderCharts(planRows, factRows)],
+    ['Charts', () => renderCharts(planRows, factRows, lastFact, planByDate)],
     ['Table', () => renderTable(planByDate)],
   ];
   for (const [name, fn] of steps){ try{ fn(); } catch(e){ console.error(`Render step "${name}" failed:`, e); } }
 }
 
-// ---------------- insights (analyst notes) ----------------
-function renderInsights(planRows, factRows, lastFact, planByDate){
+// ---------------- break-even engine ----------------
+function computeBreakEven(planRows, factRows, lastFact){
+  const planBE = planRows.find(r => (r.cumProfit||0) >= 0) || null;
+  let factBE = factRows.find(r => (r.cumProfit||0) >= 0) || null;
+  let factBEIsProjection = false;
+  let projFailed = false;
+  if (!factBE && lastFact){
+    const sample = factRows.slice(-3);
+    const avgNet = sample.reduce((s,r)=>s+(r.netProfit||0),0) / sample.length;
+    if (avgNet > 0 && lastFact.cumProfit < 0){
+      const monthsNeeded = Math.ceil(-lastFact.cumProfit / avgNet);
+      factBE = { date: addMonths(lastFact.date, monthsNeeded) };
+      factBEIsProjection = true;
+    } else if (avgNet <= 0){
+      projFailed = true;
+    }
+  }
+  const delta = (planBE && factBE) ? monthsBetween(planBE.date, factBE.date) : null;
+  return { planBE, factBE, factBEIsProjection, projFailed, delta };
+}
+
+function renderBreakeven(be){
+  const el = document.getElementById('breakeven-block');
+  const planTxt = be.planBE ? fmtMon(be.planBE.date) : 'не достигается';
+  let factTxt, factSub;
+  if (be.factBE && !be.factBEIsProjection){ factTxt = fmtMon(be.factBE.date); factSub = 'уже достигнуто по факту'; }
+  else if (be.factBE && be.factBEIsProjection){ factTxt = fmtMon(be.factBE.date); factSub = 'прогноз по темпу последних 3 факт. месяцев'; }
+  else if (be.projFailed){ factTxt = 'не прогнозируется'; factSub = 'при текущем темпе прибыль не растёт'; }
+  else { factTxt = '—'; factSub = 'недостаточно фактических данных'; }
+
+  let deltaHtml = '';
+  if (be.delta != null){
+    const good = be.delta <= 0;
+    deltaHtml = `<div class="be-delta"><div class="n ${good?'good':'bad'}">${be.delta===0?'0':(good?'−':'+')+Math.abs(be.delta)}</div><div class="lbl">${be.delta===0?'точно по плану':'мес. '+(good?'раньше':'позже')+' плана'}</div></div>`;
+  }
+
+  el.innerHTML = `
+    <div class="be-stat plan"><div class="be-label">План выхода на безубыточность</div><div class="be-value">${planTxt}</div><div class="be-sub">прибыль нарастающим итогом ≥ 0</div></div>
+    <div class="be-stat fact"><div class="be-label">Факт / прогноз</div><div class="be-value">${factTxt}</div><div class="be-sub">${factSub}</div></div>
+    ${deltaHtml}
+  `;
+}
+
+// ---------------- insights ----------------
+function renderInsights(planRows, factRows, lastFact, planByDate, be){
   const grid = document.getElementById('insights-grid');
   if (!lastFact){ grid.innerHTML = `<div class="insight tone-neutral"><div class="ic">${ICONS.target}</div><div class="body">Фактических данных пока нет — как только появится первый факт-месяц, здесь будет разбор отклонений от плана.</div></div>`; return; }
 
   const cards = [];
 
-  // 1) revenue gap streak & direction
+  // revenue gap streak
   const gaps = factRows.map(r => { const p = planByDate[+r.date]; return p && p.revenue ? (r.revenue-p.revenue)/p.revenue*100 : null; }).filter(v=>v!=null);
   if (gaps.length){
     const lastGap = gaps[gaps.length-1];
     let streak = 0;
     for (let i=gaps.length-1;i>=0;i--){ if ((gaps[i]<0)===(lastGap<0)) streak++; else break; }
-    let trendTxt = '';
-    if (gaps.length>=2){
-      const prevGap = gaps[gaps.length-2];
-      const widening = Math.abs(lastGap) > Math.abs(prevGap)+0.5;
-      const narrowing = Math.abs(lastGap) < Math.abs(prevGap)-0.5;
-      trendTxt = widening ? ', разрыв <b>увеличивается</b>' : narrowing ? ', разрыв <b>сокращается</b>' : ', разрыв стабилен';
-    }
     const below = lastGap < 0;
-    cards.push({
-      tone: below?'bad':'good', icon: below?'down':'up',
-      html: `Выручка <b>${below?'ниже':'выше'} плана ${streak} мес. подряд</b> (сейчас ${fmtPct(lastGap,1)})${trendTxt}.`
-    });
+    cards.push({ tone: below?'bad':'good', icon: below?'down':'up',
+      html: `Выручка <b>${below?'ниже':'выше'} плана ${streak} мес. подряд</b> (сейчас ${fmtPct(lastGap,1)}).` });
   }
 
-  // 2) driver decomposition for last fact month
+  // driver decomposition
   const p = planByDate[+lastFact.date];
   if (p && p.orders && p.avgCheck){
     const ordersVar = (lastFact.orders-p.orders)/p.orders*100;
     const checkVar = (lastFact.avgCheck-p.avgCheck)/p.avgCheck*100;
     const driver = Math.abs(ordersVar) >= Math.abs(checkVar) ? 'заказы' : 'средний чек';
     const driverVal = Math.abs(ordersVar) >= Math.abs(checkVar) ? ordersVar : checkVar;
-    cards.push({
-      tone: driverVal<0?'warn':'neutral', icon:'target',
-      html: `Основной драйвер отклонения в ${fmtMon(lastFact.date)} — <b>${driver}</b> (${fmtPct(driverVal,1)}). Заказы: ${fmtPct(ordersVar,1)}, средний чек: ${fmtPct(checkVar,1)}.`
-    });
+    cards.push({ tone: driverVal<0?'warn':'neutral', icon:'target',
+      html: `Причина отклонения выручки в ${fmtMon(lastFact.date)} — <b>${driver}</b> (${fmtPct(driverVal,1)}). Заказы: ${fmtPct(ordersVar,1)}, чек: ${fmtPct(checkVar,1)}.` });
   }
 
-  // 3) margin comparison, cumulative
-  const revFactCum = factRows.reduce((s,r)=>s+(r.revenue||0),0);
-  const netFactCum = factRows.reduce((s,r)=>s+(r.netProfit||0),0);
+  // biggest expense overspend category
+  const catDefs = [
+    ['partnerPrice','Партнерский прайс'], ['royalty','Роялти'],
+    ['salary','ЗП с ФОТ'], ['salaryTax','Зарплатные налоги'],
+    ['loanInterest','Проценты по займу'],
+  ];
   const planCumRows = planRows.filter(r=>r.date<=lastFact.date);
-  const revPlanCum = planCumRows.reduce((s,r)=>s+(r.revenue||0),0);
-  const netPlanCum = planCumRows.reduce((s,r)=>s+(r.netProfit||0),0);
-  if (revFactCum && revPlanCum){
-    const marginFact = netFactCum/revFactCum*100;
-    const marginPlan = netPlanCum/revPlanCum*100;
-    const d = marginFact-marginPlan;
-    cards.push({
-      tone: d>=0?'good':'bad', icon: d>=0?'up':'down',
-      html: `Маржинальность нарастающим итогом: факт <b>${marginFact.toFixed(1)}%</b> против плана ${marginPlan.toFixed(1)}% (${fmtPP(d)}).`
-    });
+  let worstCat = null, worstDelta = 0;
+  catDefs.forEach(([key,label]) => {
+    const factSum = factRows.reduce((s,r)=>s+(r[key]||0),0);
+    const planSum = planCumRows.reduce((s,r)=>s+(r[key]||0),0);
+    const d = factSum - planSum;
+    if (Math.abs(d) > Math.abs(worstDelta)){ worstDelta = d; worstCat = label; }
+  });
+  if (worstCat && Math.abs(worstDelta) > 1000){
+    cards.push({ tone: worstDelta>0?'bad':'good', icon: worstDelta>0?'alert':'up',
+      html: `Главное отклонение по расходам — статья <b>«${worstCat}»</b>: ${worstDelta>0?'перерасход':'экономия'} на ${fmtRub(Math.abs(worstDelta),true)} нарастающим итогом.` });
   }
 
-  // 4) loan payoff projection vs plan
-  if (factRows.length>=2){
-    const totalRepaid = factRows[0].loanStart - lastFact.loanEnd;
-    const avgRepay = totalRepaid / factRows.length;
-    const remaining = lastFact.loanEnd;
-    if (avgRepay > 0 && remaining > 0){
-      const monthsLeft = Math.ceil(remaining/avgRepay);
-      const projectedPayoff = addMonths(lastFact.date, monthsLeft);
-      const planPayoffRow = planRows.find(r => (r.loanEnd||0) <= 0.5);
-      if (planPayoffRow){
-        const delta = monthsBetween(planPayoffRow.date, projectedPayoff);
-        cards.push({
-          tone: delta<=0?'good':'warn', icon: delta<=0?'up':'alert',
-          html: `При текущем темпе погашения заём закроется к <b>${fmtMon(projectedPayoff)}</b> — ${delta===0?'точно по плану':(delta>0?`на ${delta} мес. позже плана`:`на ${Math.abs(delta)} мес. раньше плана`)}.`
-        });
-      }
-    } else if (remaining <= 0){
-      cards.push({ tone:'good', icon:'target', html:`Заём полностью погашен по факту.` });
-    }
+  // break-even delay
+  if (be.planBE && be.delta != null){
+    cards.push({ tone: be.delta<=0?'good':'warn', icon: be.delta<=0?'up':'alert',
+      html: be.delta===0 ? `Проект выходит на безубыточность <b>точно по плану</b> — ${fmtMon(be.planBE.date)}.`
+        : `Точка безубыточности ${be.delta>0?'сдвигается позже плана':'наступает раньше плана'} на <b>${Math.abs(be.delta)} мес.</b> — из-за отставания по выручке и/или перерасхода, см. выше.` });
+  } else if (be.planBE && be.projFailed){
+    cards.push({ tone:'bad', icon:'alert', html:`При текущем темпе прибыль не растёт — безубыточность (план: ${fmtMon(be.planBE.date)}) под риском срыва.` });
   }
 
   grid.innerHTML = cards.map(c => `
-    <div class="insight tone-${c.tone}">
-      <div class="ic">${ICONS[c.icon]}</div>
-      <div class="body">${c.html}</div>
-    </div>`).join('') || `<div class="insight tone-neutral"><div class="ic">${ICONS.target}</div><div class="body">Недостаточно данных для аналитики — нужно минимум 2 фактических месяца.</div></div>`;
+    <div class="insight tone-${c.tone}"><div class="ic">${ICONS[c.icon]}</div><div class="body">${c.html}</div></div>`).join('')
+    || `<div class="insight tone-neutral"><div class="ic">${ICONS.target}</div><div class="body">Недостаточно данных для аналитики.</div></div>`;
 }
 
 // ---------------- KPI cards ----------------
@@ -569,34 +591,34 @@ function renderKPIs(planRows, factRows, lastFact, planByDate){
   const revPlanCum = cutoff ? planRows.filter(r=>r.date<=cutoff).reduce((s,r)=>s+(r.revenue||0),0) : 0;
   const pctRevenue = revPlanCum ? (revFactCum/revPlanCum*100) : null;
 
+  const expFactCum = factRows.reduce((s,r)=>s+(r.expenses||0),0);
+  const expPlanCum = cutoff ? planRows.filter(r=>r.date<=cutoff).reduce((s,r)=>s+(r.expenses||0),0) : 0;
+  const pctExpenses = expPlanCum ? (expFactCum/expPlanCum*100) : null;
+
   const netFactCum = factRows.reduce((s,r)=>s+(r.netProfit||0),0);
   const marginFact = revFactCum ? netFactCum/revFactCum*100 : null;
   const planCum = cutoff ? planRows.filter(r=>r.date<=cutoff) : [];
-  const revPlanC = planCum.reduce((s,r)=>s+(r.revenue||0),0);
   const netPlanC = planCum.reduce((s,r)=>s+(r.netProfit||0),0);
-  const marginPlan = revPlanC ? netPlanC/revPlanC*100 : null;
-
-  const loanFact = lastFact ? lastFact.loanEnd : null;
-  const planAtCutoff = cutoff ? planByDate[+cutoff] : null;
-  const loanPlan = planAtCutoff ? planAtCutoff.loanEnd : null;
+  const marginPlan = revPlanCum ? netPlanC/revPlanCum*100 : null;
 
   const prevFact = factRows.length>=2 ? factRows[factRows.length-2] : null;
   const ordersGrowth = (prevFact && prevFact.orders) ? (lastFact.orders-prevFact.orders)/prevFact.orders*100 : null;
 
   const revSpark = sparklineSVG(factRows.slice(-8).map(r=>r.revenue), 'var(--fact)');
+  const expSpark = sparklineSVG(factRows.slice(-8).map(r=>r.expenses), 'var(--fact)');
   const marginSpark = sparklineSVG(factRows.slice(-8).map(r=> r.revenue? r.netProfit/r.revenue*100 : null), 'var(--fact)');
-  const loanSpark = sparklineSVG(factRows.slice(-8).map(r=>r.loanEnd), 'var(--fact)');
   const ordersSpark = sparklineSVG(factRows.slice(-8).map(r=>r.orders), 'var(--fact)');
 
   const cards = [
     { accent:'var(--fact)', label:'Выручка нарастающим итогом', value:fmtRub(revFactCum,true), spark:revSpark,
       badge: pctRevenue!=null ? {tone:pctRevenue>=100?'good':'bad', text:fmtPct(pctRevenue-100,0)+' к плану'} : null,
       foot: `план: ${fmtRub(revPlanCum,true)}` },
+    { accent:'var(--fact)', label:'Расходы нарастающим итогом', value:fmtRub(expFactCum,true), spark:expSpark,
+      badge: pctExpenses!=null ? {tone:pctExpenses<=100?'good':'bad', text:fmtPct(pctExpenses-100,0)+' к плану'} : null,
+      foot: `план: ${fmtRub(expPlanCum,true)}` },
     { accent:'var(--plan)', label:'Маржинальность (факт)', value: marginFact!=null?marginFact.toFixed(1)+'%':'—', spark:marginSpark,
       badge: (marginFact!=null && marginPlan!=null) ? {tone:marginFact>=marginPlan?'good':'bad', text:fmtPP(marginFact-marginPlan)} : null,
       foot: `план: ${marginPlan!=null?marginPlan.toFixed(1)+'%':'—'}` },
-    { accent:'var(--fact)', label:'Остаток займа', value:fmtRub(loanFact,true), spark:loanSpark,
-      badge: null, foot: loanPlan!=null ? `по плану: ${fmtRub(loanPlan,true)}` : `изначально: ${fmtRub(planRows[0]?.loanStart,true)}` },
     { accent:'var(--plan)', label:'Рост заказов MoM', value: ordersGrowth!=null?fmtPct(ordersGrowth,1):'—', spark:ordersSpark,
       badge: ordersGrowth!=null ? {tone:ordersGrowth>=0?'good':'bad', text: ordersGrowth>=0?'рост':'падение'} : null,
       foot: lastFact?`${fmtMon(lastFact.date)} · ${fmtNum(lastFact.orders)} заказов`:'—' },
@@ -606,55 +628,9 @@ function renderKPIs(planRows, factRows, lastFact, planByDate){
     <div class="kpi" style="--kpi-accent:${c.accent}">
       <div class="kpi-top"><div class="label">${c.label}</div>${c.spark||''}</div>
       <div class="value">${c.value}</div>
-      <div class="row">
-        ${c.badge? `<span class="badge ${c.badge.tone}">${ICONS[c.badge.tone==='good'?'up':'down']}${c.badge.text}</span>`:''}
-      </div>
-      <div class="foot" style="margin-top:6px">${c.foot}</div>
+      <div class="row">${c.badge? `<span class="badge ${c.badge.tone}">${ICONS[c.badge.tone==='good'?'up':'down']}${c.badge.text}</span>`:''}</div>
+      <div class="foot">${c.foot}</div>
     </div>`).join('');
-}
-
-// ---------------- route tracker ----------------
-function renderRoute(planRows, factRows, lastFact){
-  const rail = document.getElementById('route-rail');
-  const eta = document.getElementById('route-eta');
-  if (!planRows.length){ rail.innerHTML=''; eta.textContent='нет данных'; return; }
-
-  const total = planRows.length;
-  const payoffIdx = planRows.findIndex(r => (r.loanEnd||0) <= 0.5);
-  const progressIdx = lastFact ? planRows.findIndex(r => +r.date === +lastFact.date) : -1;
-  const progressCount = progressIdx >= 0 ? progressIdx+1 : factRows.length;
-  const pct = Math.min(100, (progressCount-1) / Math.max(1,total-1) * 100);
-
-  let dots = '', labels = '';
-  planRows.forEach((r,i) => {
-    const left = (i/(total-1))*100;
-    const done = i < progressCount;
-    dots += `<div class="route-dot ${done?'done':''}" style="left:${left}%"></div>`;
-    if (i===0 || i===total-1 || (payoffIdx>=0 && i===payoffIdx)) labels += `<span style="left:${left}%">${fmtMon(r.date)}</span>`;
-  });
-
-  rail.innerHTML = `
-    <div class="route-line-bg"></div>
-    <div class="route-line-fill" style="width:${pct}%"></div>
-    ${dots}
-    <div class="route-marker" style="left:${pct}%">${ICONS.truck}</div>
-    ${payoffIdx>=0 ? `<div class="route-flag" style="left:${(payoffIdx/(total-1))*100}%"><span class="pin"></span></div>` : ''}
-    <div class="route-labels">${labels}</div>
-  `;
-
-  let etaHtml = payoffIdx>=0 ? `план закрытия: <b>${fmtMon(planRows[payoffIdx].date)}</b>` : 'срок по плану не определён';
-  if (factRows.length>=2 && lastFact.loanEnd>0){
-    const avgRepay = (factRows[0].loanStart - lastFact.loanEnd)/factRows.length;
-    if (avgRepay>0){
-      const monthsLeft = Math.ceil(lastFact.loanEnd/avgRepay);
-      const proj = addMonths(lastFact.date, monthsLeft);
-      const delta = payoffIdx>=0 ? monthsBetween(planRows[payoffIdx].date, proj) : null;
-      etaHtml += ` · прогноз по факту: <b>${fmtMon(proj)}</b>` + (delta!=null ? ` <span class="${delta<=0?'delta-good':'delta-bad'}">(${delta<=0?`раньше на ${Math.abs(delta)} мес.`:`позже на ${delta} мес.`})</span>` : '');
-    }
-  } else if (lastFact && lastFact.loanEnd<=0){
-    etaHtml += ` · <span class="delta-good">факт: заём закрыт</span>`;
-  }
-  eta.innerHTML = etaHtml;
 }
 
 // ---------------- charts ----------------
@@ -668,83 +644,106 @@ function baseLine(label, color, extra){
   return Object.assign({ label, borderColor:color, backgroundColor:color, borderWidth:2.5,
     pointRadius:2.5, pointHoverRadius:4, tension:.3, spanGaps:false }, extra||{});
 }
-function renderCharts(planRows, factRows){
+function tooltipMoney(){ return { callbacks:{ label:(ctx)=> ctx.raw==null?'':` ${ctx.dataset.label}: ${fmtRub(ctx.raw,true)}` } }; }
+function yMoney(scales){ return Object.assign({}, scales, { y: Object.assign({}, scales.y, { ticks: Object.assign({}, scales.y.ticks, { callback:(v)=>fmtRub(v,true) }) }) }); }
+
+function renderCharts(planRows, factRows, lastFact, planByDate){
   const labels = planRows.map(r=>fmtMon(r.date));
-  const factRevAligned = alignToPlan(planRows, factRows, 'revenue');
-  const factCheckAligned = alignToPlan(planRows, factRows, 'avgCheck');
-  const factLoanAligned = alignToPlan(planRows, factRows, 'loanEnd');
+  const base = {
+    responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
+    scales:{
+      x:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#8892ad', font:{family:'JetBrains Mono', size:11}, maxRotation:0, autoSkip:true, maxTicksLimit:9} },
+      y:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#8892ad', font:{family:'JetBrains Mono', size:11}} }
+    },
+    plugins:{ legend:{display:false}, tooltip:{
+      backgroundColor:'#121927', borderColor:'rgba(255,255,255,.12)', borderWidth:1,
+      titleFont:{family:'Manrope', weight:700, size:12.5}, bodyFont:{family:'JetBrains Mono', size:12}
+    }}
+  };
+
+  // revenue
+  if (charts.revenue) charts.revenue.destroy();
+  charts.revenue = new Chart(document.getElementById('chart-revenue'), {
+    data:{ labels, datasets:[
+      { type:'bar', label:'План', data:planRows.map(r=>r.revenue), backgroundColor:'rgba(57,217,138,.22)', borderColor:'#39d98a', borderWidth:1, borderRadius:3 },
+      { type:'line', label:'Факт', data:alignToPlan(planRows, factRows, 'revenue'), borderColor:'#ff8a3d', backgroundColor:'#ff8a3d', borderWidth:2.5, pointRadius:3, tension:.3 },
+    ]},
+    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, tooltipMoney()) }), scales: yMoney(base.scales) })
+  });
+
+  // expenses
+  if (charts.expenses) charts.expenses.destroy();
+  charts.expenses = new Chart(document.getElementById('chart-expenses'), {
+    data:{ labels, datasets:[
+      { type:'bar', label:'План', data:planRows.map(r=>r.expenses), backgroundColor:'rgba(255,138,61,.18)', borderColor:'#ff8a3d', borderWidth:1, borderRadius:3 },
+      { type:'line', label:'Факт', data:alignToPlan(planRows, factRows, 'expenses'), borderColor:'#ff5d78', backgroundColor:'#ff5d78', borderWidth:2.5, pointRadius:3, tension:.3 },
+    ]},
+    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, tooltipMoney()) }), scales: yMoney(base.scales) })
+  });
+
+  // cumulative profit / break-even
+  if (charts.cumprofit) charts.cumprofit.destroy();
+  charts.cumprofit = new Chart(document.getElementById('chart-cumprofit'), {
+    type:'line',
+    data:{ labels, datasets:[
+      baseLine('План','#39d98a',{data:planRows.map(r=>r.cumProfit)}),
+      baseLine('Факт','#ff8a3d',{data:alignToPlan(planRows, factRows, 'cumProfit')}),
+    ]},
+    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, tooltipMoney()),
+      annotation:undefined }), scales: yMoney(base.scales) })
+  });
+
+  // expense structure: plan vs fact for last fact month
+  const structSub = document.getElementById('structure-sub');
+  const catDefs = [['partnerPrice','Партнерка'], ['royalty','Роялти'], ['salary','ЗП'], ['salaryTax','Налоги ФОТ'], ['loanInterest','Займ %']];
+  let structPlan, structFact, structLabels;
+  if (lastFact){
+    const p = planByDate[+lastFact.date];
+    structSub.textContent = `По статьям · ${fmtMon(lastFact.date)}`;
+    structLabels = catDefs.map(c=>c[1]);
+    structPlan = catDefs.map(([k])=> p ? (p[k]||0) : null);
+    structFact = catDefs.map(([k])=> lastFact[k]||0);
+  } else {
+    structSub.textContent = 'По статьям · план (мес. 1)';
+    structLabels = catDefs.map(c=>c[1]);
+    structPlan = catDefs.map(([k])=> planRows[0] ? (planRows[0][k]||0) : null);
+    structFact = catDefs.map(()=>null);
+  }
+  if (charts.structure) charts.structure.destroy();
+  charts.structure = new Chart(document.getElementById('chart-structure'), {
+    type:'bar',
+    data:{ labels:structLabels, datasets:[
+      { label:'План', data:structPlan, backgroundColor:'rgba(57,217,138,.55)', borderRadius:4 },
+      { label:'Факт', data:structFact, backgroundColor:'rgba(255,138,61,.75)', borderRadius:4 },
+    ]},
+    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, tooltipMoney()) }), scales: yMoney(base.scales) })
+  });
+
+  // avg check (unit economics) — with defensive fallback already applied in data
+  if (charts.check) charts.check.destroy();
+  charts.check = new Chart(document.getElementById('chart-check'), {
+    type:'line',
+    data:{ labels, datasets:[
+      baseLine('План','#39d98a',{data:planRows.map(r=>r.avgCheck)}),
+      baseLine('Факт','#ff8a3d',{data:alignToPlan(planRows, factRows, 'avgCheck')}),
+    ]},
+    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, {
+      callbacks:{ label:(ctx)=> ctx.raw==null?'':` ${ctx.dataset.label}: ${fmtRub(ctx.raw)}` } }) }), scales: yMoney(base.scales) })
+  });
+
+  // margin %
   const planMargin = planRows.map(r => r.revenue ? r.netProfit/r.revenue*100 : null);
   const factMarginAligned = alignToPlan(planRows, factRows, 'revenue').map((_,i) => {
     const fr = factRows.find(r => fmtMon(r.date)===labels[i]);
     return fr && fr.revenue ? fr.netProfit/fr.revenue*100 : null;
   });
-
-  const base = {
-    responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
-    scales:{
-      x:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#697190', font:{family:'JetBrains Mono', size:10}, maxRotation:0, autoSkip:true, maxTicksLimit:9} },
-      y:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#697190', font:{family:'JetBrains Mono', size:10}} }
-    },
-    plugins:{ legend:{display:false}, tooltip:{
-      backgroundColor:'#121927', borderColor:'rgba(255,255,255,.12)', borderWidth:1,
-      titleFont:{family:'Manrope', weight:700}, bodyFont:{family:'JetBrains Mono'}
-    }}
-  };
-
-  if (charts.revenue) charts.revenue.destroy();
-  charts.revenue = new Chart(document.getElementById('chart-revenue'), {
-    data:{ labels, datasets:[
-      { type:'bar', label:'План', data:planRows.map(r=>r.revenue), backgroundColor:'rgba(57,217,138,.22)', borderColor:'#39d98a', borderWidth:1, borderRadius:3, order:3 },
-      { type:'line', label:'Факт', data:factRevAligned, borderColor:'#ff8a3d', backgroundColor:'#ff8a3d', borderWidth:2.5, pointRadius:3, tension:.3, spanGaps:false, order:1 },
-    ]},
-    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, { callbacks:{ label:(ctx)=>` ${ctx.dataset.label}: ${fmtRub(ctx.raw,true)}` } }) }),
-      scales: Object.assign({}, base.scales, { y: Object.assign({}, base.scales.y, { ticks: Object.assign({}, base.scales.y.ticks, { callback:(v)=>fmtRub(v,true) }) }) }) })
-  });
-
   if (charts.margin) charts.margin.destroy();
   charts.margin = new Chart(document.getElementById('chart-margin'), {
     type:'line',
     data:{ labels, datasets:[ baseLine('План','#39d98a',{data:planMargin}), baseLine('Факт','#ff8a3d',{data:factMarginAligned}) ] },
-    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, { callbacks:{ label:(ctx)=> ctx.raw==null?'':` ${ctx.dataset.label}: ${ctx.raw.toFixed(1)}%` } }) }),
+    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, {
+      callbacks:{ label:(ctx)=> ctx.raw==null?'':` ${ctx.dataset.label}: ${ctx.raw.toFixed(1)}%` } }) }),
       scales: Object.assign({}, base.scales, { y: Object.assign({}, base.scales.y, { ticks: Object.assign({}, base.scales.y.ticks, { callback:(v)=>v+'%' }) }) }) })
-  });
-
-  if (charts.check) charts.check.destroy();
-  charts.check = new Chart(document.getElementById('chart-check'), {
-    type:'line',
-    data:{ labels, datasets:[ baseLine('План','#39d98a',{data:planRows.map(r=>r.avgCheck)}), baseLine('Факт','#ff8a3d',{data:factCheckAligned}) ] },
-    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, { callbacks:{ label:(ctx)=> ctx.raw==null?'':` ${ctx.dataset.label}: ${fmtRub(ctx.raw)}` } }) }),
-      scales: Object.assign({}, base.scales, { y: Object.assign({}, base.scales.y, { ticks: Object.assign({}, base.scales.y.ticks, { callback:(v)=>fmtRub(v,true) }) }) }) })
-  });
-
-  // loan chart with fact-pace projection extension
-  let loanFactExt = factLoanAligned.slice();
-  const factRowsSorted = factRows.slice().sort((a,b)=>a.date-b.date);
-  if (factRowsSorted.length>=2){
-    const lastFact = factRowsSorted[factRowsSorted.length-1];
-    const avgRepay = (factRowsSorted[0].loanStart - lastFact.loanEnd)/factRowsSorted.length;
-    if (avgRepay>0 && lastFact.loanEnd>0){
-      const idxMap = {}; planRows.forEach((r,i)=>idxMap[+r.date]=i);
-      let startIdx = idxMap[+lastFact.date];
-      let bal = lastFact.loanEnd;
-      if (startIdx!=null){
-        for (let i=startIdx+1;i<planRows.length && bal>0;i++){
-          bal = Math.max(0, bal-avgRepay);
-          loanFactExt[i] = bal;
-        }
-      }
-    }
-  }
-
-  if (charts.loan) charts.loan.destroy();
-  charts.loan = new Chart(document.getElementById('chart-loan'), {
-    type:'line',
-    data:{ labels, datasets:[
-      baseLine('План','#39d98a',{data:planRows.map(r=>r.loanEnd), fill:{target:'origin', above:'rgba(57,217,138,.05)'}}),
-      baseLine('Факт / прогноз','#ff8a3d',{data:loanFactExt}),
-    ]},
-    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, { callbacks:{ label:(ctx)=> ctx.raw==null?'':` ${ctx.dataset.label}: ${fmtRub(ctx.raw,true)}` } }) }),
-      scales: Object.assign({}, base.scales, { y: Object.assign({}, base.scales.y, { ticks: Object.assign({}, base.scales.y.ticks, { callback:(v)=>fmtRub(v,true) }) }) }) })
   });
 }
 
@@ -752,10 +751,8 @@ function renderCharts(planRows, factRows){
 function renderTable(planByDate){
   let rows = allRows.slice().sort((a,b)=>a.date-b.date || (a.type==='План'?1:-1));
   if (currentFilter !== 'all') rows = rows.filter(r=>r.type===currentFilter);
-
   const byTypeSorted = { 'План': allRows.filter(r=>r.type==='План').sort((a,b)=>a.date-b.date),
                           'Факт': allRows.filter(r=>r.type==='Факт').sort((a,b)=>a.date-b.date) };
-
   const body = document.getElementById('table-body');
   body.innerHTML = rows.map(r => {
     const badge = r.type==='План' ? '<span class="type-badge plan">План</span>' : '<span class="type-badge fact">Факт</span>';
@@ -781,7 +778,7 @@ function renderTable(planByDate){
       <td>${fmtDate(r.date)}</td><td>${badge}</td><td>${fmtNum(r.orders)}</td>
       <td>${fmtRub(r.revenue)}</td><td>${momHtml}</td><td>${fmtRub(r.expenses)}</td>
       <td>${fmtRub(r.netProfit)}</td><td>${margin!=null?margin.toFixed(1)+'%':'—'}</td>
-      <td>${fmtRub(r.cumProfit)}</td><td>${fmtRub(r.loanEnd)}</td><td>${pctCell}</td>
+      <td>${fmtRub(r.cumProfit)}</td><td>${pctCell}</td>
     </tr>`;
   }).join('');
 }
