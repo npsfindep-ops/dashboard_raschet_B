@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>План/Факт · Курьерский сервис</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0a0f1c;
+    --bg-grad: radial-gradient(1200px 600px at 85% -10%, #142244 0%, transparent 60%),
+               radial-gradient(900px 500px at -5% 110%, #0f2436 0%, transparent 55%);
+    --panel:#111a30;
+    --panel-2:#0d1526;
+    --line:rgba(255,255,255,.08);
+    --line-2:rgba(255,255,255,.14);
+    --text:#e9edf7;
+    --text-dim:#8e9ab3;
+    --text-faint:#5c6885;
+    --plan:#2fd1b5;
+    --plan-dim:rgba(47,209,181,.16);
+    --fact:#ffb020;
+    --fact-dim:rgba(255,176,32,.16);
+    --good:#4ade80;
+    --bad:#fb7185;
+    --radius:14px;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Manrope', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg) var(--bg-grad);
+    background-attachment:fixed;
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    padding:28px 20px 60px;
+  }
+  .wrap{max-width:1240px;margin:0 auto;}
+
+  /* ---------- header ---------- */
+  header{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    gap:20px; flex-wrap:wrap; margin-bottom:26px;
+    padding-bottom:20px; border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--fact); margin:0 0 6px; display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--fact);box-shadow:0 0 0 3px var(--fact-dim);}
+  h1{font-size:26px; font-weight:800; margin:0; letter-spacing:-.01em;}
+  h1 span{color:var(--text-dim); font-weight:600;}
+  .meta{text-align:right; font-family:var(--mono); font-size:12px; color:var(--text-faint);}
+  .meta b{color:var(--text-dim); font-weight:600;}
+  .controls{display:flex; align-items:center; gap:10px; margin-top:8px; justify-content:flex-end;}
+  button.refresh{
+    font-family:var(--sans); font-size:12.5px; font-weight:700; color:var(--bg);
+    background:var(--fact); border:none; border-radius:8px; padding:8px 14px;
+    cursor:pointer; display:flex; align-items:center; gap:6px; transition:transform .15s ease, opacity .15s ease;
+  }
+  button.refresh:hover{transform:translateY(-1px);}
+  button.refresh:disabled{opacity:.5; cursor:default; transform:none;}
+  .spin{display:inline-block; width:11px; height:11px; border-radius:50%;
+    border:2px solid rgba(10,15,28,.35); border-top-color:var(--bg); animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  #status-banner{
+    display:none; margin-bottom:20px; padding:12px 16px; border-radius:10px;
+    background:rgba(251,113,133,.1); border:1px solid rgba(251,113,133,.35);
+    color:#ffd0d6; font-size:13px; line-height:1.5;
+  }
+  #status-banner a{color:#ffe3e7;}
+
+  /* ---------- KPI cards ---------- */
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;}
+  .kpi{
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line); border-radius:var(--radius); padding:18px 18px 16px;
+    position:relative; overflow:hidden;
+  }
+  .kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-accent,var(--plan));}
+  .kpi .label{font-size:11.5px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px;}
+  .kpi .value{font-family:var(--mono); font-size:25px; font-weight:700; letter-spacing:-.01em; line-height:1.1;}
+  .kpi .sub{margin-top:8px; font-size:12.5px; color:var(--text-faint); display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .pill{font-family:var(--mono); font-size:11px; font-weight:600; padding:2px 7px; border-radius:20px;}
+  .pill.good{background:rgba(74,222,128,.14); color:var(--good);}
+  .pill.bad{background:rgba(251,113,133,.14); color:var(--bad);}
+  .pill.neutral{background:rgba(255,255,255,.08); color:var(--text-dim);}
+
+  /* ---------- loan route (signature element) ---------- */
+  .route-card{
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line); border-radius:var(--radius); padding:20px 22px; margin-bottom:22px;
+  }
+  .route-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:18px; flex-wrap:wrap; gap:8px;}
+  .route-head h3{margin:0; font-size:14px; font-weight:700;}
+  .route-head .route-note{font-family:var(--mono); font-size:11.5px; color:var(--text-faint);}
+  .route-rail{position:relative; height:54px; margin:0 4px;}
+  .route-line-bg{position:absolute; top:24px; left:0; right:0; height:2px; background:repeating-linear-gradient(90deg, var(--line-2) 0 6px, transparent 6px 12px);}
+  .route-line-fill{position:absolute; top:24px; left:0; height:2px; background:var(--fact); box-shadow:0 0 8px rgba(255,176,32,.5); transition:width .6s ease;}
+  .route-dot{position:absolute; top:19px; width:11px; height:11px; border-radius:50%; transform:translateX(-50%); border:2px solid var(--bg-color,#0a0f1c);}
+  .route-dot.done{background:var(--fact);}
+  .route-dot.todo{background:var(--text-faint); opacity:.5;}
+  .route-truck{position:absolute; top:-2px; transform:translateX(-50%); font-size:20px; transition:left .6s ease; filter:drop-shadow(0 2px 6px rgba(255,176,32,.5));}
+  .route-flag{position:absolute; top:-4px; transform:translateX(-50%); font-size:16px;}
+  .route-labels{position:absolute; top:32px; width:100%; font-family:var(--mono); font-size:10px; color:var(--text-faint);}
+  .route-labels span{position:absolute; transform:translateX(-50%); white-space:nowrap;}
+
+  /* ---------- charts ---------- */
+  .charts{display:grid; grid-template-columns:1.3fr 1fr; gap:14px; margin-bottom:14px;}
+  .chart-card{
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px 10px;
+  }
+  .chart-card.full{grid-column:1/-1;}
+  .chart-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
+  .chart-head h3{margin:0; font-size:13.5px; font-weight:700;}
+  .legend-inline{display:flex; gap:14px; font-family:var(--mono); font-size:11px; color:var(--text-dim);}
+  .legend-inline .sw{display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:5px; vertical-align:middle;}
+  .chart-wrap{position:relative; height:230px;}
+
+  /* ---------- table ---------- */
+  .table-card{
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; margin-top:14px;
+  }
+  .table-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;}
+  .table-head h3{margin:0; font-size:13.5px; font-weight:700;}
+  .filter-btns{display:flex; gap:6px;}
+  .filter-btns button{
+    font-family:var(--sans); font-size:12px; font-weight:600; color:var(--text-dim);
+    background:transparent; border:1px solid var(--line-2); border-radius:7px; padding:6px 12px; cursor:pointer;
+  }
+  .filter-btns button.active{background:var(--text); color:var(--bg); border-color:var(--text);}
+  .table-scroll{overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12.5px; min-width:900px;}
+  thead th{
+    text-align:right; font-weight:600; color:var(--text-faint); font-size:10.5px;
+    text-transform:uppercase; letter-spacing:.04em; padding:8px 10px; border-bottom:1px solid var(--line-2);
+    position:sticky; top:0; background:var(--panel-2);
+  }
+  thead th:first-child, thead th:nth-child(2){text-align:left;}
+  tbody td{padding:8px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap;}
+  tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:600; color:var(--text-dim);}
+  tbody tr:hover{background:rgba(255,255,255,.03);}
+  .type-badge{
+    display:inline-block; padding:2px 8px; border-radius:20px; font-size:10.5px; font-weight:700;
+    font-family:var(--mono); text-transform:uppercase; letter-spacing:.03em;
+  }
+  .type-badge.plan{background:var(--plan-dim); color:var(--plan);}
+  .type-badge.fact{background:var(--fact-dim); color:var(--fact);}
+  .delta-pos{color:var(--good);}
+  .delta-neg{color:var(--bad);}
+
+  footer{margin-top:26px; text-align:center; font-family:var(--mono); font-size:11px; color:var(--text-faint);}
+  footer a{color:var(--text-dim);}
+
+  @media (max-width:900px){
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    .charts{grid-template-columns:1fr;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="eyebrow"><span class="dot"></span>БДР · план / факт · live-синхронизация</p>
+      <h1>Курьерский сервис <span>— оперативный дашборд проекта</span></h1>
+    </div>
+    <div>
+      <div class="meta">Источник: <b>Google Sheets</b> · лист «Свод план-факт»<br>Обновлено: <b id="updated-at">—</b></div>
+      <div class="controls">
+        <button class="refresh" id="refresh-btn" onclick="loadData(true)">↻ Обновить</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="status-banner"></div>
+
+  <section class="kpis" id="kpi-grid">
+    <!-- filled by JS -->
+  </section>
+
+  <div class="route-card">
+    <div class="route-head">
+      <h3>🚚 Маршрут погашения займа</h3>
+      <span class="route-note" id="route-note">—</span>
+    </div>
+    <div class="route-rail" id="route-rail"></div>
+  </div>
+
+  <section class="charts">
+    <div class="chart-card">
+      <div class="chart-head">
+        <h3>Выручка по месяцам</h3>
+        <div class="legend-inline">
+          <span><span class="sw" style="background:var(--plan)"></span>План</span>
+          <span><span class="sw" style="background:var(--fact)"></span>Факт</span>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-revenue"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <h3>Прибыль накопительно</h3>
+        <div class="legend-inline">
+          <span><span class="sw" style="background:var(--plan)"></span>План</span>
+          <span><span class="sw" style="background:var(--fact)"></span>Факт</span>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-profit"></canvas></div>
+    </div>
+    <div class="chart-card full">
+      <div class="chart-head">
+        <h3>Остаток займа по месяцам</h3>
+        <div class="legend-inline">
+          <span><span class="sw" style="background:var(--plan)"></span>План</span>
+          <span><span class="sw" style="background:var(--fact)"></span>Факт</span>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:200px"><canvas id="chart-loan"></canvas></div>
+    </div>
+  </section>
+
+  <div class="table-card">
+    <div class="table-head">
+      <h3>Детализация по месяцам</h3>
+      <div class="filter-btns" id="filter-btns">
+        <button data-f="all" class="active">Все</button>
+        <button data-f="План">План</button>
+        <button data-f="Факт">Факт</button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Дата</th><th>Тип</th><th>Заказы</th><th>Выручка</th><th>Расходы</th>
+            <th>Прибыль до налога</th><th>Чистая прибыль</th><th>Накопительно</th><th>Займ (конец)</th><th>% к плану</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    Данные подтягиваются напрямую из Google Таблицы при каждой загрузке страницы и раз в 5 минут автоматически.<br>
+    Таблица должна быть доступна по ссылке для просмотра (Доступ по ссылке → Читатель).
+  </footer>
+
+</div>
+
+<script>
+const SHEET_ID = "1XLsirVOVZWja5InJHN_3cha7KdlH-Wi1_NPQphGyrKE";
+const SHEET_NAME = "Свод план-факт";
+
+// JSONP loader: works from file:// (double-click) where fetch()/CORS is blocked,
+// because loading a <script src="..."> tag is not subject to CORS restrictions.
+// Google's gviz endpoint natively supports this via tqx=responseHandler:NAME.
+function loadGvizJSONP(timeoutMs){
+  return new Promise((resolve, reject) => {
+    const cbName = 'gvizCB_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
+    let done = false;
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?`
+      + `tqx=${encodeURIComponent('out:json;responseHandler:' + cbName)}`
+      + `&sheet=${encodeURIComponent(SHEET_NAME)}&headers=1&_=${Date.now()}`;
+
+    const script = document.createElement('script');
+
+    function cleanup(){
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      cleanup();
+      reject(new Error('Таймаут запроса — нет ответа от Google за ' + (timeoutMs/1000) + ' сек. Проверьте интернет-соединение.'));
+    }, timeoutMs || 12000);
+
+    window[cbName] = function(json){
+      if (done) return;
+      done = true;
+      cleanup();
+      resolve(json);
+    };
+
+    script.onerror = () => {
+      if (done) return;
+      done = true;
+      cleanup();
+      reject(new Error('Не удалось загрузить скрипт с docs.google.com — проверьте доступ к таблице («Все у кого есть ссылка» → «Читатель») и подключение к интернету.'));
+    };
+
+    script.src = url;
+    document.head.appendChild(script);
+  });
+}
+
+const RU_MONTHS = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+
+const FIELD_MAP = {
+  date: 'Дата', type: 'Тип',
+  orders: 'Кол-во заказов, шт', avgCheck: 'Ср чек (с НДС), руб',
+  revenue: 'Выручка (с НДС), руб', expenses: 'Расходы, руб',
+  profitBeforeTax: 'Прибыль до налогообложения, руб',
+  netProfit: 'Чистая прибыль, руб.', cumProfit: 'Прибыль накопительно, руб',
+  periodNo: 'Номер периода (мес.)',
+  loanStart: 'Займ на начало периода', loanEnd: 'Займ на конец периода',
+};
+
+function parseGvizDate(v){
+  if (v == null) return null;
+  if (typeof v === 'string' && v.indexOf('Date(') === 0){
+    const m = v.match(/Date\((\d+),(\d+),(\d+)/);
+    if (m) return new Date(+m[1], +m[2], +m[3]);
+  }
+  return null;
+}
+function findColIndex(cols, name){
+  let idx = cols.findIndex(c => (c.label||'').trim() === name);
+  if (idx !== -1) return idx;
+  idx = cols.findIndex(c => (c.label||'').trim().toLowerCase().includes(name.toLowerCase()));
+  return idx;
+}
+function extractRowsFromGviz(json){
+  const cols = json.table.cols;
+  const colIdx = {};
+  for (const key in FIELD_MAP) colIdx[key] = findColIndex(cols, FIELD_MAP[key]);
+  const rows = [];
+  for (const r of json.table.rows){
+    const c = r.c;
+    const get = (key) => { const i = colIdx[key]; if (i==null||i<0||!c[i]) return null; return c[i].v; };
+    const date = parseGvizDate(get('date'));
+    const type = get('type');
+    const revenue = get('revenue');
+    if (!date || !type || revenue == null) continue;
+    rows.push({
+      date, type,
+      orders: get('orders'), avgCheck: get('avgCheck'), revenue,
+      expenses: get('expenses'), profitBeforeTax: get('profitBeforeTax'),
+      netProfit: get('netProfit'), cumProfit: get('cumProfit'),
+      loanStart: get('loanStart'), loanEnd: get('loanEnd'), periodNo: get('periodNo'),
+    });
+  }
+  rows.sort((a,b) => a.date - b.date || (a.type === 'План' ? 1 : -1));
+  return rows;
+}
+
+function fmtDate(d){
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  return `${dd}.${mm}.${d.getFullYear()}`;
+}
+function fmtMon(d){ return `${RU_MONTHS[d.getMonth()]}.${String(d.getFullYear()).slice(2)}`; }
+function fmtRub(n, compact){
+  if (n == null || isNaN(n)) return "—";
+  if (compact){
+    const abs = Math.abs(n);
+    if (abs >= 1000000) return (n/1000000).toLocaleString('ru-RU',{maximumFractionDigits:2}) + " млн ₽";
+    if (abs >= 1000) return (n/1000).toLocaleString('ru-RU',{maximumFractionDigits:0}) + " тыс ₽";
+  }
+  return Math.round(n).toLocaleString('ru-RU') + " ₽";
+}
+function fmtNum(n){ return n==null || isNaN(n) ? "—" : Math.round(n).toLocaleString('ru-RU'); }
+
+let charts = {};
+let allRows = [];
+let currentFilter = 'all';
+
+async function loadData(manual){
+  const btn = document.getElementById('refresh-btn');
+  const banner = document.getElementById('status-banner');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Обновление…';
+  banner.style.display = 'none';
+  try{
+    const json = await loadGvizJSONP(12000);
+    const rows = extractRowsFromGviz(json);
+    if (!rows.length) throw new Error('Не удалось распознать данные — проверьте название листа и доступ к таблице.');
+    allRows = rows;
+    render();
+    document.getElementById('updated-at').textContent = new Date().toLocaleTimeString('ru-RU');
+  } catch(err){
+    console.error(err);
+    banner.style.display = 'block';
+    banner.innerHTML = `⚠ Не удалось загрузить данные из Google Таблицы (${err.message}). Проверьте, что доступ открыт по ссылке (Читатель), и обновите страницу. <a href="https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit" target="_blank">Открыть таблицу →</a>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '↻ Обновить';
+  }
+}
+
+function render(){
+  const planRows = allRows.filter(r => r.type === 'План').sort((a,b)=>a.date-b.date);
+  const factRows = allRows.filter(r => r.type === 'Факт').sort((a,b)=>a.date-b.date);
+  const lastFact = factRows[factRows.length-1] || null;
+
+  renderKPIs(planRows, factRows, lastFact);
+  renderRoute(planRows, factRows, lastFact);
+  renderCharts(planRows, factRows);
+  renderTable();
+}
+
+function renderKPIs(planRows, factRows, lastFact){
+  const grid = document.getElementById('kpi-grid');
+  const revFactCum = factRows.reduce((s,r)=>s+(r.revenue||0),0);
+  const cutoff = lastFact ? lastFact.date : null;
+  const revPlanCum = cutoff ? planRows.filter(r=>r.date<=cutoff).reduce((s,r)=>s+(r.revenue||0),0) : 0;
+  const pctRevenue = revPlanCum ? (revFactCum/revPlanCum*100) : null;
+
+  const cumProfitFact = lastFact ? lastFact.cumProfit : null;
+  const planAtCutoff = cutoff ? planRows.find(r=>+r.date === +cutoff) : null;
+  const cumProfitPlan = planAtCutoff ? planAtCutoff.cumProfit : null;
+  const pctProfit = (cumProfitPlan && cumProfitFact!=null) ? (cumProfitFact/cumProfitPlan*100) : null;
+
+  const loanFact = lastFact ? lastFact.loanEnd : null;
+  const loanPlan = planAtCutoff ? planAtCutoff.loanEnd : null;
+
+  const cards = [
+    {
+      label:'Выручка нарастающим итогом', accent:'var(--fact)',
+      value: fmtRub(revFactCum, true),
+      sub: pctRevenue!=null
+        ? `<span class="pill ${pctRevenue>=100?'good':'bad'}">${pctRevenue.toFixed(0)}% от плана</span> план: ${fmtRub(revPlanCum,true)}`
+        : `план на весь срок: ${fmtRub(planRows.reduce((s,r)=>s+(r.revenue||0),0),true)}`
+    },
+    {
+      label:'Чистая прибыль накопительно', accent:'var(--plan)',
+      value: fmtRub(cumProfitFact, true),
+      sub: pctProfit!=null
+        ? `<span class="pill ${pctProfit>=100?'good':'bad'}">${pctProfit.toFixed(0)}% от плана</span> план: ${fmtRub(cumProfitPlan,true)}`
+        : `Факт по последнему месяцу`
+    },
+    {
+      label:'Остаток займа', accent:'var(--fact)',
+      value: fmtRub(loanFact, true),
+      sub: loanPlan!=null
+        ? `по плану на этот месяц: ${fmtRub(loanPlan,true)}`
+        : `изначально: ${fmtRub(planRows[0]?.loanStart,true)}`
+    },
+    {
+      label:'Последний фактический месяц', accent:'var(--plan)',
+      value: lastFact ? fmtMon(lastFact.date) : '—',
+      sub: lastFact ? `заказов: ${fmtNum(lastFact.orders)} · период №${lastFact.periodNo}` : 'нет фактических данных'
+    },
+  ];
+
+  grid.innerHTML = cards.map(c => `
+    <div class="kpi" style="--kpi-accent:${c.accent}">
+      <div class="label">${c.label}</div>
+      <div class="value">${c.value}</div>
+      <div class="sub">${c.sub}</div>
+    </div>
+  `).join('');
+}
+
+function renderRoute(planRows, factRows, lastFact){
+  const rail = document.getElementById('route-rail');
+  const note = document.getElementById('route-note');
+  if (!planRows.length){ rail.innerHTML=''; note.textContent='нет данных'; return; }
+
+  const total = planRows.length;
+  const payoffIdx = planRows.findIndex(r => (r.loanEnd||0) <= 0.5);
+  const progressIdx = lastFact ? planRows.findIndex(r => +r.date === +lastFact.date) : -1;
+  const progressCount = progressIdx >= 0 ? progressIdx+1 : factRows.length;
+  const pct = Math.min(100, (progressCount-1) / Math.max(1,total-1) * 100);
+
+  let dots = '';
+  let labels = '';
+  planRows.forEach((r,i) => {
+    const left = (i/(total-1))*100;
+    const done = i < progressCount;
+    dots += `<div class="route-dot ${done?'done':'todo'}" style="left:${left}%"></div>`;
+    if (i===0 || i===total-1 || (payoffIdx>=0 && i===payoffIdx)){
+      labels += `<span style="left:${left}%">${fmtMon(r.date)}</span>`;
+    }
+  });
+
+  rail.innerHTML = `
+    <div class="route-line-bg"></div>
+    <div class="route-line-fill" style="width:${pct}%"></div>
+    ${dots}
+    <div class="route-truck" style="left:${pct}%">🚚</div>
+    ${payoffIdx>=0 ? `<div class="route-flag" style="left:${(payoffIdx/(total-1))*100}%">🏁</div>` : ''}
+    <div class="route-labels">${labels}</div>
+  `;
+
+  const payoffText = payoffIdx>=0 ? `план: заём закрыт к ${fmtMon(planRows[payoffIdx].date)}` : 'план: срок закрытия не определён';
+  const factText = lastFact ? `факт: пройдено ${progressCount} из ${total} мес., остаток ${fmtRub(lastFact.loanEnd,true)}` : 'фактических данных пока нет';
+  note.textContent = `${factText} · ${payoffText}`;
+}
+
+function baseLineDataset(label, color, dashed){
+  return {
+    label, borderColor: color, backgroundColor: color,
+    borderWidth: 2.5, pointRadius: 2.5, pointHoverRadius: 4,
+    tension: .3, spanGaps:false,
+    borderDash: dashed ? [5,4] : [],
+  };
+}
+
+function renderCharts(planRows, factRows){
+  const labels = planRows.map(r => fmtMon(r.date));
+  const dateIndex = {};
+  planRows.forEach((r,i)=>dateIndex[+r.date]=i);
+
+  const factAligned = (key) => {
+    const arr = new Array(planRows.length).fill(null);
+    factRows.forEach(r => { const i = dateIndex[+r.date]; if (i!=null) arr[i] = r[key]; });
+    return arr;
+  };
+
+  const ctxDefaults = {
+    responsive:true, maintainAspectRatio:false,
+    interaction:{mode:'index', intersect:false},
+    scales:{
+      x:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#8e9ab3', font:{family:'JetBrains Mono', size:10}, maxRotation:0, autoSkip:true, maxTicksLimit:10} },
+      y:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#8e9ab3', font:{family:'JetBrains Mono', size:10}, callback:(v)=>fmtRub(v,true)} }
+    },
+    plugins:{ legend:{display:false}, tooltip:{
+      backgroundColor:'#111a30', borderColor:'rgba(255,255,255,.12)', borderWidth:1,
+      titleFont:{family:'Manrope', weight:700}, bodyFont:{family:'JetBrains Mono'},
+      callbacks:{ label:(ctx)=> ` ${ctx.dataset.label}: ${fmtRub(ctx.raw,true)}` }
+    }}
+  };
+
+  // revenue: bar (plan) + line (fact)
+  if (charts.revenue) charts.revenue.destroy();
+  charts.revenue = new Chart(document.getElementById('chart-revenue'), {
+    data: { labels, datasets:[
+      { type:'bar', label:'План', data: planRows.map(r=>r.revenue), backgroundColor:'rgba(47,209,181,.28)', borderColor:'#2fd1b5', borderWidth:1, borderRadius:3, order:2 },
+      { type:'line', label:'Факт', data: factAligned('revenue'), borderColor:'#ffb020', backgroundColor:'#ffb020', borderWidth:2.5, pointRadius:3, tension:.3, spanGaps:false, order:1 },
+    ]},
+    options: ctxDefaults
+  });
+
+  // cumulative profit: two lines
+  if (charts.profit) charts.profit.destroy();
+  charts.profit = new Chart(document.getElementById('chart-profit'), {
+    data: { labels, datasets:[
+      { ...baseLineDataset('План', '#2fd1b5'), data: planRows.map(r=>r.cumProfit) },
+      { ...baseLineDataset('Факт', '#ffb020'), data: factAligned('cumProfit') },
+    ]},
+    options: ctxDefaults
+  });
+
+  // loan balance
+  if (charts.loan) charts.loan.destroy();
+  charts.loan = new Chart(document.getElementById('chart-loan'), {
+    data: { labels, datasets:[
+      { ...baseLineDataset('План', '#2fd1b5'), data: planRows.map(r=>r.loanEnd), fill:{target:'origin', above:'rgba(47,209,181,.06)'} },
+      { ...baseLineDataset('Факт', '#ffb020'), data: factAligned('loanEnd') },
+    ]},
+    options: ctxDefaults
+  });
+}
+
+function renderTable(){
+  const planRows = allRows.filter(r=>r.type==='План');
+  const planByDate = {};
+  planRows.forEach(r => planByDate[+r.date] = r);
+
+  let rows = allRows.slice().sort((a,b)=>a.date-b.date || (a.type==='План'?1:-1));
+  if (currentFilter !== 'all') rows = rows.filter(r=>r.type===currentFilter);
+
+  const body = document.getElementById('table-body');
+  body.innerHTML = rows.map(r => {
+    const badge = r.type === 'План' ? '<span class="type-badge plan">План</span>' : '<span class="type-badge fact">Факт</span>';
+    let pctCell = '—';
+    if (r.type === 'Факт'){
+      const p = planByDate[+r.date];
+      if (p && p.revenue){
+        const pct = r.revenue / p.revenue * 100;
+        pctCell = `<span class="${pct>=100?'delta-pos':'delta-neg'}">${pct.toFixed(0)}%</span>`;
+      }
+    }
+    return `<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td>${badge}</td>
+      <td>${fmtNum(r.orders)}</td>
+      <td>${fmtRub(r.revenue)}</td>
+      <td>${fmtRub(r.expenses)}</td>
+      <td>${fmtRub(r.profitBeforeTax)}</td>
+      <td>${fmtRub(r.netProfit)}</td>
+      <td>${fmtRub(r.cumProfit)}</td>
+      <td>${fmtRub(r.loanEnd)}</td>
+      <td>${pctCell}</td>
+    </tr>`;
+  }).join('');
+}
+
+document.getElementById('filter-btns').addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  document.querySelectorAll('#filter-btns button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = btn.dataset.f;
+  renderTable();
+});
+
+loadData();
+setInterval(() => loadData(), 5 * 60 * 1000);
+</script>
+</body>
+</html>
