@@ -3,170 +3,224 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>План/Факт · Курьерский сервис</title>
+<title>Курьерский сервис · Диспетчерская БДР</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#0a0f1c;
-    --bg-grad: radial-gradient(1200px 600px at 85% -10%, #142244 0%, transparent 60%),
-               radial-gradient(900px 500px at -5% 110%, #0f2436 0%, transparent 55%);
-    --panel:#111a30;
-    --panel-2:#0d1526;
-    --line:rgba(255,255,255,.08);
-    --line-2:rgba(255,255,255,.14);
-    --text:#e9edf7;
-    --text-dim:#8e9ab3;
-    --text-faint:#5c6885;
-    --plan:#2fd1b5;
-    --plan-dim:rgba(47,209,181,.16);
-    --fact:#ffb020;
-    --fact-dim:rgba(255,176,32,.16);
-    --good:#4ade80;
-    --bad:#fb7185;
-    --radius:14px;
-    --mono: 'JetBrains Mono', ui-monospace, monospace;
-    --sans: 'Manrope', system-ui, sans-serif;
+    --bg:#080b12;
+    --bg-mesh:
+      radial-gradient(900px 500px at 88% -8%, rgba(255,138,61,.10), transparent 60%),
+      radial-gradient(1000px 560px at 6% 105%, rgba(61,220,151,.08), transparent 55%),
+      linear-gradient(180deg, #080b12, #0a0e17 40%, #080b12);
+    --grid-line: rgba(148,163,196,.05);
+    --s1:#0e131d;
+    --s2:#121927;
+    --s3:#17202f;
+    --line:rgba(148,163,196,.10);
+    --line-strong:rgba(148,163,196,.22);
+    --text-hi:#f3f5fb;
+    --text:#aab3cc;
+    --text-dim:#697190;
+    --plan:#39d98a;
+    --plan-soft:rgba(57,217,138,.12);
+    --fact:#ff8a3d;
+    --fact-soft:rgba(255,138,61,.13);
+    --danger:#ff5d78;
+    --danger-soft:rgba(255,93,120,.13);
+    --good:#39d98a;
+    --warn:#ffc857;
+    --radius:16px;
+    --radius-sm:10px;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
+    --sans:'Manrope', system-ui, sans-serif;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    background:var(--bg) var(--bg-grad);
-    background-attachment:fixed;
+    background:
+      var(--bg-mesh),
+      repeating-linear-gradient(0deg, var(--grid-line) 0 1px, transparent 1px 64px),
+      repeating-linear-gradient(90deg, var(--grid-line) 0 1px, transparent 1px 64px),
+      var(--bg);
     color:var(--text);
     font-family:var(--sans);
     min-height:100vh;
-    padding:28px 20px 60px;
+    padding:30px 22px 70px;
+    -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:1240px;margin:0 auto;}
+  .wrap{max-width:1320px;margin:0 auto;}
+  a{color:inherit;}
 
-  /* ---------- header ---------- */
+  ::-webkit-scrollbar{height:8px; width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line-strong); border-radius:4px;}
+
+  /* ---------------- header ---------------- */
   header{
-    display:flex; justify-content:space-between; align-items:flex-end;
-    gap:20px; flex-wrap:wrap; margin-bottom:26px;
-    padding-bottom:20px; border-bottom:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap;
+    margin-bottom:28px; padding-bottom:22px; border-bottom:1px solid var(--line);
   }
-  .eyebrow{
-    font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--fact); margin:0 0 6px; display:flex; align-items:center; gap:8px;
+  .brand-eyebrow{
+    font-family:var(--mono); font-size:10.5px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--fact); margin:0 0 10px; display:flex; align-items:center; gap:8px; font-weight:600;
   }
-  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--fact);box-shadow:0 0 0 3px var(--fact-dim);}
-  h1{font-size:26px; font-weight:800; margin:0; letter-spacing:-.01em;}
-  h1 span{color:var(--text-dim); font-weight:600;}
-  .meta{text-align:right; font-family:var(--mono); font-size:12px; color:var(--text-faint);}
-  .meta b{color:var(--text-dim); font-weight:600;}
-  .controls{display:flex; align-items:center; gap:10px; margin-top:8px; justify-content:flex-end;}
+  .live-dot{position:relative; width:7px;height:7px;border-radius:50%;background:var(--fact);}
+  .live-dot::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1px solid var(--fact);opacity:.5;animation:pulse 2.2s ease-out infinite;}
+  @keyframes pulse{0%{transform:scale(.4);opacity:.7;}100%{transform:scale(1.8);opacity:0;}}
+  h1{font-size:30px; font-weight:800; margin:0; letter-spacing:-.02em; color:var(--text-hi); line-height:1.15;}
+  h1 em{font-style:normal; color:var(--text-dim); font-weight:600;}
+  .meta{text-align:right; font-family:var(--mono); font-size:11.5px; color:var(--text-dim); line-height:1.7;}
+  .meta b{color:var(--text);}
+  .controls{display:flex; align-items:center; gap:10px; margin-top:10px; justify-content:flex-end;}
   button.refresh{
-    font-family:var(--sans); font-size:12.5px; font-weight:700; color:var(--bg);
-    background:var(--fact); border:none; border-radius:8px; padding:8px 14px;
-    cursor:pointer; display:flex; align-items:center; gap:6px; transition:transform .15s ease, opacity .15s ease;
+    font-family:var(--sans); font-size:12.5px; font-weight:700; color:#0a0e17;
+    background:linear-gradient(135deg, var(--fact), #ffb060); border:none; border-radius:9px; padding:9px 15px;
+    cursor:pointer; display:flex; align-items:center; gap:7px; transition:transform .15s ease, box-shadow .15s ease;
+    box-shadow:0 4px 18px -6px rgba(255,138,61,.55);
   }
-  button.refresh:hover{transform:translateY(-1px);}
+  button.refresh:hover{transform:translateY(-1px); box-shadow:0 6px 22px -6px rgba(255,138,61,.7);}
   button.refresh:disabled{opacity:.5; cursor:default; transform:none;}
   .spin{display:inline-block; width:11px; height:11px; border-radius:50%;
-    border:2px solid rgba(10,15,28,.35); border-top-color:var(--bg); animation:spin .8s linear infinite;}
+    border:2px solid rgba(10,14,23,.3); border-top-color:#0a0e17; animation:spin .8s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
 
   #status-banner{
-    display:none; margin-bottom:20px; padding:12px 16px; border-radius:10px;
-    background:rgba(251,113,133,.1); border:1px solid rgba(251,113,133,.35);
-    color:#ffd0d6; font-size:13px; line-height:1.5;
+    display:none; margin-bottom:22px; padding:13px 16px; border-radius:10px;
+    background:var(--danger-soft); border:1px solid rgba(255,93,120,.35);
+    color:#ffd7de; font-size:13px; line-height:1.55;
   }
-  #status-banner a{color:#ffe3e7;}
 
-  /* ---------- KPI cards ---------- */
-  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;}
+  /* ---------------- section labels ---------------- */
+  .section-label{
+    display:flex; align-items:center; gap:10px; margin:34px 0 14px;
+    font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); font-weight:600;
+  }
+  .section-label::after{content:""; flex:1; height:1px; background:var(--line);}
+  .section-label .n{color:var(--fact);}
+
+  /* ---------------- insights ---------------- */
+  .insights{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:12px;}
+  .insight{
+    background:linear-gradient(165deg, var(--s2), var(--s1));
+    border:1px solid var(--line); border-radius:var(--radius-sm); padding:15px 16px;
+    display:flex; gap:12px; align-items:flex-start;
+  }
+  .insight .ic{
+    flex:none; width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    background:var(--tone-soft, var(--fact-soft)); color:var(--tone, var(--fact));
+  }
+  .insight .ic svg{width:16px; height:16px;}
+  .insight .body{font-size:12.5px; line-height:1.55; color:var(--text);}
+  .insight .body b{color:var(--text-hi); font-weight:700;}
+  .insight.tone-good{--tone:var(--good); --tone-soft:var(--plan-soft);}
+  .insight.tone-bad{--tone:var(--danger); --tone-soft:var(--danger-soft);}
+  .insight.tone-warn{--tone:var(--warn); --tone-soft:rgba(255,200,87,.13);}
+  .insight.tone-neutral{--tone:#9aa5c4; --tone-soft:rgba(154,165,196,.13);}
+
+  /* ---------------- KPI cards ---------------- */
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
   .kpi{
-    background:linear-gradient(180deg,var(--panel),var(--panel-2));
-    border:1px solid var(--line); border-radius:var(--radius); padding:18px 18px 16px;
     position:relative; overflow:hidden;
+    background:linear-gradient(165deg, var(--s2), var(--s1));
+    border:1px solid var(--line); border-radius:var(--radius); padding:19px 19px 16px;
   }
-  .kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-accent,var(--plan));}
-  .kpi .label{font-size:11.5px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px;}
-  .kpi .value{font-family:var(--mono); font-size:25px; font-weight:700; letter-spacing:-.01em; line-height:1.1;}
-  .kpi .sub{margin-top:8px; font-size:12.5px; color:var(--text-faint); display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
-  .pill{font-family:var(--mono); font-size:11px; font-weight:600; padding:2px 7px; border-radius:20px;}
-  .pill.good{background:rgba(74,222,128,.14); color:var(--good);}
-  .pill.bad{background:rgba(251,113,133,.14); color:var(--bad);}
-  .pill.neutral{background:rgba(255,255,255,.08); color:var(--text-dim);}
+  .kpi::before{
+    content:""; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg, var(--kpi-accent,var(--fact)), transparent 85%);
+  }
+  .kpi-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;}
+  .kpi .label{font-size:11px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.05em; max-width:70%;}
+  .kpi .spark{width:74px; height:28px; flex:none;}
+  .kpi .value{font-family:var(--mono); font-size:27px; font-weight:700; letter-spacing:-.01em; color:var(--text-hi); line-height:1;}
+  .kpi .row{margin-top:11px; display:flex; align-items:center; gap:7px; flex-wrap:wrap;}
+  .badge{font-family:var(--mono); font-size:11px; font-weight:700; padding:3px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;}
+  .badge svg{width:10px;height:10px;}
+  .badge.good{background:var(--plan-soft); color:var(--good);}
+  .badge.bad{background:var(--danger-soft); color:var(--danger);}
+  .badge.neutral{background:rgba(255,255,255,.06); color:var(--text-dim);}
+  .kpi .foot{font-size:11.5px; color:var(--text-dim);}
 
-  /* ---------- loan route (signature element) ---------- */
+  /* ---------------- route tracker ---------------- */
   .route-card{
-    background:linear-gradient(180deg,var(--panel),var(--panel-2));
-    border:1px solid var(--line); border-radius:var(--radius); padding:20px 22px; margin-bottom:22px;
+    background:linear-gradient(165deg, var(--s2), var(--s1));
+    border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px;
   }
-  .route-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:18px; flex-wrap:wrap; gap:8px;}
-  .route-head h3{margin:0; font-size:14px; font-weight:700;}
-  .route-head .route-note{font-family:var(--mono); font-size:11.5px; color:var(--text-faint);}
-  .route-rail{position:relative; height:54px; margin:0 4px;}
-  .route-line-bg{position:absolute; top:24px; left:0; right:0; height:2px; background:repeating-linear-gradient(90deg, var(--line-2) 0 6px, transparent 6px 12px);}
-  .route-line-fill{position:absolute; top:24px; left:0; height:2px; background:var(--fact); box-shadow:0 0 8px rgba(255,176,32,.5); transition:width .6s ease;}
-  .route-dot{position:absolute; top:19px; width:11px; height:11px; border-radius:50%; transform:translateX(-50%); border:2px solid var(--bg-color,#0a0f1c);}
-  .route-dot.done{background:var(--fact);}
-  .route-dot.todo{background:var(--text-faint); opacity:.5;}
-  .route-truck{position:absolute; top:-2px; transform:translateX(-50%); font-size:20px; transition:left .6s ease; filter:drop-shadow(0 2px 6px rgba(255,176,32,.5));}
-  .route-flag{position:absolute; top:-4px; transform:translateX(-50%); font-size:16px;}
-  .route-labels{position:absolute; top:32px; width:100%; font-family:var(--mono); font-size:10px; color:var(--text-faint);}
+  .route-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;}
+  .route-head h3{margin:0; font-size:13.5px; font-weight:700; color:var(--text-hi); display:flex; align-items:center; gap:8px;}
+  .route-head h3 svg{width:16px;height:16px; color:var(--fact);}
+  .route-eta{font-family:var(--mono); font-size:12px; color:var(--text-dim); text-align:right;}
+  .route-eta b{color:var(--text-hi);}
+  .route-eta .delta-good{color:var(--good);}
+  .route-eta .delta-bad{color:var(--danger);}
+  .route-rail{position:relative; height:58px; margin:20px 6px 0;}
+  .route-line-bg{position:absolute; top:26px; left:0; right:0; height:2px; background:var(--line-strong); border-radius:2px;}
+  .route-line-fill{position:absolute; top:26px; left:0; height:2px; border-radius:2px;
+    background:linear-gradient(90deg, var(--plan), var(--fact)); box-shadow:0 0 12px rgba(255,138,61,.45); transition:width .7s ease;}
+  .route-dot{position:absolute; top:22px; width:9px; height:9px; border-radius:50%; transform:translateX(-50%); background:#232c40; border:2px solid var(--line-strong);}
+  .route-dot.done{background:var(--fact); border-color:#3a2313;}
+  .route-marker{position:absolute; top:2px; transform:translate(-50%,0); transition:left .7s ease;}
+  .route-marker svg{width:20px; height:20px; filter:drop-shadow(0 3px 8px rgba(255,138,61,.55));}
+  .route-flag{position:absolute; top:8px; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center;}
+  .route-flag .pin{width:8px;height:8px;border-radius:50%; background:var(--plan); box-shadow:0 0 0 3px rgba(57,217,138,.18);}
+  .route-labels{position:absolute; top:36px; width:100%; font-family:var(--mono); font-size:10px; color:var(--text-dim);}
   .route-labels span{position:absolute; transform:translateX(-50%); white-space:nowrap;}
 
-  /* ---------- charts ---------- */
-  .charts{display:grid; grid-template-columns:1.3fr 1fr; gap:14px; margin-bottom:14px;}
+  /* ---------------- charts ---------------- */
+  .charts{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:0;}
   .chart-card{
-    background:linear-gradient(180deg,var(--panel),var(--panel-2));
-    border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px 10px;
+    background:linear-gradient(165deg, var(--s2), var(--s1));
+    border:1px solid var(--line); border-radius:var(--radius); padding:19px 21px 12px;
   }
-  .chart-card.full{grid-column:1/-1;}
-  .chart-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
-  .chart-head h3{margin:0; font-size:13.5px; font-weight:700;}
-  .legend-inline{display:flex; gap:14px; font-family:var(--mono); font-size:11px; color:var(--text-dim);}
+  .chart-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2px; gap:10px;}
+  .chart-head h3{margin:0; font-size:13.5px; font-weight:700; color:var(--text-hi);}
+  .chart-head p{margin:3px 0 0; font-size:11.5px; color:var(--text-dim);}
+  .legend-inline{display:flex; gap:13px; font-family:var(--mono); font-size:10.5px; color:var(--text-dim); flex:none; padding-top:2px;}
   .legend-inline .sw{display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:5px; vertical-align:middle;}
-  .chart-wrap{position:relative; height:230px;}
+  .chart-wrap{position:relative; height:220px; margin-top:8px;}
 
-  /* ---------- table ---------- */
+  /* ---------------- table ---------------- */
   .table-card{
-    background:linear-gradient(180deg,var(--panel),var(--panel-2));
-    border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; margin-top:14px;
+    background:linear-gradient(165deg, var(--s2), var(--s1));
+    border:1px solid var(--line); border-radius:var(--radius); padding:19px 21px;
   }
-  .table-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;}
-  .table-head h3{margin:0; font-size:13.5px; font-weight:700;}
+  .table-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;}
+  .table-head h3{margin:0; font-size:13.5px; font-weight:700; color:var(--text-hi);}
   .filter-btns{display:flex; gap:6px;}
   .filter-btns button{
     font-family:var(--sans); font-size:12px; font-weight:600; color:var(--text-dim);
-    background:transparent; border:1px solid var(--line-2); border-radius:7px; padding:6px 12px; cursor:pointer;
+    background:transparent; border:1px solid var(--line-strong); border-radius:7px; padding:6px 13px; cursor:pointer;
+    transition:all .15s ease;
   }
-  .filter-btns button.active{background:var(--text); color:var(--bg); border-color:var(--text);}
+  .filter-btns button.active{background:var(--text-hi); color:#0a0e17; border-color:var(--text-hi);}
   .table-scroll{overflow-x:auto;}
-  table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12.5px; min-width:900px;}
+  table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12.5px; min-width:980px;}
   thead th{
-    text-align:right; font-weight:600; color:var(--text-faint); font-size:10.5px;
-    text-transform:uppercase; letter-spacing:.04em; padding:8px 10px; border-bottom:1px solid var(--line-2);
-    position:sticky; top:0; background:var(--panel-2);
+    text-align:right; font-weight:600; color:var(--text-dim); font-size:10px;
+    text-transform:uppercase; letter-spacing:.04em; padding:9px 11px; border-bottom:1px solid var(--line-strong);
+    position:sticky; top:0; background:var(--s2);
   }
   thead th:first-child, thead th:nth-child(2){text-align:left;}
-  tbody td{padding:8px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap;}
-  tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:600; color:var(--text-dim);}
-  tbody tr:hover{background:rgba(255,255,255,.03);}
+  tbody td{padding:8px 11px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap;}
+  tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:600; color:var(--text);}
+  tbody tr:hover{background:rgba(255,255,255,.025);}
   .type-badge{
-    display:inline-block; padding:2px 8px; border-radius:20px; font-size:10.5px; font-weight:700;
+    display:inline-block; padding:2px 8px; border-radius:20px; font-size:10px; font-weight:700;
     font-family:var(--mono); text-transform:uppercase; letter-spacing:.03em;
   }
-  .type-badge.plan{background:var(--plan-dim); color:var(--plan);}
-  .type-badge.fact{background:var(--fact-dim); color:var(--fact);}
-  .delta-pos{color:var(--good);}
-  .delta-neg{color:var(--bad);}
+  .type-badge.plan{background:var(--plan-soft); color:var(--plan);}
+  .type-badge.fact{background:var(--fact-soft); color:var(--fact);}
+  .cell-pct{border-radius:5px; padding:2px 7px; font-weight:700;}
+  .mom-up{color:var(--good);} .mom-down{color:var(--danger);} .mom-flat{color:var(--text-dim);}
 
-  footer{margin-top:26px; text-align:center; font-family:var(--mono); font-size:11px; color:var(--text-faint);}
-  footer a{color:var(--text-dim);}
+  footer{margin-top:28px; text-align:center; font-family:var(--mono); font-size:11px; color:var(--text-dim);}
 
-  @media (max-width:900px){
+  @media (max-width:980px){
     .kpis{grid-template-columns:repeat(2,1fr);}
     .charts{grid-template-columns:1fr;}
   }
-  @media (prefers-reduced-motion: reduce){
-    *{animation:none !important; transition:none !important;}
-  }
+  @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
 </style>
 </head>
 <body>
@@ -174,67 +228,68 @@
 
   <header>
     <div>
-      <p class="eyebrow"><span class="dot"></span>БДР · план / факт · live-синхронизация</p>
-      <h1>Курьерский сервис <span>— оперативный дашборд проекта</span></h1>
+      <p class="brand-eyebrow"><span class="live-dot"></span>БДР · план / факт · live из Google Sheets</p>
+      <h1>Курьерский сервис <em>— диспетчерская проекта</em></h1>
     </div>
     <div>
-      <div class="meta">Источник: <b>Google Sheets</b> · лист «Свод план-факт»<br>Обновлено: <b id="updated-at">—</b></div>
-      <div class="controls">
-        <button class="refresh" id="refresh-btn" onclick="loadData(true)">↻ Обновить</button>
-      </div>
+      <div class="meta">Источник: <b>Google Sheets</b> · «Свод план-факт»<br>Обновлено: <b id="updated-at">—</b></div>
+      <div class="controls"><button class="refresh" id="refresh-btn" onclick="loadData(true)">↻ Обновить</button></div>
     </div>
   </header>
 
   <div id="status-banner"></div>
 
-  <section class="kpis" id="kpi-grid">
-    <!-- filled by JS -->
-  </section>
+  <div class="section-label"><span class="n">01</span> Аналитика периода</div>
+  <div class="insights" id="insights-grid"></div>
 
+  <div class="section-label"><span class="n">02</span> Ключевые показатели</div>
+  <section class="kpis" id="kpi-grid"></section>
+
+  <div class="section-label"><span class="n">03</span> Погашение займа</div>
   <div class="route-card">
     <div class="route-head">
-      <h3>🚚 Маршрут погашения займа</h3>
-      <span class="route-note" id="route-note">—</span>
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h11l3 4h4v-4l-3-5H3v5Z"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg> Маршрут погашения</h3>
+      <div class="route-eta" id="route-eta">—</div>
     </div>
     <div class="route-rail" id="route-rail"></div>
   </div>
 
+  <div class="section-label"><span class="n">04</span> Динамика по месяцам</div>
   <section class="charts">
     <div class="chart-card">
       <div class="chart-head">
-        <h3>Выручка по месяцам</h3>
-        <div class="legend-inline">
-          <span><span class="sw" style="background:var(--plan)"></span>План</span>
-          <span><span class="sw" style="background:var(--fact)"></span>Факт</span>
-        </div>
+        <div><h3>Выручка: план vs факт</h3><p>Столбцы — план, линия — факт, область — разрыв</p></div>
+        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
       </div>
       <div class="chart-wrap"><canvas id="chart-revenue"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-head">
-        <h3>Прибыль накопительно</h3>
-        <div class="legend-inline">
-          <span><span class="sw" style="background:var(--plan)"></span>План</span>
-          <span><span class="sw" style="background:var(--fact)"></span>Факт</span>
-        </div>
+        <div><h3>Маржинальность</h3><p>Чистая прибыль / выручка, % за месяц</p></div>
+        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
       </div>
-      <div class="chart-wrap"><canvas id="chart-profit"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-margin"></canvas></div>
     </div>
-    <div class="chart-card full">
+    <div class="chart-card">
       <div class="chart-head">
-        <h3>Остаток займа по месяцам</h3>
-        <div class="legend-inline">
-          <span><span class="sw" style="background:var(--plan)"></span>План</span>
-          <span><span class="sw" style="background:var(--fact)"></span>Факт</span>
-        </div>
+        <div><h3>Юнит-экономика</h3><p>Средний чек, ₽ / заказ</p></div>
+        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
       </div>
-      <div class="chart-wrap" style="height:200px"><canvas id="chart-loan"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-check"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div><h3>Остаток займа</h3><p>Сплошная — план/факт, пунктир — прогноз по темпу факта</p></div>
+        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт/прогноз</span></div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-loan"></canvas></div>
     </div>
   </section>
 
+  <div class="section-label"><span class="n">05</span> Детализация</div>
   <div class="table-card">
     <div class="table-head">
-      <h3>Детализация по месяцам</h3>
+      <h3>По месяцам</h3>
       <div class="filter-btns" id="filter-btns">
         <button data-f="all" class="active">Все</button>
         <button data-f="План">План</button>
@@ -243,83 +298,39 @@
     </div>
     <div class="table-scroll">
       <table>
-        <thead>
-          <tr>
-            <th>Дата</th><th>Тип</th><th>Заказы</th><th>Выручка</th><th>Расходы</th>
-            <th>Прибыль до налога</th><th>Чистая прибыль</th><th>Накопительно</th><th>Займ (конец)</th><th>% к плану</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th>Дата</th><th>Тип</th><th>Заказы</th><th>Выручка</th><th>Δ MoM</th><th>Расходы</th>
+          <th>Чистая прибыль</th><th>Маржа</th><th>Накопительно</th><th>Займ (конец)</th><th>% к плану</th>
+        </tr></thead>
         <tbody id="table-body"></tbody>
       </table>
     </div>
   </div>
 
-  <footer>
-    Данные подтягиваются напрямую из Google Таблицы при каждой загрузке страницы и раз в 5 минут автоматически.<br>
-    Таблица должна быть доступна по ссылке для просмотра (Доступ по ссылке → Читатель).
-  </footer>
-
+  <footer>Автообновление каждые 5 минут · таблица должна быть открыта по ссылке на чтение</footer>
 </div>
 
 <script>
 const SHEET_ID = "1XLsirVOVZWja5InJHN_3cha7KdlH-Wi1_NPQphGyrKE";
 const SHEET_NAME = "Свод план-факт";
-
-// JSONP loader: works from file:// (double-click) where fetch()/CORS is blocked,
-// because loading a <script src="..."> tag is not subject to CORS restrictions.
-// Google's gviz endpoint natively supports this via tqx=responseHandler:NAME.
-function loadGvizJSONP(timeoutMs){
-  return new Promise((resolve, reject) => {
-    const cbName = 'gvizCB_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
-    let done = false;
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?`
-      + `tqx=${encodeURIComponent('out:json;responseHandler:' + cbName)}`
-      + `&sheet=${encodeURIComponent(SHEET_NAME)}&headers=1&_=${Date.now()}`;
-
-    const script = document.createElement('script');
-
-    function cleanup(){
-      clearTimeout(timer);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-    }
-
-    const timer = setTimeout(() => {
-      if (done) return;
-      done = true;
-      cleanup();
-      reject(new Error('Таймаут запроса — нет ответа от Google за ' + (timeoutMs/1000) + ' сек. Проверьте интернет-соединение.'));
-    }, timeoutMs || 12000);
-
-    window[cbName] = function(json){
-      if (done) return;
-      done = true;
-      cleanup();
-      resolve(json);
-    };
-
-    script.onerror = () => {
-      if (done) return;
-      done = true;
-      cleanup();
-      reject(new Error('Не удалось загрузить скрипт с docs.google.com — проверьте доступ к таблице («Все у кого есть ссылка» → «Читатель») и подключение к интернету.'));
-    };
-
-    script.src = url;
-    document.head.appendChild(script);
-  });
-}
-
 const RU_MONTHS = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
 
+const ICONS = {
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16l6-6 4 4 6-8"/><path d="M14 6h6v6"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8l6 6 4-4 6 8"/><path d="M14 18h6v-6"/></svg>',
+  target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".7" fill="currentColor"/></svg>',
+  alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
+  scale: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 7 3 15a4 4 0 0 0 8 0L7 7ZM17 7l-4 8a4 4 0 0 0 8 0l-4-8ZM5 7h14"/></svg>',
+  pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg>',
+  truck: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 6a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v3h3.2a1 1 0 0 1 .86.49l2.8 4.67c.09.15.14.32.14.5V17a1 1 0 0 1-1 1h-1.3a2.6 2.6 0 0 1-5.1 0H9.4a2.6 2.6 0 0 1-5.1 0H3a1 1 0 0 1-1-1V6Zm14 4v3.2l2.2.01L16.6 10H16Z"/></svg>',
+};
+
 const FIELD_MAP = {
-  date: 'Дата', type: 'Тип',
-  orders: 'Кол-во заказов, шт', avgCheck: 'Ср чек (с НДС), руб',
-  revenue: 'Выручка (с НДС), руб', expenses: 'Расходы, руб',
-  profitBeforeTax: 'Прибыль до налогообложения, руб',
-  netProfit: 'Чистая прибыль, руб.', cumProfit: 'Прибыль накопительно, руб',
-  periodNo: 'Номер периода (мес.)',
-  loanStart: 'Займ на начало периода', loanEnd: 'Займ на конец периода',
+  date:'Дата', type:'Тип', orders:'Кол-во заказов, шт', avgCheck:'Ср чек (с НДС), руб',
+  revenue:'Выручка (с НДС), руб', expenses:'Расходы, руб',
+  profitBeforeTax:'Прибыль до налогообложения, руб', netProfit:'Чистая прибыль, руб.',
+  cumProfit:'Прибыль накопительно, руб', periodNo:'Номер периода (мес.)',
+  loanStart:'Займ на начало периода', loanEnd:'Займ на конец периода',
 };
 
 function parseGvizDate(v){
@@ -350,21 +361,38 @@ function extractRowsFromGviz(json){
     if (!date || !type || revenue == null) continue;
     rows.push({
       date, type,
-      orders: get('orders'), avgCheck: get('avgCheck'), revenue,
-      expenses: get('expenses'), profitBeforeTax: get('profitBeforeTax'),
-      netProfit: get('netProfit'), cumProfit: get('cumProfit'),
-      loanStart: get('loanStart'), loanEnd: get('loanEnd'), periodNo: get('periodNo'),
+      orders:get('orders'), avgCheck:get('avgCheck'), revenue,
+      expenses:get('expenses'), profitBeforeTax:get('profitBeforeTax'),
+      netProfit:get('netProfit'), cumProfit:get('cumProfit'),
+      loanStart:get('loanStart'), loanEnd:get('loanEnd'), periodNo:get('periodNo'),
     });
   }
-  rows.sort((a,b) => a.date - b.date || (a.type === 'План' ? 1 : -1));
+  rows.sort((a,b) => a.date - b.date || (a.type==='План'?1:-1));
   return rows;
 }
 
-function fmtDate(d){
-  const dd = String(d.getDate()).padStart(2,'0');
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  return `${dd}.${mm}.${d.getFullYear()}`;
+// JSONP: works from file:// where fetch()/CORS is blocked.
+function loadGvizJSONP(timeoutMs){
+  return new Promise((resolve, reject) => {
+    const cbName = 'gvizCB_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
+    let done = false;
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?`
+      + `tqx=${encodeURIComponent('out:json;responseHandler:' + cbName)}`
+      + `&sheet=${encodeURIComponent(SHEET_NAME)}&headers=1&_=${Date.now()}`;
+    const script = document.createElement('script');
+    function cleanup(){ clearTimeout(timer); delete window[cbName]; if (script.parentNode) script.parentNode.removeChild(script); }
+    const timer = setTimeout(() => { if (done) return; done = true; cleanup();
+      reject(new Error('Таймаут запроса — нет ответа от Google за ' + (timeoutMs/1000) + ' сек.')); }, timeoutMs || 12000);
+    window[cbName] = function(json){ if (done) return; done = true; cleanup(); resolve(json); };
+    script.onerror = () => { if (done) return; done = true; cleanup();
+      reject(new Error('Не удалось загрузить скрипт с docs.google.com — проверьте доступ к таблице и интернет.')); };
+    script.src = url;
+    document.head.appendChild(script);
+  });
 }
+
+// ---------------- formatting ----------------
+function fmtDate(d){ return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`; }
 function fmtMon(d){ return `${RU_MONTHS[d.getMonth()]}.${String(d.getFullYear()).slice(2)}`; }
 function fmtRub(n, compact){
   if (n == null || isNaN(n)) return "—";
@@ -375,103 +403,221 @@ function fmtRub(n, compact){
   }
   return Math.round(n).toLocaleString('ru-RU') + " ₽";
 }
-function fmtNum(n){ return n==null || isNaN(n) ? "—" : Math.round(n).toLocaleString('ru-RU'); }
+function fmtNum(n){ return n==null||isNaN(n) ? "—" : Math.round(n).toLocaleString('ru-RU'); }
+function fmtPct(n, digits){ return n==null||isNaN(n) ? "—" : (n>=0?'+':'') + n.toFixed(digits==null?0:digits) + '%'; }
+function fmtPP(n){ return n==null||isNaN(n) ? "—" : (n>=0?'+':'') + n.toFixed(1) + ' п.п.'; }
+function addMonths(d,n){ const m=d.getMonth()+n; const y=d.getFullYear()+Math.floor(m/12); return new Date(y, ((m%12)+12)%12, 1); }
+function monthsBetween(a,b){ return (b.getFullYear()-a.getFullYear())*12 + (b.getMonth()-a.getMonth()); }
+
+function sparklinePath(values, w, h, pad){
+  const vals = values.filter(v=>v!=null && !isNaN(v));
+  if (vals.length < 2) return {path:'', last:null};
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const span = (max-min) || 1;
+  const n = values.length;
+  let d = '';
+  let lastPt = null;
+  values.forEach((v,i) => {
+    if (v==null || isNaN(v)) return;
+    const x = pad + (i/(n-1)) * (w-2*pad);
+    const y = h-pad - ((v-min)/span) * (h-2*pad);
+    d += (d? ' L':'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+    lastPt = {x,y};
+  });
+  return {path:d, last:lastPt};
+}
+function sparklineSVG(values, color){
+  const w=74,h=28,pad=3;
+  const {path,last} = sparklinePath(values,w,h,pad);
+  if (!path) return '';
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}">
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    ${last?`<circle cx="${last.x.toFixed(1)}" cy="${last.y.toFixed(1)}" r="2.2" fill="${color}"/>`:''}
+  </svg>`;
+}
 
 let charts = {};
 let allRows = [];
 let currentFilter = 'all';
 
-async function loadData(manual){
+async function loadData(){
   const btn = document.getElementById('refresh-btn');
   const banner = document.getElementById('status-banner');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span> Обновление…';
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Обновление…';
   banner.style.display = 'none';
   try{
     const json = await loadGvizJSONP(12000);
     const rows = extractRowsFromGviz(json);
-    if (!rows.length) throw new Error('Не удалось распознать данные — проверьте название листа и доступ к таблице.');
+    if (!rows.length) throw new Error('Не удалось распознать данные — проверьте лист и доступ к таблице.');
     allRows = rows;
     render();
     document.getElementById('updated-at').textContent = new Date().toLocaleTimeString('ru-RU');
   } catch(err){
     console.error(err);
     banner.style.display = 'block';
-    banner.innerHTML = `⚠ Не удалось загрузить данные из Google Таблицы (${err.message}). Проверьте, что доступ открыт по ссылке (Читатель), и обновите страницу. <a href="https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit" target="_blank">Открыть таблицу →</a>`;
+    banner.innerHTML = `⚠ Не удалось загрузить данные из Google Таблицы (${err.message}). <a href="https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit" target="_blank">Открыть таблицу →</a>`;
   } finally {
-    btn.disabled = false;
-    btn.innerHTML = '↻ Обновить';
+    btn.disabled = false; btn.innerHTML = '↻ Обновить';
   }
 }
 
 function render(){
-  const planRows = allRows.filter(r => r.type === 'План').sort((a,b)=>a.date-b.date);
-  const factRows = allRows.filter(r => r.type === 'Факт').sort((a,b)=>a.date-b.date);
+  const planRows = allRows.filter(r=>r.type==='План').sort((a,b)=>a.date-b.date);
+  const factRows = allRows.filter(r=>r.type==='Факт').sort((a,b)=>a.date-b.date);
   const lastFact = factRows[factRows.length-1] || null;
+  const planByDate = {}; planRows.forEach(r=>planByDate[+r.date]=r);
 
-  renderKPIs(planRows, factRows, lastFact);
-  renderRoute(planRows, factRows, lastFact);
-  renderCharts(planRows, factRows);
-  renderTable();
+  const steps = [
+    ['Insights', () => renderInsights(planRows, factRows, lastFact, planByDate)],
+    ['KPI', () => renderKPIs(planRows, factRows, lastFact, planByDate)],
+    ['Route', () => renderRoute(planRows, factRows, lastFact)],
+    ['Charts', () => renderCharts(planRows, factRows)],
+    ['Table', () => renderTable(planByDate)],
+  ];
+  for (const [name, fn] of steps){ try{ fn(); } catch(e){ console.error(`Render step "${name}" failed:`, e); } }
 }
 
-function renderKPIs(planRows, factRows, lastFact){
+// ---------------- insights (analyst notes) ----------------
+function renderInsights(planRows, factRows, lastFact, planByDate){
+  const grid = document.getElementById('insights-grid');
+  if (!lastFact){ grid.innerHTML = `<div class="insight tone-neutral"><div class="ic">${ICONS.target}</div><div class="body">Фактических данных пока нет — как только появится первый факт-месяц, здесь будет разбор отклонений от плана.</div></div>`; return; }
+
+  const cards = [];
+
+  // 1) revenue gap streak & direction
+  const gaps = factRows.map(r => { const p = planByDate[+r.date]; return p && p.revenue ? (r.revenue-p.revenue)/p.revenue*100 : null; }).filter(v=>v!=null);
+  if (gaps.length){
+    const lastGap = gaps[gaps.length-1];
+    let streak = 0;
+    for (let i=gaps.length-1;i>=0;i--){ if ((gaps[i]<0)===(lastGap<0)) streak++; else break; }
+    let trendTxt = '';
+    if (gaps.length>=2){
+      const prevGap = gaps[gaps.length-2];
+      const widening = Math.abs(lastGap) > Math.abs(prevGap)+0.5;
+      const narrowing = Math.abs(lastGap) < Math.abs(prevGap)-0.5;
+      trendTxt = widening ? ', разрыв <b>увеличивается</b>' : narrowing ? ', разрыв <b>сокращается</b>' : ', разрыв стабилен';
+    }
+    const below = lastGap < 0;
+    cards.push({
+      tone: below?'bad':'good', icon: below?'down':'up',
+      html: `Выручка <b>${below?'ниже':'выше'} плана ${streak} мес. подряд</b> (сейчас ${fmtPct(lastGap,1)})${trendTxt}.`
+    });
+  }
+
+  // 2) driver decomposition for last fact month
+  const p = planByDate[+lastFact.date];
+  if (p && p.orders && p.avgCheck){
+    const ordersVar = (lastFact.orders-p.orders)/p.orders*100;
+    const checkVar = (lastFact.avgCheck-p.avgCheck)/p.avgCheck*100;
+    const driver = Math.abs(ordersVar) >= Math.abs(checkVar) ? 'заказы' : 'средний чек';
+    const driverVal = Math.abs(ordersVar) >= Math.abs(checkVar) ? ordersVar : checkVar;
+    cards.push({
+      tone: driverVal<0?'warn':'neutral', icon:'target',
+      html: `Основной драйвер отклонения в ${fmtMon(lastFact.date)} — <b>${driver}</b> (${fmtPct(driverVal,1)}). Заказы: ${fmtPct(ordersVar,1)}, средний чек: ${fmtPct(checkVar,1)}.`
+    });
+  }
+
+  // 3) margin comparison, cumulative
+  const revFactCum = factRows.reduce((s,r)=>s+(r.revenue||0),0);
+  const netFactCum = factRows.reduce((s,r)=>s+(r.netProfit||0),0);
+  const planCumRows = planRows.filter(r=>r.date<=lastFact.date);
+  const revPlanCum = planCumRows.reduce((s,r)=>s+(r.revenue||0),0);
+  const netPlanCum = planCumRows.reduce((s,r)=>s+(r.netProfit||0),0);
+  if (revFactCum && revPlanCum){
+    const marginFact = netFactCum/revFactCum*100;
+    const marginPlan = netPlanCum/revPlanCum*100;
+    const d = marginFact-marginPlan;
+    cards.push({
+      tone: d>=0?'good':'bad', icon: d>=0?'up':'down',
+      html: `Маржинальность нарастающим итогом: факт <b>${marginFact.toFixed(1)}%</b> против плана ${marginPlan.toFixed(1)}% (${fmtPP(d)}).`
+    });
+  }
+
+  // 4) loan payoff projection vs plan
+  if (factRows.length>=2){
+    const totalRepaid = factRows[0].loanStart - lastFact.loanEnd;
+    const avgRepay = totalRepaid / factRows.length;
+    const remaining = lastFact.loanEnd;
+    if (avgRepay > 0 && remaining > 0){
+      const monthsLeft = Math.ceil(remaining/avgRepay);
+      const projectedPayoff = addMonths(lastFact.date, monthsLeft);
+      const planPayoffRow = planRows.find(r => (r.loanEnd||0) <= 0.5);
+      if (planPayoffRow){
+        const delta = monthsBetween(planPayoffRow.date, projectedPayoff);
+        cards.push({
+          tone: delta<=0?'good':'warn', icon: delta<=0?'up':'alert',
+          html: `При текущем темпе погашения заём закроется к <b>${fmtMon(projectedPayoff)}</b> — ${delta===0?'точно по плану':(delta>0?`на ${delta} мес. позже плана`:`на ${Math.abs(delta)} мес. раньше плана`)}.`
+        });
+      }
+    } else if (remaining <= 0){
+      cards.push({ tone:'good', icon:'target', html:`Заём полностью погашен по факту.` });
+    }
+  }
+
+  grid.innerHTML = cards.map(c => `
+    <div class="insight tone-${c.tone}">
+      <div class="ic">${ICONS[c.icon]}</div>
+      <div class="body">${c.html}</div>
+    </div>`).join('') || `<div class="insight tone-neutral"><div class="ic">${ICONS.target}</div><div class="body">Недостаточно данных для аналитики — нужно минимум 2 фактических месяца.</div></div>`;
+}
+
+// ---------------- KPI cards ----------------
+function renderKPIs(planRows, factRows, lastFact, planByDate){
   const grid = document.getElementById('kpi-grid');
   const revFactCum = factRows.reduce((s,r)=>s+(r.revenue||0),0);
   const cutoff = lastFact ? lastFact.date : null;
   const revPlanCum = cutoff ? planRows.filter(r=>r.date<=cutoff).reduce((s,r)=>s+(r.revenue||0),0) : 0;
   const pctRevenue = revPlanCum ? (revFactCum/revPlanCum*100) : null;
 
-  const cumProfitFact = lastFact ? lastFact.cumProfit : null;
-  const planAtCutoff = cutoff ? planRows.find(r=>+r.date === +cutoff) : null;
-  const cumProfitPlan = planAtCutoff ? planAtCutoff.cumProfit : null;
-  const pctProfit = (cumProfitPlan && cumProfitFact!=null) ? (cumProfitFact/cumProfitPlan*100) : null;
+  const netFactCum = factRows.reduce((s,r)=>s+(r.netProfit||0),0);
+  const marginFact = revFactCum ? netFactCum/revFactCum*100 : null;
+  const planCum = cutoff ? planRows.filter(r=>r.date<=cutoff) : [];
+  const revPlanC = planCum.reduce((s,r)=>s+(r.revenue||0),0);
+  const netPlanC = planCum.reduce((s,r)=>s+(r.netProfit||0),0);
+  const marginPlan = revPlanC ? netPlanC/revPlanC*100 : null;
 
   const loanFact = lastFact ? lastFact.loanEnd : null;
+  const planAtCutoff = cutoff ? planByDate[+cutoff] : null;
   const loanPlan = planAtCutoff ? planAtCutoff.loanEnd : null;
 
+  const prevFact = factRows.length>=2 ? factRows[factRows.length-2] : null;
+  const ordersGrowth = (prevFact && prevFact.orders) ? (lastFact.orders-prevFact.orders)/prevFact.orders*100 : null;
+
+  const revSpark = sparklineSVG(factRows.slice(-8).map(r=>r.revenue), 'var(--fact)');
+  const marginSpark = sparklineSVG(factRows.slice(-8).map(r=> r.revenue? r.netProfit/r.revenue*100 : null), 'var(--fact)');
+  const loanSpark = sparklineSVG(factRows.slice(-8).map(r=>r.loanEnd), 'var(--fact)');
+  const ordersSpark = sparklineSVG(factRows.slice(-8).map(r=>r.orders), 'var(--fact)');
+
   const cards = [
-    {
-      label:'Выручка нарастающим итогом', accent:'var(--fact)',
-      value: fmtRub(revFactCum, true),
-      sub: pctRevenue!=null
-        ? `<span class="pill ${pctRevenue>=100?'good':'bad'}">${pctRevenue.toFixed(0)}% от плана</span> план: ${fmtRub(revPlanCum,true)}`
-        : `план на весь срок: ${fmtRub(planRows.reduce((s,r)=>s+(r.revenue||0),0),true)}`
-    },
-    {
-      label:'Чистая прибыль накопительно', accent:'var(--plan)',
-      value: fmtRub(cumProfitFact, true),
-      sub: pctProfit!=null
-        ? `<span class="pill ${pctProfit>=100?'good':'bad'}">${pctProfit.toFixed(0)}% от плана</span> план: ${fmtRub(cumProfitPlan,true)}`
-        : `Факт по последнему месяцу`
-    },
-    {
-      label:'Остаток займа', accent:'var(--fact)',
-      value: fmtRub(loanFact, true),
-      sub: loanPlan!=null
-        ? `по плану на этот месяц: ${fmtRub(loanPlan,true)}`
-        : `изначально: ${fmtRub(planRows[0]?.loanStart,true)}`
-    },
-    {
-      label:'Последний фактический месяц', accent:'var(--plan)',
-      value: lastFact ? fmtMon(lastFact.date) : '—',
-      sub: lastFact ? `заказов: ${fmtNum(lastFact.orders)} · период №${lastFact.periodNo}` : 'нет фактических данных'
-    },
+    { accent:'var(--fact)', label:'Выручка нарастающим итогом', value:fmtRub(revFactCum,true), spark:revSpark,
+      badge: pctRevenue!=null ? {tone:pctRevenue>=100?'good':'bad', text:fmtPct(pctRevenue-100,0)+' к плану'} : null,
+      foot: `план: ${fmtRub(revPlanCum,true)}` },
+    { accent:'var(--plan)', label:'Маржинальность (факт)', value: marginFact!=null?marginFact.toFixed(1)+'%':'—', spark:marginSpark,
+      badge: (marginFact!=null && marginPlan!=null) ? {tone:marginFact>=marginPlan?'good':'bad', text:fmtPP(marginFact-marginPlan)} : null,
+      foot: `план: ${marginPlan!=null?marginPlan.toFixed(1)+'%':'—'}` },
+    { accent:'var(--fact)', label:'Остаток займа', value:fmtRub(loanFact,true), spark:loanSpark,
+      badge: null, foot: loanPlan!=null ? `по плану: ${fmtRub(loanPlan,true)}` : `изначально: ${fmtRub(planRows[0]?.loanStart,true)}` },
+    { accent:'var(--plan)', label:'Рост заказов MoM', value: ordersGrowth!=null?fmtPct(ordersGrowth,1):'—', spark:ordersSpark,
+      badge: ordersGrowth!=null ? {tone:ordersGrowth>=0?'good':'bad', text: ordersGrowth>=0?'рост':'падение'} : null,
+      foot: lastFact?`${fmtMon(lastFact.date)} · ${fmtNum(lastFact.orders)} заказов`:'—' },
   ];
 
   grid.innerHTML = cards.map(c => `
     <div class="kpi" style="--kpi-accent:${c.accent}">
-      <div class="label">${c.label}</div>
+      <div class="kpi-top"><div class="label">${c.label}</div>${c.spark||''}</div>
       <div class="value">${c.value}</div>
-      <div class="sub">${c.sub}</div>
-    </div>
-  `).join('');
+      <div class="row">
+        ${c.badge? `<span class="badge ${c.badge.tone}">${ICONS[c.badge.tone==='good'?'up':'down']}${c.badge.text}</span>`:''}
+      </div>
+      <div class="foot" style="margin-top:6px">${c.foot}</div>
+    </div>`).join('');
 }
 
+// ---------------- route tracker ----------------
 function renderRoute(planRows, factRows, lastFact){
   const rail = document.getElementById('route-rail');
-  const note = document.getElementById('route-note');
-  if (!planRows.length){ rail.innerHTML=''; note.textContent='нет данных'; return; }
+  const eta = document.getElementById('route-eta');
+  if (!planRows.length){ rail.innerHTML=''; eta.textContent='нет данных'; return; }
 
   const total = planRows.length;
   const payoffIdx = planRows.findIndex(r => (r.loanEnd||0) <= 0.5);
@@ -479,141 +625,178 @@ function renderRoute(planRows, factRows, lastFact){
   const progressCount = progressIdx >= 0 ? progressIdx+1 : factRows.length;
   const pct = Math.min(100, (progressCount-1) / Math.max(1,total-1) * 100);
 
-  let dots = '';
-  let labels = '';
+  let dots = '', labels = '';
   planRows.forEach((r,i) => {
     const left = (i/(total-1))*100;
     const done = i < progressCount;
-    dots += `<div class="route-dot ${done?'done':'todo'}" style="left:${left}%"></div>`;
-    if (i===0 || i===total-1 || (payoffIdx>=0 && i===payoffIdx)){
-      labels += `<span style="left:${left}%">${fmtMon(r.date)}</span>`;
-    }
+    dots += `<div class="route-dot ${done?'done':''}" style="left:${left}%"></div>`;
+    if (i===0 || i===total-1 || (payoffIdx>=0 && i===payoffIdx)) labels += `<span style="left:${left}%">${fmtMon(r.date)}</span>`;
   });
 
   rail.innerHTML = `
     <div class="route-line-bg"></div>
     <div class="route-line-fill" style="width:${pct}%"></div>
     ${dots}
-    <div class="route-truck" style="left:${pct}%">🚚</div>
-    ${payoffIdx>=0 ? `<div class="route-flag" style="left:${(payoffIdx/(total-1))*100}%">🏁</div>` : ''}
+    <div class="route-marker" style="left:${pct}%">${ICONS.truck}</div>
+    ${payoffIdx>=0 ? `<div class="route-flag" style="left:${(payoffIdx/(total-1))*100}%"><span class="pin"></span></div>` : ''}
     <div class="route-labels">${labels}</div>
   `;
 
-  const payoffText = payoffIdx>=0 ? `план: заём закрыт к ${fmtMon(planRows[payoffIdx].date)}` : 'план: срок закрытия не определён';
-  const factText = lastFact ? `факт: пройдено ${progressCount} из ${total} мес., остаток ${fmtRub(lastFact.loanEnd,true)}` : 'фактических данных пока нет';
-  note.textContent = `${factText} · ${payoffText}`;
+  let etaHtml = payoffIdx>=0 ? `план закрытия: <b>${fmtMon(planRows[payoffIdx].date)}</b>` : 'срок по плану не определён';
+  if (factRows.length>=2 && lastFact.loanEnd>0){
+    const avgRepay = (factRows[0].loanStart - lastFact.loanEnd)/factRows.length;
+    if (avgRepay>0){
+      const monthsLeft = Math.ceil(lastFact.loanEnd/avgRepay);
+      const proj = addMonths(lastFact.date, monthsLeft);
+      const delta = payoffIdx>=0 ? monthsBetween(planRows[payoffIdx].date, proj) : null;
+      etaHtml += ` · прогноз по факту: <b>${fmtMon(proj)}</b>` + (delta!=null ? ` <span class="${delta<=0?'delta-good':'delta-bad'}">(${delta<=0?`раньше на ${Math.abs(delta)} мес.`:`позже на ${delta} мес.`})</span>` : '');
+    }
+  } else if (lastFact && lastFact.loanEnd<=0){
+    etaHtml += ` · <span class="delta-good">факт: заём закрыт</span>`;
+  }
+  eta.innerHTML = etaHtml;
 }
 
-function baseLineDataset(label, color, dashed){
-  return {
-    label, borderColor: color, backgroundColor: color,
-    borderWidth: 2.5, pointRadius: 2.5, pointHoverRadius: 4,
-    tension: .3, spanGaps:false,
-    borderDash: dashed ? [5,4] : [],
-  };
+// ---------------- charts ----------------
+function alignToPlan(planRows, factRows, key){
+  const idx = {}; planRows.forEach((r,i)=>idx[+r.date]=i);
+  const arr = new Array(planRows.length).fill(null);
+  factRows.forEach(r => { const i = idx[+r.date]; if (i!=null) arr[i] = r[key]; });
+  return arr;
 }
-
+function baseLine(label, color, extra){
+  return Object.assign({ label, borderColor:color, backgroundColor:color, borderWidth:2.5,
+    pointRadius:2.5, pointHoverRadius:4, tension:.3, spanGaps:false }, extra||{});
+}
 function renderCharts(planRows, factRows){
-  const labels = planRows.map(r => fmtMon(r.date));
-  const dateIndex = {};
-  planRows.forEach((r,i)=>dateIndex[+r.date]=i);
+  const labels = planRows.map(r=>fmtMon(r.date));
+  const factRevAligned = alignToPlan(planRows, factRows, 'revenue');
+  const factCheckAligned = alignToPlan(planRows, factRows, 'avgCheck');
+  const factLoanAligned = alignToPlan(planRows, factRows, 'loanEnd');
+  const planMargin = planRows.map(r => r.revenue ? r.netProfit/r.revenue*100 : null);
+  const factMarginAligned = alignToPlan(planRows, factRows, 'revenue').map((_,i) => {
+    const fr = factRows.find(r => fmtMon(r.date)===labels[i]);
+    return fr && fr.revenue ? fr.netProfit/fr.revenue*100 : null;
+  });
 
-  const factAligned = (key) => {
-    const arr = new Array(planRows.length).fill(null);
-    factRows.forEach(r => { const i = dateIndex[+r.date]; if (i!=null) arr[i] = r[key]; });
-    return arr;
-  };
-
-  const ctxDefaults = {
-    responsive:true, maintainAspectRatio:false,
-    interaction:{mode:'index', intersect:false},
+  const base = {
+    responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
     scales:{
-      x:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#8e9ab3', font:{family:'JetBrains Mono', size:10}, maxRotation:0, autoSkip:true, maxTicksLimit:10} },
-      y:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#8e9ab3', font:{family:'JetBrains Mono', size:10}, callback:(v)=>fmtRub(v,true)} }
+      x:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#697190', font:{family:'JetBrains Mono', size:10}, maxRotation:0, autoSkip:true, maxTicksLimit:9} },
+      y:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#697190', font:{family:'JetBrains Mono', size:10}} }
     },
     plugins:{ legend:{display:false}, tooltip:{
-      backgroundColor:'#111a30', borderColor:'rgba(255,255,255,.12)', borderWidth:1,
-      titleFont:{family:'Manrope', weight:700}, bodyFont:{family:'JetBrains Mono'},
-      callbacks:{ label:(ctx)=> ` ${ctx.dataset.label}: ${fmtRub(ctx.raw,true)}` }
+      backgroundColor:'#121927', borderColor:'rgba(255,255,255,.12)', borderWidth:1,
+      titleFont:{family:'Manrope', weight:700}, bodyFont:{family:'JetBrains Mono'}
     }}
   };
 
-  // revenue: bar (plan) + line (fact)
   if (charts.revenue) charts.revenue.destroy();
   charts.revenue = new Chart(document.getElementById('chart-revenue'), {
-    data: { labels, datasets:[
-      { type:'bar', label:'План', data: planRows.map(r=>r.revenue), backgroundColor:'rgba(47,209,181,.28)', borderColor:'#2fd1b5', borderWidth:1, borderRadius:3, order:2 },
-      { type:'line', label:'Факт', data: factAligned('revenue'), borderColor:'#ffb020', backgroundColor:'#ffb020', borderWidth:2.5, pointRadius:3, tension:.3, spanGaps:false, order:1 },
+    data:{ labels, datasets:[
+      { type:'bar', label:'План', data:planRows.map(r=>r.revenue), backgroundColor:'rgba(57,217,138,.22)', borderColor:'#39d98a', borderWidth:1, borderRadius:3, order:3 },
+      { type:'line', label:'Факт', data:factRevAligned, borderColor:'#ff8a3d', backgroundColor:'#ff8a3d', borderWidth:2.5, pointRadius:3, tension:.3, spanGaps:false, order:1 },
     ]},
-    options: ctxDefaults
+    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, { callbacks:{ label:(ctx)=>` ${ctx.dataset.label}: ${fmtRub(ctx.raw,true)}` } }) }),
+      scales: Object.assign({}, base.scales, { y: Object.assign({}, base.scales.y, { ticks: Object.assign({}, base.scales.y.ticks, { callback:(v)=>fmtRub(v,true) }) }) }) })
   });
 
-  // cumulative profit: two lines
-  if (charts.profit) charts.profit.destroy();
-  charts.profit = new Chart(document.getElementById('chart-profit'), {
-    data: { labels, datasets:[
-      { ...baseLineDataset('План', '#2fd1b5'), data: planRows.map(r=>r.cumProfit) },
-      { ...baseLineDataset('Факт', '#ffb020'), data: factAligned('cumProfit') },
-    ]},
-    options: ctxDefaults
+  if (charts.margin) charts.margin.destroy();
+  charts.margin = new Chart(document.getElementById('chart-margin'), {
+    type:'line',
+    data:{ labels, datasets:[ baseLine('План','#39d98a',{data:planMargin}), baseLine('Факт','#ff8a3d',{data:factMarginAligned}) ] },
+    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, { callbacks:{ label:(ctx)=> ctx.raw==null?'':` ${ctx.dataset.label}: ${ctx.raw.toFixed(1)}%` } }) }),
+      scales: Object.assign({}, base.scales, { y: Object.assign({}, base.scales.y, { ticks: Object.assign({}, base.scales.y.ticks, { callback:(v)=>v+'%' }) }) }) })
   });
 
-  // loan balance
+  if (charts.check) charts.check.destroy();
+  charts.check = new Chart(document.getElementById('chart-check'), {
+    type:'line',
+    data:{ labels, datasets:[ baseLine('План','#39d98a',{data:planRows.map(r=>r.avgCheck)}), baseLine('Факт','#ff8a3d',{data:factCheckAligned}) ] },
+    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, { callbacks:{ label:(ctx)=> ctx.raw==null?'':` ${ctx.dataset.label}: ${fmtRub(ctx.raw)}` } }) }),
+      scales: Object.assign({}, base.scales, { y: Object.assign({}, base.scales.y, { ticks: Object.assign({}, base.scales.y.ticks, { callback:(v)=>fmtRub(v,true) }) }) }) })
+  });
+
+  // loan chart with fact-pace projection extension
+  let loanFactExt = factLoanAligned.slice();
+  const factRowsSorted = factRows.slice().sort((a,b)=>a.date-b.date);
+  if (factRowsSorted.length>=2){
+    const lastFact = factRowsSorted[factRowsSorted.length-1];
+    const avgRepay = (factRowsSorted[0].loanStart - lastFact.loanEnd)/factRowsSorted.length;
+    if (avgRepay>0 && lastFact.loanEnd>0){
+      const idxMap = {}; planRows.forEach((r,i)=>idxMap[+r.date]=i);
+      let startIdx = idxMap[+lastFact.date];
+      let bal = lastFact.loanEnd;
+      if (startIdx!=null){
+        for (let i=startIdx+1;i<planRows.length && bal>0;i++){
+          bal = Math.max(0, bal-avgRepay);
+          loanFactExt[i] = bal;
+        }
+      }
+    }
+  }
+
   if (charts.loan) charts.loan.destroy();
   charts.loan = new Chart(document.getElementById('chart-loan'), {
-    data: { labels, datasets:[
-      { ...baseLineDataset('План', '#2fd1b5'), data: planRows.map(r=>r.loanEnd), fill:{target:'origin', above:'rgba(47,209,181,.06)'} },
-      { ...baseLineDataset('Факт', '#ffb020'), data: factAligned('loanEnd') },
+    type:'line',
+    data:{ labels, datasets:[
+      baseLine('План','#39d98a',{data:planRows.map(r=>r.loanEnd), fill:{target:'origin', above:'rgba(57,217,138,.05)'}}),
+      baseLine('Факт / прогноз','#ff8a3d',{data:loanFactExt}),
     ]},
-    options: ctxDefaults
+    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, { callbacks:{ label:(ctx)=> ctx.raw==null?'':` ${ctx.dataset.label}: ${fmtRub(ctx.raw,true)}` } }) }),
+      scales: Object.assign({}, base.scales, { y: Object.assign({}, base.scales.y, { ticks: Object.assign({}, base.scales.y.ticks, { callback:(v)=>fmtRub(v,true) }) }) }) })
   });
 }
 
-function renderTable(){
-  const planRows = allRows.filter(r=>r.type==='План');
-  const planByDate = {};
-  planRows.forEach(r => planByDate[+r.date] = r);
-
+// ---------------- table ----------------
+function renderTable(planByDate){
   let rows = allRows.slice().sort((a,b)=>a.date-b.date || (a.type==='План'?1:-1));
   if (currentFilter !== 'all') rows = rows.filter(r=>r.type===currentFilter);
 
+  const byTypeSorted = { 'План': allRows.filter(r=>r.type==='План').sort((a,b)=>a.date-b.date),
+                          'Факт': allRows.filter(r=>r.type==='Факт').sort((a,b)=>a.date-b.date) };
+
   const body = document.getElementById('table-body');
   body.innerHTML = rows.map(r => {
-    const badge = r.type === 'План' ? '<span class="type-badge plan">План</span>' : '<span class="type-badge fact">Факт</span>';
+    const badge = r.type==='План' ? '<span class="type-badge plan">План</span>' : '<span class="type-badge fact">Факт</span>';
+    const seq = byTypeSorted[r.type];
+    const idx = seq.findIndex(x=>+x.date===+r.date);
+    const prev = idx>0 ? seq[idx-1] : null;
+    let momHtml = '—';
+    if (prev && prev.revenue){
+      const mom = (r.revenue-prev.revenue)/prev.revenue*100;
+      momHtml = `<span class="${mom>0.5?'mom-up':mom<-0.5?'mom-down':'mom-flat'}">${fmtPct(mom,1)}</span>`;
+    }
+    const margin = r.revenue ? (r.netProfit/r.revenue*100) : null;
     let pctCell = '—';
-    if (r.type === 'Факт'){
+    if (r.type==='Факт'){
       const p = planByDate[+r.date];
       if (p && p.revenue){
-        const pct = r.revenue / p.revenue * 100;
-        pctCell = `<span class="${pct>=100?'delta-pos':'delta-neg'}">${pct.toFixed(0)}%</span>`;
+        const pct = r.revenue/p.revenue*100;
+        const bg = pct>=100 ? 'rgba(57,217,138,'+Math.min(.35,.1+Math.abs(pct-100)/200)+')' : 'rgba(255,93,120,'+Math.min(.35,.1+Math.abs(pct-100)/200)+')';
+        pctCell = `<span class="cell-pct" style="background:${bg}">${pct.toFixed(0)}%</span>`;
       }
     }
     return `<tr>
-      <td>${fmtDate(r.date)}</td>
-      <td>${badge}</td>
-      <td>${fmtNum(r.orders)}</td>
-      <td>${fmtRub(r.revenue)}</td>
-      <td>${fmtRub(r.expenses)}</td>
-      <td>${fmtRub(r.profitBeforeTax)}</td>
-      <td>${fmtRub(r.netProfit)}</td>
-      <td>${fmtRub(r.cumProfit)}</td>
-      <td>${fmtRub(r.loanEnd)}</td>
-      <td>${pctCell}</td>
+      <td>${fmtDate(r.date)}</td><td>${badge}</td><td>${fmtNum(r.orders)}</td>
+      <td>${fmtRub(r.revenue)}</td><td>${momHtml}</td><td>${fmtRub(r.expenses)}</td>
+      <td>${fmtRub(r.netProfit)}</td><td>${margin!=null?margin.toFixed(1)+'%':'—'}</td>
+      <td>${fmtRub(r.cumProfit)}</td><td>${fmtRub(r.loanEnd)}</td><td>${pctCell}</td>
     </tr>`;
   }).join('');
 }
 
 document.getElementById('filter-btns').addEventListener('click', (e) => {
-  const btn = e.target.closest('button');
-  if (!btn) return;
+  const btn = e.target.closest('button'); if (!btn) return;
   document.querySelectorAll('#filter-btns button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   currentFilter = btn.dataset.f;
-  renderTable();
+  const planByDate = {}; allRows.filter(r=>r.type==='План').forEach(r=>planByDate[+r.date]=r);
+  renderTable(planByDate);
 });
 
 loadData();
-setInterval(() => loadData(), 5 * 60 * 1000);
+setInterval(() => loadData(), 5*60*1000);
 </script>
 </body>
 </html>
