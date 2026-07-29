@@ -6,35 +6,29 @@
 <title>Курьерская доставка — план и факт</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#080b12;
-    --bg-mesh:
-      radial-gradient(900px 500px at 88% -8%, rgba(255,138,61,.10), transparent 60%),
-      radial-gradient(1000px 560px at 6% 105%, rgba(61,220,151,.08), transparent 55%),
-      linear-gradient(180deg, #080b12, #0a0e17 40%, #080b12);
-    --grid-line: rgba(148,163,196,.05);
-    --s1:#0e131d;
-    --s2:#121927;
-    --line:rgba(148,163,196,.10);
-    --line-strong:rgba(148,163,196,.22);
-    --text-hi:#f3f5fb;
-    --text:#c3cbe0;
-    --text-dim:#8892ad;
-    --plan:#39d98a;
-    --plan-soft:rgba(57,217,138,.13);
-    --fact:#ff8a3d;
-    --fact-soft:rgba(255,138,61,.14);
-    --danger:#ff5d78;
-    --danger-soft:rgba(255,93,120,.14);
-    --good:#39d98a;
-    --warn:#ffc857;
-    --radius:14px;
-    --radius-sm:9px;
-    --mono:'JetBrains Mono', ui-monospace, monospace;
-    --sans:'Manrope', system-ui, sans-serif;
+    --bg:#111111;
+    --card-bg:#1e1e1e;
+    --line:#2a2a2a;
+    --line-strong:#333333;
+    --text-hi:#ffffff;
+    --text:#aaaaaa;
+    --text-dim:#888888;
+    --plan:#a3e635;
+    --plan-soft:rgba(163,230,53,.15);
+    --fact:#f97316;
+    --fact-soft:rgba(249,115,22,.15);
+    --danger:#ff4d4d;
+    --danger-soft:rgba(255,77,77,.12);
+    --good:#a3e635;
+    --warn:#facc15;
+    --radius:8px;
+    --radius-sm:6px;
+    --mono:'Geologica', sans-serif;
+    --sans:'Geologica', sans-serif;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -54,11 +48,7 @@
   #stage{
     width:1600px; height:900px; flex:none;
     transform-origin: center center;
-    background:
-      var(--bg-mesh),
-      repeating-linear-gradient(0deg, var(--grid-line) 0 1px, transparent 1px 64px),
-      repeating-linear-gradient(90deg, var(--grid-line) 0 1px, transparent 1px 64px),
-      var(--bg);
+    background:var(--bg);
     padding:22px 28px;
     display:flex; flex-direction:column; gap:12px;
   }
@@ -70,7 +60,7 @@
     display:flex; justify-content:space-between; align-items:baseline; gap:20px; flex:none;
     padding-bottom:10px; border-bottom:1px solid var(--line);
   }
-  h1{font-size:19px; font-weight:800; margin:0; letter-spacing:-.01em; color:var(--text-hi); line-height:1.2;}
+  h1{font-size:19px; font-weight:700; margin:0; letter-spacing:-.01em; color:var(--text-hi); line-height:1.2;}
   .meta{font-family:var(--mono); font-size:11.5px; color:var(--text-dim);}
   .meta b{color:var(--text);}
 
@@ -97,7 +87,7 @@
 
   /* ---------------- insights ---------------- */
   .insights-panel{
-    background:linear-gradient(165deg, var(--s2), var(--s1));
+    background:var(--card-bg);
     border:1px solid var(--line); border-radius:var(--radius); padding:14px;
     display:flex; flex-direction:column; gap:9px; min-height:0; overflow-y:auto;
   }
@@ -122,7 +112,7 @@
   .kpis{display:grid; grid-template-columns:repeat(7,1fr); gap:10px; flex:none;}
   .kpi{
     position:relative; overflow:hidden;
-    background:linear-gradient(165deg, var(--s2), var(--s1));
+    background:var(--card-bg);
     border:1px solid var(--line); border-radius:var(--radius); padding:12px 13px 10px;
   }
   .kpi::before{
@@ -140,7 +130,7 @@
 
   /* ---------------- chart cards ---------------- */
   .chart-card{
-    background:linear-gradient(165deg, var(--s2), var(--s1));
+    background:var(--card-bg);
     border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px 10px;
     display:flex; flex-direction:column; min-height:0;
   }
@@ -154,7 +144,7 @@
 
   /* ---------------- table ---------------- */
   .table-card{
-    background:linear-gradient(165deg, var(--s2), var(--s1));
+    background:var(--card-bg);
     border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px;
     display:flex; flex-direction:column; min-height:0;
   }
@@ -637,19 +627,32 @@ function buildProjection(planRows, factRows, key){
   for (let i=0;i<factAligned.length;i++) if (factAligned[i]!=null) lastIdx = i;
   const dashed = new Array(planRows.length).fill(null);
   if (lastIdx < 0) return { solid: factAligned, dashed };
+
   const sortedFact = factRows.slice().sort((a,b)=>a.date-b.date);
   const vals = sortedFact.map(r=>r[key]).filter(v=>v!=null);
-  let avgDelta = 0;
-  if (vals.length >= 2){
-    const from = Math.max(1, vals.length-3);
-    const deltas = [];
-    for (let i=from;i<vals.length;i++) deltas.push(vals[i]-vals[i-1]);
-    avgDelta = deltas.reduce((s,d)=>s+d,0)/deltas.length;
+
+  // Trend via ordinary least-squares over the last up-to-6 actual points (more stable than a 2-3 month delta,
+  // less noisy than using every single point if the series has shifted regime recently).
+  let slope = 0;
+  const n = Math.min(6, vals.length);
+  if (n >= 2){
+    const y = vals.slice(vals.length - n);
+    const xMean = (n-1)/2;
+    const yMean = y.reduce((s,v)=>s+v,0)/n;
+    let num = 0, den = 0;
+    for (let i=0;i<n;i++){ num += (i-xMean)*(y[i]-yMean); den += (i-xMean)*(i-xMean); }
+    slope = den ? num/den : 0;
   }
+
+  // Damped trend: each further month out extrapolates less of the slope (converges rather than
+  // running a straight line to zero), similar in spirit to Holt's damped-trend smoothing.
+  const DAMP = 0.75;
   dashed[lastIdx] = factAligned[lastIdx];
   let cur = factAligned[lastIdx];
+  let step = 0;
   for (let i=lastIdx+1;i<planRows.length;i++){
-    cur = cur + avgDelta;
+    step++;
+    cur = cur + slope * Math.pow(DAMP, step);
     if (cur < 0) cur = 0;
     dashed[i] = cur;
   }
@@ -663,13 +666,13 @@ function chartBaseOptions(moneyAxis){
   return {
     responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
     scales:{
-      x:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#8892ad', font:{family:'JetBrains Mono', size:11}, maxRotation:0, autoSkip:true, maxTicksLimit:9} },
-      y:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#8892ad', font:{family:'JetBrains Mono', size:11},
+      x:{ grid:{color:'#2a2a2a'}, ticks:{color:'#888888', font:{family:'Geologica', size:11}, maxRotation:0, autoSkip:true, maxTicksLimit:9} },
+      y:{ grid:{color:'#2a2a2a'}, ticks:{color:'#888888', font:{family:'Geologica', size:11},
             callback: moneyAxis ? (v)=>fmtRub(v,true) : undefined } }
     },
     plugins:{ legend:{display:false}, tooltip:{
-      backgroundColor:'#121927', borderColor:'rgba(255,255,255,.12)', borderWidth:1,
-      titleFont:{family:'Manrope', weight:700, size:12.5}, bodyFont:{family:'JetBrains Mono', size:12},
+      backgroundColor:'#1e1e1e', borderColor:'#333333', borderWidth:1,
+      titleFont:{family:'Geologica', weight:700, size:12.5}, bodyFont:{family:'Geologica', size:12},
       callbacks:{ label:(ctx)=> ctx.raw==null?'': ` ${ctx.dataset.label}: ${moneyAxis?fmtRub(ctx.raw,true):fmtNum(ctx.raw)}` }
     }}
   };
@@ -685,9 +688,9 @@ function renderMetricChart(metric, planRows, factRows){
   charts.metric = new Chart(document.getElementById('chart-metric'), {
     type:'line',
     data:{ labels, datasets:[
-      baseLine('План','#39d98a',{data:planRows.map(r=>r[m.field])}),
-      baseLine('Факт','#ff8a3d',{data:solid}),
-      baseLine('Прогноз','#ff8a3d',{data:dashed, borderDash:[6,5], pointRadius:0, borderWidth:2}),
+      baseLine('План','#a3e635',{data:planRows.map(r=>r[m.field])}),
+      baseLine('Факт','#f97316',{data:solid}),
+      baseLine('Прогноз','#f97316',{data:dashed, borderDash:[6,5], pointRadius:0, borderWidth:2}),
     ]},
     options: chartBaseOptions(m.money)
   });
@@ -698,9 +701,9 @@ function renderPayoffChart(planRows, factRows, be){
   const { solid, dashed } = buildProjection(planRows, factRows, 'cumProfit');
   const invLine = be && be.investment!=null ? planRows.map(()=>be.investment) : null;
   const datasets = [
-    baseLine('План','#39d98a',{data:planRows.map(r=>r.cumProfit)}),
-    baseLine('Факт','#ff8a3d',{data:solid}),
-    baseLine('Прогноз','#ff8a3d',{data:dashed, borderDash:[6,5], pointRadius:0, borderWidth:2}),
+    baseLine('План','#a3e635',{data:planRows.map(r=>r.cumProfit)}),
+    baseLine('Факт','#f97316',{data:solid}),
+    baseLine('Прогноз','#f97316',{data:dashed, borderDash:[6,5], pointRadius:0, borderWidth:2}),
   ];
   if (invLine) datasets.push({ label:'Сумма вложений', data:invLine, borderColor:'rgba(200,206,224,.55)', borderWidth:1.5, borderDash:[3,4], pointRadius:0, tension:0, fill:false });
   if (charts.payoff) charts.payoff.destroy();
