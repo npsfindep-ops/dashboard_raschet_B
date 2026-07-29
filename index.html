@@ -237,10 +237,10 @@ const ICONS = {
 
 const METRICS = {
   profit:    { label:'Прибыль',      field:'netProfit', money:true,  sub:'' },
-  revenue:   { label:'Выручка',      field:'revenue',    money:true,  sub:'Динамика по месяцам, план vs факт' },
-  expenses:  { label:'Расходы',      field:'expenses',   money:true,  sub:'Динамика по месяцам, план vs факт' },
-  avgCheck:  { label:'Средний чек',  field:'avgCheck',   money:true,  sub:'Выручка / количество заказов, ₽ на 1 заказ' },
-  orders:    { label:'Заказы',       field:'orders',     money:false, sub:'Количество заказов по месяцам' },
+  revenue:   { label:'Выручка',      field:'revenue',    money:true,  sub:'' },
+  expenses:  { label:'Расходы',      field:'expenses',   money:true,  sub:'' },
+  avgCheck:  { label:'Средний чек',  field:'avgCheck',   money:true,  sub:'' },
+  orders:    { label:'Заказы',       field:'orders',     money:false, sub:'' },
 };
 
 const FIELD_MAP = {
@@ -469,10 +469,12 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
   // 2) Срок окупаемости, мес.
   {
     const factVal = be.factMonths!=null ? String(be.factMonths) : (be.projFailed?'—':'…');
+    const remaining = be.factBE ? monthsBetween(lastFact.date, be.factBE.date) : null;
+    const payoffMonthTxt = be.factBE ? fmtMon(be.factBE.date) : null;
     cards.push({ label:'СРОК ОКУПАЕМОСТИ, МЕС.', value: factVal, rows:[
-      { label:'к плану', value: be.delta!=null ? (be.delta===0?'0':(be.delta>0?'+':'−')+Math.abs(be.delta)) : '—',
+      { label:'к плану', value: be.planBE ? fmtMon(be.planBE.date) : '—',
         tone: be.delta!=null ? (be.delta<=0?'good':'bad') : 'neutral' },
-      { label:'сейчас, мес.', value: String(lastFact.periodNo), tone:'neutral' },
+      { label:'осталось', value: remaining!=null ? `${remaining} мес. (${payoffMonthTxt})` : '—', tone:'neutral' },
     ]});
   }
 
@@ -481,10 +483,11 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const planAtCutoff = planByDate[+lastFact.date];
     const pct = planAtCutoff && planAtCutoff.loanEnd ? (lastFact.loanEnd-planAtCutoff.loanEnd)/planAtCutoff.loanEnd*100 : null;
     const loanF = fmtAdaptive(lastFact.loanEnd);
-    const startF = fmtAdaptive(planRows[0]?.loanStart);
-    cards.push({ label:`ЗАЁМ, ${loanF.unit.toUpperCase()}`, value: loanF.value, rows:[
+    const loanStart = planRows[0]?.loanStart;
+    const repaidPct = (loanStart && lastFact.loanEnd!=null) ? (loanStart-lastFact.loanEnd)/loanStart*100 : null;
+    cards.push({ label:`ЗАЙМ, ${loanF.unit.toUpperCase()}`, value: loanF.value, rows:[
       { label:'к плану', value: pct!=null?fmtPct(pct,0):'—', tone: pct!=null?(pct<=0?'good':'bad'):'neutral' },
-      { label:`старт, ${startF.unit}`, value: startF.value, tone:'neutral' },
+      { label:'погашено', value: repaidPct!=null?repaidPct.toFixed(0)+'%':'—', tone:'neutral' },
     ]});
   }
 
@@ -496,11 +499,18 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const avgRevFact = factRows.length ? revFactCum/factRows.length : null;
     const avgRevPlan = planCumRows.length ? revPlanCum/planCumRows.length : null;
     const pct = (avgRevFact!=null && avgRevPlan) ? (avgRevFact/avgRevPlan*100-100) : null;
-    const mom = (prevFact && prevFact.revenue) ? (lastFact.revenue-prevFact.revenue)/prevFact.revenue*100 : null;
+    const sortedFact = factRows.slice().sort((a,b)=>a.date-b.date);
+    let trend3 = null;
+    if (sortedFact.length >= 6){
+      const last3 = sortedFact.slice(-3), prev3 = sortedFact.slice(-6,-3);
+      const avgLast3 = last3.reduce((s,r)=>s+(r.revenue||0),0)/3;
+      const avgPrev3 = prev3.reduce((s,r)=>s+(r.revenue||0),0)/3;
+      if (avgPrev3) trend3 = (avgLast3-avgPrev3)/avgPrev3*100;
+    }
     const avgRevF = fmtAdaptive(avgRevFact);
     cards.push({ label:`ВЫРУЧКА, ${avgRevF.unit.toUpperCase()}/МЕС.`, value: avgRevF.value, rows:[
       { label:'к плану', value: pct!=null?fmtPct(pct,0):'—', tone: pct!=null?(pct>=0?'good':'bad'):'neutral' },
-      { label:'рост MoM', value: mom!=null?fmtPct(mom,1):'—', tone: mom!=null?(mom>=0?'good':'bad'):'neutral' },
+      { label:'тренд, 3 мес.', value: trend3!=null?fmtPct(trend3,1):'—', tone: trend3!=null?(trend3>=0?'good':'bad'):'neutral' },
     ]});
   }
 
@@ -725,7 +735,8 @@ function fitTrendAndSeasonality(factRows, key){
   return { slope, intercept, baseDate, lastFitted: intercept + slope*lastX, lastDate, q4Multiplier };
 }
 
-function forecastFromTrend(model, targetDate, phi){
+function forecastFromTrend(model, targetDate, applySeasonal, phi){
+  applySeasonal = applySeasonal==null ? true : applySeasonal;
   phi = phi==null ? 0.85 : phi;
   if (!model) return null;
   const h = monthsBetween(model.lastDate, targetDate);
@@ -737,11 +748,18 @@ function forecastFromTrend(model, targetDate, phi){
     for (let s=1; s<=h; s++) phiSum += Math.pow(phi, s);
     trendVal = model.lastFitted + phiSum*model.slope;
   }
+  if (!applySeasonal) return trendVal;
   const cm = targetDate.getMonth();
   const isQ4 = (cm===9 || cm===10 || cm===11);
   return isQ4 ? trendVal*model.q4Multiplier : trendVal;
 }
 
+// Only ORDERS gets the Q4 seasonal multiplier applied — genuine seasonal demand (more parcels in
+// the holiday season) is plausible there. Average check is a pricing decision, not something that
+// swings with the calendar, and the only Q4 data point we have (Oct-Dec 2025) is completely
+// confounded with the business's launch quarter — e.g. any launch-period discounting would get
+// misread as "Q4 causes a lower cheque" and wrongly repeated every year. So avgCheck (and margin,
+// used for profit below) use trend only, no seasonal multiplier.
 function buildProjection(planRows, factRows, key){
   const factAligned = alignToPlan(planRows, factRows, key);
   let lastIdx = -1;
@@ -750,10 +768,11 @@ function buildProjection(planRows, factRows, key){
   if (lastIdx < 0) return { solid: factAligned, dashed };
 
   const model = fitTrendAndSeasonality(factRows, key);
+  const applySeasonal = (key === 'orders');
   const nonNegative = !(key === 'netProfit' || key === 'profitBeforeTax' || key === 'cumProfit');
   dashed[lastIdx] = factAligned[lastIdx];
   for (let i=lastIdx+1; i<planRows.length; i++){
-    let v = forecastFromTrend(model, planRows[i].date);
+    let v = forecastFromTrend(model, planRows[i].date, applySeasonal);
     if (v!=null && nonNegative && v<0) v = 0;
     dashed[i] = v;
   }
@@ -775,14 +794,19 @@ function buildConsistentProjections(planRows, factRows){
     revenueDashed[i] = (o!=null && c!=null) ? o*c : null;
   }
 
-  // Profit: same fact-only trend+seasonality fit, applied directly to net profit itself (an OLS
-  // trend fit has no sign issues, unlike a ratio, so it works fine even through loss-making months).
-  const profitModel = fitTrendAndSeasonality(factRows, 'netProfit');
+  // Profit: rather than fitting its own independent Q4 multiplier (equally confounded with the
+  // launch quarter, and prone to producing an unexplainable "profit spike" with no real driver
+  // behind it), we fit a trend-only margin (net profit ÷ revenue) and apply it to the
+  // orders-driven revenue forecast above. That way the ONE genuine seasonal signal we have
+  // (order volume) is what flows through the whole model, instead of five independent guesses.
+  const marginSeries = factRows.filter(r => r.revenue).map(r => ({ date: r.date, margin: r.netProfit/r.revenue }));
+  const marginModel = fitTrendAndSeasonality(marginSeries, 'margin');
   const profitSolid = alignToPlan(planRows, factRows, 'netProfit');
   const profitDashed = new Array(planRows.length).fill(null);
   if (lastIdx>=0) profitDashed[lastIdx] = profitSolid[lastIdx];
   for (let i=lastIdx+1; i<planRows.length; i++){
-    profitDashed[i] = forecastFromTrend(profitModel, planRows[i].date);
+    const marginForecast = forecastFromTrend(marginModel, planRows[i].date, false);
+    profitDashed[i] = (revenueDashed[i]!=null && marginForecast!=null) ? revenueDashed[i]*marginForecast : null;
   }
 
   const expensesSolid = alignToPlan(planRows, factRows, 'expenses');
