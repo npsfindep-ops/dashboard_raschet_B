@@ -51,38 +51,19 @@
     padding:30px 22px 70px;
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:1360px;margin:0 auto;}
+  .wrap{max-width:1400px;margin:0 auto;}
   a{color:inherit;}
   ::-webkit-scrollbar{height:8px; width:8px;}
   ::-webkit-scrollbar-thumb{background:var(--line-strong); border-radius:4px;}
 
   /* ---------------- header ---------------- */
   header{
-    display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap;
+    display:flex; justify-content:space-between; align-items:baseline; gap:20px; flex-wrap:wrap;
     margin-bottom:26px; padding-bottom:18px; border-bottom:1px solid var(--line);
   }
-  .brand-eyebrow{
-    font-family:var(--mono); font-size:11.5px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--fact); margin:0 0 5px; display:flex; align-items:center; gap:8px; font-weight:600;
-  }
-  .live-dot{position:relative; width:7px;height:7px;border-radius:50%;background:var(--fact);}
-  .live-dot::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1px solid var(--fact);opacity:.5;animation:pulse 2.2s ease-out infinite;}
-  @keyframes pulse{0%{transform:scale(.4);opacity:.7;}100%{transform:scale(1.8);opacity:0;}}
   h1{font-size:21px; font-weight:800; margin:0; letter-spacing:-.01em; color:var(--text-hi); line-height:1.2;}
-  .meta{text-align:right; font-family:var(--mono); font-size:12px; color:var(--text-dim); line-height:1.7;}
+  .meta{font-family:var(--mono); font-size:12px; color:var(--text-dim);}
   .meta b{color:var(--text);}
-  .controls{display:flex; align-items:center; gap:10px; margin-top:8px; justify-content:flex-end;}
-  button.refresh{
-    font-family:var(--sans); font-size:13px; font-weight:700; color:#0a0e17;
-    background:linear-gradient(135deg, var(--fact), #ffb060); border:none; border-radius:9px; padding:9px 15px;
-    cursor:pointer; display:flex; align-items:center; gap:7px; transition:transform .15s ease, box-shadow .15s ease;
-    box-shadow:0 4px 18px -6px rgba(255,138,61,.55);
-  }
-  button.refresh:hover{transform:translateY(-1px);}
-  button.refresh:disabled{opacity:.5; cursor:default; transform:none;}
-  .spin{display:inline-block; width:11px; height:11px; border-radius:50%;
-    border:2px solid rgba(10,14,23,.3); border-top-color:#0a0e17; animation:spin .8s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
 
   #status-banner{
     display:none; margin-bottom:22px; padding:14px 17px; border-radius:10px;
@@ -97,117 +78,99 @@
   .section-label::after{content:""; flex:1; height:1px; background:var(--line);}
   .section-label .n{color:var(--fact);}
 
+  /* ---------------- metric toggle ---------------- */
+  .metric-toggle{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;}
+  .metric-toggle button{
+    font-family:var(--sans); font-size:13.5px; font-weight:700; color:var(--text-dim);
+    background:var(--s2); border:1px solid var(--line-strong); border-radius:9px; padding:9px 16px; cursor:pointer;
+    transition:all .15s ease;
+  }
+  .metric-toggle button.active{background:linear-gradient(135deg, var(--fact), #ffb060); color:#0a0e17; border-color:transparent;}
+  .metric-toggle button:hover:not(.active){border-color:var(--fact); color:var(--text-hi);}
+
+  /* ---------------- split layouts ---------------- */
+  .split-21{display:grid; grid-template-columns:2fr 1fr; gap:14px; align-items:stretch;}
+  @media (max-width:980px){ .split-21{grid-template-columns:1fr;} }
+
   /* ---------------- insights ---------------- */
-  .insights{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:13px;}
-  .insight{
+  .insights-panel{
     background:linear-gradient(165deg, var(--s2), var(--s1));
-    border:1px solid var(--line); border-radius:var(--radius-sm); padding:16px 17px;
-    display:flex; gap:13px; align-items:flex-start;
+    border:1px solid var(--line); border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; gap:12px;
+    max-height:520px; overflow-y:auto;
+  }
+  .insights-panel h4{margin:0 0 2px; font-size:13px; font-weight:700; color:var(--text-hi); text-transform:uppercase; letter-spacing:.04em;}
+  .insight{
+    background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:var(--radius-sm); padding:14px 15px;
+    display:flex; gap:11px; align-items:flex-start;
   }
   .insight .ic{
-    flex:none; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    flex:none; width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center;
     background:var(--tone-soft, var(--fact-soft)); color:var(--tone, var(--fact));
   }
-  .insight .ic svg{width:17px; height:17px;}
-  .insight .body{font-size:14px; line-height:1.6; color:var(--text);}
+  .insight .ic svg{width:15px; height:15px;}
+  .insight .body{font-size:13.5px; line-height:1.55; color:var(--text);}
   .insight .body b{color:var(--text-hi); font-weight:700;}
   .insight.tone-good{--tone:var(--good); --tone-soft:var(--plan-soft);}
   .insight.tone-bad{--tone:var(--danger); --tone-soft:var(--danger-soft);}
   .insight.tone-warn{--tone:var(--warn); --tone-soft:rgba(255,200,87,.14);}
   .insight.tone-neutral{--tone:#aab4d1; --tone-soft:rgba(154,165,196,.14);}
 
-  /* ---------------- breakeven banner ---------------- */
-  .breakeven{
-    background:linear-gradient(135deg, var(--s2), var(--s1));
-    border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px;
-    display:grid; grid-template-columns:1fr 1fr auto; gap:24px; align-items:center;
-  }
-  .be-stat .be-label{font-size:12px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px;}
-  .be-stat .be-value{font-family:var(--mono); font-size:30px; font-weight:700; color:var(--text-hi); line-height:1;}
-  .be-stat.plan .be-value{color:var(--plan);}
-  .be-stat.fact .be-value{color:var(--fact);}
-  .be-stat .be-sub{margin-top:7px; font-size:13px; color:var(--text-dim);}
-  .be-delta{text-align:center; padding-left:20px; border-left:1px solid var(--line);}
-  .be-delta .n{font-family:var(--mono); font-size:34px; font-weight:800;}
-  .be-delta .n.good{color:var(--good);} .be-delta .n.bad{color:var(--danger);}
-  .be-delta .lbl{font-size:12px; color:var(--text-dim); margin-top:4px;}
-  @media (max-width:820px){ .breakeven{grid-template-columns:1fr; text-align:left;} .be-delta{border-left:none; border-top:1px solid var(--line); padding:16px 0 0;} }
-
   /* ---------------- KPI cards ---------------- */
-  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+  .kpis{display:grid; grid-template-columns:repeat(auto-fit, minmax(210px,1fr)); gap:14px;}
   .kpi{
     position:relative; overflow:hidden;
     background:linear-gradient(165deg, var(--s2), var(--s1));
-    border:1px solid var(--line); border-radius:var(--radius); padding:20px 20px 17px;
+    border:1px solid var(--line); border-radius:var(--radius); padding:19px 19px 16px;
   }
   .kpi::before{
     content:""; position:absolute; top:0; left:0; right:0; height:2px;
     background:linear-gradient(90deg, var(--kpi-accent,var(--fact)), transparent 85%);
   }
-  .kpi-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:13px;}
-  .kpi .label{font-size:12px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.04em; max-width:68%;}
-  .kpi .spark{width:78px; height:30px; flex:none;}
-  .kpi .value{font-family:var(--mono); font-size:29px; font-weight:700; letter-spacing:-.01em; color:var(--text-hi); line-height:1;}
-  .kpi .row{margin-top:11px; display:flex; align-items:center; gap:7px; flex-wrap:wrap;}
-  .badge{font-family:var(--mono); font-size:12px; font-weight:700; padding:3px 9px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;}
+  .kpi .label{font-size:11.5px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-bottom:11px;}
+  .kpi .value{font-family:var(--mono); font-size:27px; font-weight:700; letter-spacing:-.01em; color:var(--text-hi); line-height:1;}
+  .kpi .row{margin-top:10px; display:flex; align-items:center; gap:7px; flex-wrap:wrap;}
+  .badge{font-family:var(--mono); font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;}
   .badge svg{width:10px;height:10px;}
   .badge.good{background:var(--plan-soft); color:var(--good);}
   .badge.bad{background:var(--danger-soft); color:var(--danger);}
-  .kpi .foot{font-size:12.5px; color:var(--text-dim); margin-top:7px;}
+  .kpi .foot{font-size:12px; color:var(--text-dim); margin-top:7px; line-height:1.5;}
 
-  /* ---------------- charts ---------------- */
-  .charts{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  /* ---------------- chart cards ---------------- */
   .chart-card{
     background:linear-gradient(165deg, var(--s2), var(--s1));
     border:1px solid var(--line); border-radius:var(--radius); padding:21px 22px 14px;
   }
-  .chart-card.full{grid-column:1/-1;}
   .chart-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2px; gap:10px;}
   .chart-head h3{margin:0; font-size:15px; font-weight:700; color:var(--text-hi);}
   .chart-head p{margin:4px 0 0; font-size:12.5px; color:var(--text-dim);}
   .legend-inline{display:flex; gap:14px; font-family:var(--mono); font-size:11.5px; color:var(--text-dim); flex:none; padding-top:3px;}
   .legend-inline .sw{display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:5px; vertical-align:middle;}
-  .chart-wrap{position:relative; height:260px; margin-top:10px;}
+  .legend-inline .sw.dash{background:none; border-top:2px dashed var(--text-dim); width:11px; height:0; margin-top:4px;}
+  .chart-wrap{position:relative; height:360px; margin-top:10px;}
+  .chart-wrap.small{height:300px;}
 
   /* ---------------- table ---------------- */
   .table-card{
     background:linear-gradient(165deg, var(--s2), var(--s1));
     border:1px solid var(--line); border-radius:var(--radius); padding:21px 22px;
   }
-  .table-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;}
-  .table-head h3{margin:0; font-size:15px; font-weight:700; color:var(--text-hi);}
-  .filter-btns{display:flex; gap:6px;}
-  .filter-btns button{
-    font-family:var(--sans); font-size:13px; font-weight:600; color:var(--text-dim);
-    background:transparent; border:1px solid var(--line-strong); border-radius:7px; padding:6px 14px; cursor:pointer;
-  }
-  .filter-btns button.active{background:var(--text-hi); color:#0a0e17; border-color:var(--text-hi);}
+  .table-card h3{margin:0 0 14px; font-size:15px; font-weight:700; color:var(--text-hi);}
   .table-scroll{overflow-x:auto;}
-  table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:13.5px; min-width:1020px;}
+  table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:13.5px;}
   thead th{
     text-align:right; font-weight:600; color:var(--text-dim); font-size:11px;
     text-transform:uppercase; letter-spacing:.03em; padding:10px 12px; border-bottom:1px solid var(--line-strong);
     position:sticky; top:0; background:var(--s2);
   }
-  thead th:first-child, thead th:nth-child(2){text-align:left;}
+  thead th:first-child{text-align:left;}
   tbody td{padding:9px 12px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap;}
   tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:600; color:var(--text);}
   tbody tr:hover{background:rgba(255,255,255,.025);}
-  .type-badge{
-    display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:700;
-    font-family:var(--mono); text-transform:uppercase; letter-spacing:.03em;
-  }
-  .type-badge.plan{background:var(--plan-soft); color:var(--plan);}
-  .type-badge.fact{background:var(--fact-soft); color:var(--fact);}
   .cell-pct{border-radius:5px; padding:2px 8px; font-weight:700;}
-  .mom-up{color:var(--good);} .mom-down{color:var(--danger);} .mom-flat{color:var(--text-dim);}
+  .delta-pos{color:var(--good);} .delta-neg{color:var(--danger);}
 
   footer{margin-top:28px; text-align:center; font-family:var(--mono); font-size:12px; color:var(--text-dim);}
 
-  @media (max-width:980px){
-    .kpis{grid-template-columns:repeat(2,1fr);}
-    .charts{grid-template-columns:1fr;}
-  }
   @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
 </style>
 </head>
@@ -215,91 +178,49 @@
 <div class="wrap">
 
   <header>
-    <div>
-      <p class="brand-eyebrow"><span class="live-dot"></span>БДР · план и факт · live из Google Sheets</p>
-      <h1>Курьерская доставка — план и факт</h1>
-    </div>
-    <div>
-      <div class="meta">Источник: <b>Google Sheets</b> · «Свод план-факт»<br>Обновлено: <b id="updated-at">—</b></div>
-      <div class="controls"><button class="refresh" id="refresh-btn" onclick="loadData(true)">↻ Обновить</button></div>
-    </div>
+    <h1>Курьерская доставка — план и факт</h1>
+    <div class="meta">Обновлено: <b id="updated-at">—</b></div>
   </header>
 
   <div id="status-banner"></div>
 
-  <div class="section-label"><span class="n">01</span> Причины отклонений</div>
-  <div class="insights" id="insights-grid"></div>
-
-  <div class="section-label"><span class="n">02</span> Точка безубыточности</div>
-  <div class="breakeven" id="breakeven-block"></div>
-
-  <div class="section-label"><span class="n">03</span> Ключевые показатели</div>
+  <div class="section-label"><span class="n">01</span> Ключевые показатели</div>
   <section class="kpis" id="kpi-grid"></section>
 
-  <div class="section-label"><span class="n">04</span> Доходы, расходы и структура затрат</div>
-  <section class="charts">
+  <div class="section-label"><span class="n">02</span> Показатели по месяцам</div>
+  <div class="metric-toggle" id="metric-toggle">
+    <button data-m="profit" class="active">Прибыль</button>
+    <button data-m="revenue">Выручка</button>
+    <button data-m="expenses">Расходы</button>
+    <button data-m="avgCheck">Средний чек</button>
+    <button data-m="orders">Заказы</button>
+  </div>
+  <div class="split-21">
     <div class="chart-card">
       <div class="chart-head">
-        <div><h3>Выручка</h3><p>Динамика по месяцам, план vs факт</p></div>
-        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
+        <div><h3 id="metric-chart-title">Прибыль</h3><p id="metric-chart-sub">Чистая прибыль по месяцам, план vs факт</p></div>
+        <div class="legend-inline">
+          <span><span class="sw" style="background:var(--plan)"></span>План</span>
+          <span><span class="sw" style="background:var(--fact)"></span>Факт</span>
+          <span><span class="sw dash"></span>Прогноз</span>
+        </div>
       </div>
-      <div class="chart-wrap"><canvas id="chart-revenue"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-metric"></canvas></div>
     </div>
-    <div class="chart-card">
-      <div class="chart-head">
-        <div><h3>Расходы</h3><p>Динамика по месяцам, план vs факт</p></div>
-        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
-      </div>
-      <div class="chart-wrap"><canvas id="chart-expenses"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-head">
-        <div><h3>Окупаемость проекта</h3><p>Прибыль нарастающим итогом vs сумма вложений (пунктир)</p></div>
-        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
-      </div>
-      <div class="chart-wrap"><canvas id="chart-cumprofit"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-head">
-        <div><h3>Структура расходов</h3><p id="structure-sub">По статьям, последний факт. месяц</p></div>
-        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
-      </div>
-      <div class="chart-wrap"><canvas id="chart-structure"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-head">
-        <div><h3>Средний чек</h3><p>Выручка / количество заказов, ₽ на 1 заказ</p></div>
-        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
-      </div>
-      <div class="chart-wrap"><canvas id="chart-check"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-head">
-        <div><h3>Рентабельность</h3><p>Чистая прибыль / выручка, % за месяц</p></div>
-        <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
-      </div>
-      <div class="chart-wrap"><canvas id="chart-margin"></canvas></div>
-    </div>
-  </section>
+    <div class="insights-panel" id="insights-panel"></div>
+  </div>
 
-  <div class="section-label"><span class="n">05</span> Детализация</div>
-  <div class="table-card">
-    <div class="table-head">
-      <h3>По месяцам</h3>
-      <div class="filter-btns" id="filter-btns">
-        <button data-f="all" class="active">Все</button>
-        <button data-f="План">План</button>
-        <button data-f="Факт">Факт</button>
-      </div>
+  <div class="section-label"><span class="n">03</span> Детализация</div>
+  <div class="split-21">
+    <div class="table-card">
+      <h3 id="detail-table-title">Прибыль по месяцам</h3>
+      <div class="table-scroll"><table><thead id="detail-thead"></thead><tbody id="detail-tbody"></tbody></table></div>
     </div>
-    <div class="table-scroll">
-      <table>
-        <thead><tr>
-          <th>Дата</th><th>Тип</th><th>Заказы</th><th>Выручка</th><th>Δ MoM</th><th>Расходы</th>
-          <th>Чистая прибыль</th><th>Маржа</th><th>Накопительно</th><th>% к плану</th>
-        </tr></thead>
-        <tbody id="table-body"></tbody>
-      </table>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div><h3>Окупаемость</h3><p>Прибыль нарастающим итогом vs сумма вложений</p></div>
+      </div>
+      <div class="chart-wrap small"><canvas id="chart-payoff"></canvas></div>
     </div>
   </div>
 
@@ -316,6 +237,14 @@ const ICONS = {
   down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8l6 6 4-4 6 8"/><path d="M14 18h6v-6"/></svg>',
   target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".7" fill="currentColor"/></svg>',
   alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
+};
+
+const METRICS = {
+  profit:    { label:'Прибыль',      field:'netProfit', money:true,  sub:'Чистая прибыль по месяцам, план vs факт' },
+  revenue:   { label:'Выручка',      field:'revenue',    money:true,  sub:'Динамика по месяцам, план vs факт' },
+  expenses:  { label:'Расходы',      field:'expenses',   money:true,  sub:'Динамика по месяцам, план vs факт' },
+  avgCheck:  { label:'Средний чек',  field:'avgCheck',   money:true,  sub:'Выручка / количество заказов, ₽ на 1 заказ' },
+  orders:    { label:'Заказы',       field:'orders',     money:false, sub:'Количество заказов по месяцам' },
 };
 
 const FIELD_MAP = {
@@ -360,7 +289,6 @@ function extractRowsFromGviz(json){
     const revenue = get('revenue');
     if (!date || !type || revenue == null) continue;
     const orders = get('orders');
-    // always derive from revenue/orders — the raw column proved unreliable across sheet conversions
     const avgCheck = orders ? revenue/orders : get('avgCheck');
     rows.push({
       date, type, orders, avgCheck, revenue,
@@ -409,46 +337,20 @@ function fmtRub(n, compact){
   }
   return Math.round(n).toLocaleString('ru-RU') + " ₽";
 }
-function fmtNum(n){ return n==null||isNaN(n) ? "—" : Math.round(n).toLocaleString('ru-RU'); }
+function fmtNum(n, digits){ return n==null||isNaN(n) ? "—" : n.toLocaleString('ru-RU', {maximumFractionDigits: digits||0}); }
 function fmtPct(n, digits){ return n==null||isNaN(n) ? "—" : (n>=0?'+':'') + n.toFixed(digits==null?0:digits) + '%'; }
 function fmtPP(n){ return n==null||isNaN(n) ? "—" : (n>=0?'+':'') + n.toFixed(1) + ' п.п.'; }
 function addMonths(d,n){ const m=d.getMonth()+n; const y=d.getFullYear()+Math.floor(m/12); return new Date(y, ((m%12)+12)%12, 1); }
 function monthsBetween(a,b){ return (b.getFullYear()-a.getFullYear())*12 + (b.getMonth()-a.getMonth()); }
 
-function sparklinePath(values, w, h, pad){
-  const vals = values.filter(v=>v!=null && !isNaN(v));
-  if (vals.length < 2) return {path:'', last:null};
-  const min = Math.min(...vals), max = Math.max(...vals);
-  const span = (max-min) || 1;
-  const n = values.length;
-  let d = ''; let lastPt = null;
-  values.forEach((v,i) => {
-    if (v==null || isNaN(v)) return;
-    const x = pad + (i/(n-1)) * (w-2*pad);
-    const y = h-pad - ((v-min)/span) * (h-2*pad);
-    d += (d? ' L':'M') + x.toFixed(1) + ' ' + y.toFixed(1);
-    lastPt = {x,y};
-  });
-  return {path:d, last:lastPt};
-}
-function sparklineSVG(values, color){
-  const w=78,h=30,pad=3;
-  const {path,last} = sparklinePath(values,w,h,pad);
-  if (!path) return '';
-  return `<svg class="spark" viewBox="0 0 ${w} ${h}">
-    <path d="${path}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    ${last?`<circle cx="${last.x.toFixed(1)}" cy="${last.y.toFixed(1)}" r="2.3" fill="${color}"/>`:''}
-  </svg>`;
-}
-
 let charts = {};
 let allRows = [];
-let currentFilter = 'all';
+let currentMetric = 'profit';
+let cachedInsights = [];
+let cachedPlanRows = [], cachedFactRows = [], cachedLastFact = null, cachedPlanByDate = {}, cachedBE = null;
 
 async function loadData(){
-  const btn = document.getElementById('refresh-btn');
   const banner = document.getElementById('status-banner');
-  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Обновление…';
   banner.style.display = 'none';
   try{
     const json = await loadGvizJSONP(12000);
@@ -461,8 +363,6 @@ async function loadData(){
     console.error(err);
     banner.style.display = 'block';
     banner.innerHTML = `⚠ Не удалось загрузить данные из Google Таблицы (${err.message}). <a href="https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit" target="_blank">Открыть таблицу →</a>`;
-  } finally {
-    btn.disabled = false; btn.innerHTML = '↻ Обновить';
   }
 }
 
@@ -471,23 +371,23 @@ function render(){
   const factRows = allRows.filter(r=>r.type==='Факт').sort((a,b)=>a.date-b.date);
   const lastFact = factRows[factRows.length-1] || null;
   const planByDate = {}; planRows.forEach(r=>planByDate[+r.date]=r);
-
   const be = computeBreakEven(planRows, factRows, lastFact);
 
+  cachedPlanRows = planRows; cachedFactRows = factRows; cachedLastFact = lastFact;
+  cachedPlanByDate = planByDate; cachedBE = be;
+
   const steps = [
-    ['Insights', () => renderInsights(planRows, factRows, lastFact, planByDate, be)],
-    ['Breakeven', () => renderBreakeven(be)],
-    ['KPI', () => renderKPIs(planRows, factRows, lastFact, planByDate)],
-    ['Charts', () => renderCharts(planRows, factRows, lastFact, planByDate, be)],
-    ['Table', () => renderTable(planByDate)],
+    ['KPI', () => renderKPIs(planRows, factRows, lastFact, planByDate, be)],
+    ['Insights', () => { cachedInsights = computeAllInsights(planRows, factRows, lastFact, planByDate, be); renderInsightsPanel(currentMetric); }],
+    ['MetricChart', () => renderMetricChart(currentMetric, planRows, factRows)],
+    ['PayoffChart', () => renderPayoffChart(planRows, factRows, be)],
+    ['DetailTable', () => renderDetailTable(currentMetric, planRows, factRows, lastFact, planByDate)],
   ];
   for (const [name, fn] of steps){ try{ fn(); } catch(e){ console.error(`Render step "${name}" failed:`, e); } }
 }
 
-// ---------------- break-even engine ----------------
+// ==================== break-even engine ====================
 function computeBreakEven(planRows, factRows, lastFact){
-  // "Окупаемость" = когда прибыль нарастающим итогом покрывает сумму вложений
-  // (не путать с погашением займа — заём лишь способ финансирования, сумма может отличаться).
   const invRow = factRows.find(r => r.investment != null) || planRows.find(r => r.investment != null);
   const investment = invRow ? invRow.investment : (planRows[0] ? planRows[0].loanStart : null);
 
@@ -510,76 +410,147 @@ function computeBreakEven(planRows, factRows, lastFact){
         projFailed = true;
       }
     }
-    // сколько нужно зарабатывать в среднем в месяц, чтобы уложиться в плановый срок
     if (planBE){
       const monthsToPlanDeadline = monthsBetween(lastFact.date, planBE.date);
       const remaining = investment - lastFact.cumProfit;
-      if (monthsToPlanDeadline > 0 && remaining > 0){
-        requiredMonthlyProfit = remaining / monthsToPlanDeadline;
-      }
+      if (monthsToPlanDeadline > 0 && remaining > 0) requiredMonthlyProfit = remaining / monthsToPlanDeadline;
     }
   }
 
   const delta = (planBE && factBE) ? monthsBetween(planBE.date, factBE.date) : null;
-  return { investment, planBE, factBE, factBEIsProjection, projFailed, delta, requiredMonthlyProfit, actualRecentMonthlyProfit };
+  const factMonths = (factBE && factRows.length) ? monthsBetween(factRows[0].date, factBE.date) + 1 : null;
+  const planMonths = (planBE && planRows.length) ? monthsBetween(planRows[0].date, planBE.date) + 1 : null;
+
+  return { investment, planBE, factBE, factBEIsProjection, projFailed, delta, requiredMonthlyProfit, actualRecentMonthlyProfit, factMonths, planMonths };
 }
 
-function renderBreakeven(be){
-  const el = document.getElementById('breakeven-block');
-  const planTxt = be.planBE ? fmtMon(be.planBE.date) : 'не достигается';
-  let factTxt, factSub;
-  if (be.factBE && !be.factBEIsProjection){ factTxt = fmtMon(be.factBE.date); factSub = 'уже достигнуто по факту'; }
-  else if (be.factBE && be.factBEIsProjection){ factTxt = fmtMon(be.factBE.date); factSub = 'прогноз по темпу последних 3 факт. месяцев'; }
-  else if (be.projFailed){ factTxt = 'не прогнозируется'; factSub = 'при текущем темпе чистая прибыль не растёт'; }
-  else { factTxt = '—'; factSub = 'недостаточно фактических данных'; }
+// ==================== KPI cards ====================
+function renderKPIs(planRows, factRows, lastFact, planByDate, be){
+  const grid = document.getElementById('kpi-grid');
+  if (!lastFact){ grid.innerHTML = `<div class="kpi"><div class="label">Нет фактических данных</div><div class="value">—</div></div>`; return; }
 
-  let deltaHtml = '';
-  if (be.delta != null){
-    const good = be.delta <= 0;
-    deltaHtml = `<div class="be-delta"><div class="n ${good?'good':'bad'}">${be.delta===0?'0':(good?'−':'+')+Math.abs(be.delta)}</div><div class="lbl">${be.delta===0?'точно по плану':'мес. '+(good?'раньше':'позже')+' плана'}</div></div>`;
+  const cards = [];
+
+  // 1) Окупаемость (%)
+  if (be.investment){
+    const factPct = lastFact.cumProfit/be.investment*100;
+    const planAtCutoff = planByDate[+lastFact.date];
+    const planPct = planAtCutoff ? planAtCutoff.cumProfit/be.investment*100 : null;
+    const stillNeeded = Math.max(0, be.investment - lastFact.cumProfit);
+    cards.push({ accent:'var(--fact)', label:'Окупаемость', value: factPct.toFixed(0)+'%',
+      badge: planPct!=null ? {tone: factPct>=planPct?'good':'bad', text: fmtPP(factPct-planPct)} : null,
+      foot: `план на этот месяц: ${planPct!=null?planPct.toFixed(0)+'%':'—'} · ещё нужно ${fmtRub(stillNeeded,true)} прибыли` });
   }
 
-  const invSub = be.investment!=null ? `прибыль нарастающим итогом ≥ ${fmtRub(be.investment,true)} вложений` : 'прибыль нарастающим итогом ≥ суммы вложений';
-  el.innerHTML = `
-    <div class="be-stat plan"><div class="be-label">План окупаемости</div><div class="be-value">${planTxt}</div><div class="be-sub">${invSub}</div></div>
-    <div class="be-stat fact"><div class="be-label">Факт / прогноз</div><div class="be-value">${factTxt}</div><div class="be-sub">${factSub}</div></div>
-    ${deltaHtml}
-  `;
+  // 2) Срок окупаемости (мес.)
+  {
+    const factTxt = be.factMonths!=null ? be.factMonths+' мес.' : (be.projFailed? 'не определён':'в процессе');
+    const planTxt = be.planMonths!=null ? be.planMonths+' мес.' : '—';
+    cards.push({ accent:'var(--fact)', label:'Срок окупаемости', value: factTxt,
+      badge: be.delta!=null ? {tone: be.delta<=0?'good':'bad', text: (be.delta===0?'0 мес.':(be.delta>0?'+':'−')+Math.abs(be.delta)+' мес.')} : null,
+      foot: `план: ${planTxt} · сейчас: мес. ${lastFact.periodNo}` });
+  }
+
+  // 3) Выручка накопительно
+  {
+    const revFactCum = factRows.reduce((s,r)=>s+(r.revenue||0),0);
+    const revPlanCum = planRows.filter(r=>r.date<=lastFact.date).reduce((s,r)=>s+(r.revenue||0),0);
+    const pct = revPlanCum ? revFactCum/revPlanCum*100 : null;
+    cards.push({ accent:'var(--plan)', label:'Выручка (накопительно)', value: fmtRub(revFactCum,true),
+      badge: pct!=null ? {tone:pct>=100?'good':'bad', text:fmtPct(pct-100,0)+' к плану'} : null,
+      foot: `план: ${fmtRub(revPlanCum,true)}` });
+  }
+
+  // 4) Рентабельность
+  {
+    const revFactCum = factRows.reduce((s,r)=>s+(r.revenue||0),0);
+    const netFactCum = factRows.reduce((s,r)=>s+(r.netProfit||0),0);
+    const planCum = planRows.filter(r=>r.date<=lastFact.date);
+    const revPlanCum = planCum.reduce((s,r)=>s+(r.revenue||0),0);
+    const netPlanCum = planCum.reduce((s,r)=>s+(r.netProfit||0),0);
+    const rFact = revFactCum ? netFactCum/revFactCum*100 : null;
+    const rPlan = revPlanCum ? netPlanCum/revPlanCum*100 : null;
+    cards.push({ accent:'var(--plan)', label:'Рентабельность', value: rFact!=null?rFact.toFixed(1)+'%':'—',
+      badge: (rFact!=null && rPlan!=null) ? {tone:rFact>=rPlan?'good':'bad', text:fmtPP(rFact-rPlan)} : null,
+      foot: `план: ${rPlan!=null?rPlan.toFixed(1)+'%':'—'}` });
+  }
+
+  // 5) Займ (остаток)
+  {
+    const planAtCutoff = planByDate[+lastFact.date];
+    cards.push({ accent:'var(--fact)', label:'Займ (остаток)', value: fmtRub(lastFact.loanEnd,true),
+      badge: null, foot: planAtCutoff ? `план: ${fmtRub(planAtCutoff.loanEnd,true)}` : `старт: ${fmtRub(planRows[0]?.loanStart,true)}` });
+  }
+
+  // 6) Средний чек
+  {
+    const planAtCutoff = planByDate[+lastFact.date];
+    const pct = planAtCutoff && planAtCutoff.avgCheck ? (lastFact.avgCheck-planAtCutoff.avgCheck)/planAtCutoff.avgCheck*100 : null;
+    cards.push({ accent:'var(--plan)', label:'Средний чек', value: fmtRub(lastFact.avgCheck),
+      badge: pct!=null ? {tone:pct>=0?'good':'bad', text:fmtPct(pct,1)} : null,
+      foot: planAtCutoff ? `план: ${fmtRub(planAtCutoff.avgCheck)}` : '—' });
+  }
+
+  // 7) Заказы (среднее в месяц)
+  {
+    const avgOrdersFact = factRows.reduce((s,r)=>s+(r.orders||0),0)/factRows.length;
+    const matchedPlan = factRows.map(r=>planByDate[+r.date]).filter(Boolean);
+    const avgOrdersPlan = matchedPlan.length ? matchedPlan.reduce((s,r)=>s+(r.orders||0),0)/matchedPlan.length : null;
+    const pct = avgOrdersPlan ? (avgOrdersFact-avgOrdersPlan)/avgOrdersPlan*100 : null;
+    cards.push({ accent:'var(--fact)', label:'Заказы (сред./мес.)', value: fmtNum(Math.round(avgOrdersFact)),
+      badge: pct!=null ? {tone:pct>=0?'good':'bad', text:fmtPct(pct,1)} : null,
+      foot: avgOrdersPlan!=null ? `план: ${fmtNum(Math.round(avgOrdersPlan))}` : '—' });
+  }
+
+  grid.innerHTML = cards.map(c => `
+    <div class="kpi" style="--kpi-accent:${c.accent}">
+      <div class="label">${c.label}</div>
+      <div class="value">${c.value}</div>
+      <div class="row">${c.badge? `<span class="badge ${c.badge.tone}">${ICONS[c.badge.tone==='good'?'up':'down']}${c.badge.text}</span>`:''}</div>
+      <div class="foot">${c.foot}</div>
+    </div>`).join('');
 }
 
-// ---------------- insights ----------------
-function renderInsights(planRows, factRows, lastFact, planByDate, be){
-  const grid = document.getElementById('insights-grid');
-  if (!lastFact){ grid.innerHTML = `<div class="insight tone-neutral"><div class="ic">${ICONS.target}</div><div class="body">Фактических данных пока нет — как только появится первый факт-месяц, здесь будет разбор отклонений от плана.</div></div>`; return; }
-
+// ==================== insights (tagged by topic) ====================
+function computeAllInsights(planRows, factRows, lastFact, planByDate, be){
+  if (!lastFact) return [];
   const cards = [];
   const planCumRows = planRows.filter(r=>r.date<=lastFact.date);
   const revFactCum = factRows.reduce((s,r)=>s+(r.revenue||0),0);
   const revPlanCum = planCumRows.reduce((s,r)=>s+(r.revenue||0),0);
 
-  // 1) revenue trend + driver + recommendation
-  const gaps = factRows.map(r => { const pr = planByDate[+r.date]; return pr && pr.revenue ? (r.revenue-pr.revenue)/pr.revenue*100 : null; }).filter(v=>v!=null);
-  if (gaps.length){
+  function streakInfo(key){
+    const gaps = factRows.map(r => { const p = planByDate[+r.date]; return p && p[key] ? (r[key]-p[key])/p[key]*100 : null; }).filter(v=>v!=null);
+    if (!gaps.length) return null;
     const lastGap = gaps[gaps.length-1];
     let streak = 0;
     for (let i=gaps.length-1;i>=0;i--){ if ((gaps[i]<0)===(lastGap<0)) streak++; else break; }
-    const below = lastGap < 0;
-    const p = planByDate[+lastFact.date];
-    let driverTxt = '';
-    if (p && p.orders && p.avgCheck){
-      const ordersVar = (lastFact.orders-p.orders)/p.orders*100;
-      const checkVar = (lastFact.avgCheck-p.avgCheck)/p.avgCheck*100;
-      const byOrders = Math.abs(ordersVar) >= Math.abs(checkVar);
-      const rec = byOrders
-        ? (ordersVar<0 ? 'рекомендация: разобрать воронку привлечения/удержания клиентов — падение объясняется количеством заказов, а не ценой' : '')
-        : (checkVar<0 ? 'рекомендация: проверить средний чек — возможно, демпинг или рост доли мелких заказов' : '');
-      driverTxt = ` Основной драйвер — <b>${byOrders?'заказы':'средний чек'}</b> (заказы ${fmtPct(ordersVar,1)}, чек ${fmtPct(checkVar,1)}).${rec?' '+rec+'.':''}`;
-    }
-    cards.push({ tone: below?'bad':'good', icon: below?'down':'up',
-      html: `Выручка <b>${below?'ниже':'выше'} плана ${streak} мес. подряд</b> (сейчас ${fmtPct(lastGap,1)}).${driverTxt}` });
+    return { lastGap, streak, below: lastGap<0 };
   }
 
-  // 2) expense structure: ratio-to-revenue analysis + unplanned line items
+  // Заказы
+  const ordersS = streakInfo('orders');
+  if (ordersS){
+    cards.push({ topic:'Заказы', tone: ordersS.below?'bad':'good', icon: ordersS.below?'down':'up',
+      html: `Заказы <b>${ordersS.below?'ниже':'выше'} плана ${ordersS.streak} мес. подряд</b> (сейчас ${fmtPct(ordersS.lastGap,1)}).${ordersS.below?' Рекомендация: разобрать воронку привлечения/удержания клиентов — маркетинг, конверсию, отток.':' Хорошая динамика — стоит зафиксировать, что сработало, и масштабировать.'}` });
+  }
+
+  // Средний чек
+  const checkS = streakInfo('avgCheck');
+  if (checkS){
+    cards.push({ topic:'Средний чек', tone: checkS.below?'bad':'good', icon: checkS.below?'down':'up',
+      html: `Средний чек <b>${checkS.below?'ниже':'выше'} плана ${checkS.streak} мес. подряд</b> (сейчас ${fmtPct(checkS.lastGap,1)}).${checkS.below?' Рекомендация: проверить ценообразование, скидки и долю мелких заказов.':' Апсейл/ценообразование работают лучше плана.'}` });
+  }
+
+  // Выручка
+  const revS = streakInfo('revenue');
+  if (revS){
+    const driverTopic = ordersS && checkS ? (Math.abs(ordersS.lastGap) >= Math.abs(checkS.lastGap) ? 'заказы' : 'средний чек') : null;
+    cards.push({ topic:'Выручка', tone: revS.below?'bad':'good', icon: revS.below?'down':'up',
+      html: `Выручка <b>${revS.below?'ниже':'выше'} плана ${revS.streak} мес. подряд</b> (сейчас ${fmtPct(revS.lastGap,1)}).${driverTopic?` Основной драйвер — <b>${driverTopic}</b>, подробнее на соответствующей вкладке.`:''}` });
+  }
+
+  // Расходы: unplanned + ratio-worst
   const catDefs = [
     ['partnerPrice','Партнерский прайс'], ['royalty','Роялти'],
     ['salary','ЗП с ФОТ'], ['salaryTax','Зарплатные налоги'], ['loanInterest','Проценты по займу'],
@@ -592,281 +563,211 @@ function renderInsights(planRows, factRows, lastFact, planByDate, be){
     const factRatio = revFactCum ? factSum/revFactCum*100 : 0;
     const planRatio = revPlanCum ? planSum/revPlanCum*100 : 0;
     const isUnplanned = planSum < revPlanCum*0.002 && factSum > revFactCum*0.01;
-    if (isUnplanned && (!unplanned || factSum > unplanned.factSum)){
-      unplanned = { label, factSum, factRatio };
-    }
+    if (isUnplanned && (!unplanned || factSum > unplanned.factSum)) unplanned = { label, factSum, factRatio };
     const ratioDelta = factRatio - planRatio;
-    if (!isUnplanned && (!worstRatio || ratioDelta > worstRatio.ratioDelta)){
-      worstRatio = { label, ratioDelta, factRatio, planRatio, factSum, planSum };
-    }
+    if (!isUnplanned && (!worstRatio || ratioDelta > worstRatio.ratioDelta)) worstRatio = { label, ratioDelta, factRatio, planRatio, factSum, planSum };
   });
   if (unplanned){
-    cards.push({ tone:'bad', icon:'alert',
+    cards.push({ topic:'Расходы', tone:'bad', icon:'alert',
       html: `Статья <b>«${unplanned.label}»</b> не заложена в план на этот период, но по факту уже составляет <b>${unplanned.factRatio.toFixed(1)}% выручки</b> (${fmtRub(unplanned.factSum,true)}) — внеплановые расходы. Рекомендация: уточнить условия начисления у контрагента и внести статью в план.` });
   }
   if (worstRatio && worstRatio.ratioDelta > 1.5){
-    cards.push({ tone:'warn', icon:'alert',
-      html: `Статья <b>«${worstRatio.label}»</b> растёт как доля выручки: план ${worstRatio.planRatio.toFixed(1)}% → факт ${worstRatio.factRatio.toFixed(1)}% (+${worstRatio.ratioDelta.toFixed(1)} п.п.). Это не просто рост в рублях из-за масштаба — эффективность по этой статье падает. Рекомендация: пересмотреть условия/тариф по «${worstRatio.label}».` });
+    cards.push({ topic:'Расходы', tone:'warn', icon:'alert',
+      html: `Статья <b>«${worstRatio.label}»</b> растёт как доля выручки: план ${worstRatio.planRatio.toFixed(1)}% → факт ${worstRatio.factRatio.toFixed(1)}% (+${worstRatio.ratioDelta.toFixed(1)} п.п.). Рекомендация: пересмотреть условия/тариф по «${worstRatio.label}».` });
+  }
+  const expS = streakInfo('expenses');
+  if (expS){
+    cards.push({ topic:'Расходы', tone: expS.below?'good':'bad', icon: expS.below?'down':'up',
+      html: `Расходы нарастающим итогом ${expS.below?'ниже':'выше'} плана (сейчас отклонение ${fmtPct(expS.lastGap,1)} за последний месяц).` });
   }
 
-  // 3) rentability trend
+  // Прибыль: rentability + BDR-adjusted + breakeven/recommendation
   const netFactCum = factRows.reduce((s,r)=>s+(r.netProfit||0),0);
   const netPlanCum = planCumRows.reduce((s,r)=>s+(r.netProfit||0),0);
   if (revFactCum && revPlanCum){
-    const rFact = netFactCum/revFactCum*100;
-    const rPlan = netPlanCum/revPlanCum*100;
-    const d = rFact-rPlan;
-    cards.push({ tone: d>=0?'good':'bad', icon: d>=0?'up':'down',
-      html: `Рентабельность нарастающим итогом: факт <b>${rFact.toFixed(1)}%</b> против плана ${rPlan.toFixed(1)}% (${fmtPP(d)}).${d<0?' Это напрямую отдаляет точку окупаемости — см. ниже.':''}` });
+    const rFact = netFactCum/revFactCum*100, rPlan = netPlanCum/revPlanCum*100, d = rFact-rPlan;
+    cards.push({ topic:'Прибыль', tone: d>=0?'good':'bad', icon: d>=0?'up':'down',
+      html: `Рентабельность нарастающим итогом: факт <b>${rFact.toFixed(1)}%</b> против плана ${rPlan.toFixed(1)}% (${fmtPP(d)}).${d<0?' Это напрямую отдаляет точку окупаемости.':''}` });
   }
-
-  // 3b) BDR-adjusted result (accounts for amortized customer-acquisition cost) — Факт-only metric
   if (lastFact.finResultCum != null && lastFact.cumProfit != null){
     const gap = lastFact.cumProfit - lastFact.finResultCum;
     if (Math.abs(gap) > Math.abs(lastFact.cumProfit)*0.03 + 5000){
-      cards.push({ tone:'warn', icon:'alert',
-        html: `С учётом равномерного списания стоимости привлечения клиента (БДР), реальный накопленный финрезультат — <b>${fmtRub(lastFact.finResultCum,true)}</b>, это на ${fmtRub(Math.abs(gap),true)} ${gap>0?'ниже':'выше'} операционной чистой прибыли (${fmtRub(lastFact.cumProfit,true)}). Более консервативная и корректная цифра для оценки реального состояния проекта — эта.` });
+      cards.push({ topic:'Прибыль', tone:'warn', icon:'alert',
+        html: `С учётом равномерного списания стоимости привлечения клиента (БДР), реальный накопленный финрезультат — <b>${fmtRub(lastFact.finResultCum,true)}</b>, это на ${fmtRub(Math.abs(gap),true)} ${gap>0?'ниже':'выше'} операционной чистой прибыли. Более консервативная оценка — эта.` });
     }
   }
-
-  // 4) break-even delay + actionable recommendation
   if (be.investment!=null && be.planBE){
     if (be.delta != null){
       let rec = '';
       if (be.requiredMonthlyProfit!=null && be.actualRecentMonthlyProfit!=null){
         if (be.requiredMonthlyProfit > be.actualRecentMonthlyProfit){
           const gap = be.requiredMonthlyProfit - be.actualRecentMonthlyProfit;
-          rec = ` Чтобы уложиться в плановый срок (${fmtMon(be.planBE.date)}), нужно нарастить среднюю чистую прибыль минимум на <b>${fmtRub(gap,true)}/мес</b> (сейчас в среднем ${fmtRub(be.actualRecentMonthlyProfit,true)}/мес, требуется ${fmtRub(be.requiredMonthlyProfit,true)}/мес).`;
+          rec = ` Чтобы уложиться в плановый срок (${fmtMon(be.planBE.date)}), нужно нарастить среднюю чистую прибыль минимум на <b>${fmtRub(gap,true)}/мес</b> (сейчас ${fmtRub(be.actualRecentMonthlyProfit,true)}/мес, нужно ${fmtRub(be.requiredMonthlyProfit,true)}/мес).`;
         } else {
-          rec = ` Текущий темп прибыли (${fmtRub(be.actualRecentMonthlyProfit,true)}/мес) уже выше необходимого для планового срока — задержка объясняется стартовым отставанием, а не текущей динамикой.`;
+          rec = ` Текущий темп прибыли (${fmtRub(be.actualRecentMonthlyProfit,true)}/мес) уже выше необходимого — задержка объясняется стартовым отставанием, а не текущей динамикой.`;
         }
       }
-      cards.push({ tone: be.delta<=0?'good':'warn', icon: be.delta<=0?'up':'alert',
-        html: (be.delta===0 ? `Проект окупается <b>точно по плану</b> — ${fmtMon(be.planBE.date)}.` : `Точка окупаемости ${be.delta>0?'сдвигается позже плана':'наступает раньше плана'} на <b>${Math.abs(be.delta)} мес.</b>` ) + rec });
+      cards.push({ topic:'Прибыль', tone: be.delta<=0?'good':'warn', icon: be.delta<=0?'up':'alert',
+        html: (be.delta===0 ? `Проект окупается <b>точно по плану</b> — ${fmtMon(be.planBE.date)}.` : `Точка окупаемости ${be.delta>0?'сдвигается позже плана':'наступает раньше плана'} на <b>${Math.abs(be.delta)} мес.</b>`) + rec });
     } else if (be.projFailed){
-      cards.push({ tone:'bad', icon:'alert', html:`При текущем темпе чистая прибыль не растёт — окупаемость (план: ${fmtMon(be.planBE.date)}, ${fmtRub(be.investment,true)} вложений) под риском срыва. Рекомендация: приоритет — остановить снижение выручки и/или сократить статью с наибольшим отклонением, см. выше.` });
+      cards.push({ topic:'Прибыль', tone:'bad', icon:'alert', html:`При текущем темпе чистая прибыль не растёт — окупаемость (план: ${fmtMon(be.planBE.date)}) под риском срыва. Приоритет — остановить снижение выручки и/или сократить статью с наибольшим отклонением (см. вкладку «Расходы»).` });
     }
   }
 
-  grid.innerHTML = cards.map(c => `
-    <div class="insight tone-${c.tone}"><div class="ic">${ICONS[c.icon]}</div><div class="body">${c.html}</div></div>`).join('')
-    || `<div class="insight tone-neutral"><div class="ic">${ICONS.target}</div><div class="body">Недостаточно данных для аналитики.</div></div>`;
+  return cards;
 }
 
-// ---------------- KPI cards ----------------
-function renderKPIs(planRows, factRows, lastFact, planByDate){
-  const grid = document.getElementById('kpi-grid');
-  const revFactCum = factRows.reduce((s,r)=>s+(r.revenue||0),0);
-  const cutoff = lastFact ? lastFact.date : null;
-  const revPlanCum = cutoff ? planRows.filter(r=>r.date<=cutoff).reduce((s,r)=>s+(r.revenue||0),0) : 0;
-  const pctRevenue = revPlanCum ? (revFactCum/revPlanCum*100) : null;
-
-  const expFactCum = factRows.reduce((s,r)=>s+(r.expenses||0),0);
-  const expPlanCum = cutoff ? planRows.filter(r=>r.date<=cutoff).reduce((s,r)=>s+(r.expenses||0),0) : 0;
-  const pctExpenses = expPlanCum ? (expFactCum/expPlanCum*100) : null;
-
-  const netFactCum = factRows.reduce((s,r)=>s+(r.netProfit||0),0);
-  const marginFact = revFactCum ? netFactCum/revFactCum*100 : null;
-  const planCum = cutoff ? planRows.filter(r=>r.date<=cutoff) : [];
-  const netPlanC = planCum.reduce((s,r)=>s+(r.netProfit||0),0);
-  const marginPlan = revPlanCum ? netPlanC/revPlanCum*100 : null;
-
-  const prevFact = factRows.length>=2 ? factRows[factRows.length-2] : null;
-  const ordersGrowth = (prevFact && prevFact.orders) ? (lastFact.orders-prevFact.orders)/prevFact.orders*100 : null;
-
-  const revSpark = sparklineSVG(factRows.slice(-8).map(r=>r.revenue), 'var(--fact)');
-  const expSpark = sparklineSVG(factRows.slice(-8).map(r=>r.expenses), 'var(--fact)');
-  const marginSpark = sparklineSVG(factRows.slice(-8).map(r=> r.revenue? r.netProfit/r.revenue*100 : null), 'var(--fact)');
-  const ordersSpark = sparklineSVG(factRows.slice(-8).map(r=>r.orders), 'var(--fact)');
-
-  const cards = [
-    { accent:'var(--fact)', label:'Выручка нарастающим итогом', value:fmtRub(revFactCum,true), spark:revSpark,
-      badge: pctRevenue!=null ? {tone:pctRevenue>=100?'good':'bad', text:fmtPct(pctRevenue-100,0)+' к плану'} : null,
-      foot: `план: ${fmtRub(revPlanCum,true)}` },
-    { accent:'var(--fact)', label:'Расходы нарастающим итогом', value:fmtRub(expFactCum,true), spark:expSpark,
-      badge: pctExpenses!=null ? {tone:pctExpenses<=100?'good':'bad', text:fmtPct(pctExpenses-100,0)+' к плану'} : null,
-      foot: `план: ${fmtRub(expPlanCum,true)}` },
-    { accent:'var(--plan)', label:'Рентабельность (чистая)', value: marginFact!=null?marginFact.toFixed(1)+'%':'—', spark:marginSpark,
-      badge: (marginFact!=null && marginPlan!=null) ? {tone:marginFact>=marginPlan?'good':'bad', text:fmtPP(marginFact-marginPlan)} : null,
-      foot: `план: ${marginPlan!=null?marginPlan.toFixed(1)+'%':'—'}` },
-    { accent:'var(--plan)', label:'Рост заказов MoM', value: ordersGrowth!=null?fmtPct(ordersGrowth,1):'—', spark:ordersSpark,
-      badge: ordersGrowth!=null ? {tone:ordersGrowth>=0?'good':'bad', text: ordersGrowth>=0?'рост':'падение'} : null,
-      foot: lastFact?`${fmtMon(lastFact.date)} · ${fmtNum(lastFact.orders)} заказов`:'—' },
-  ];
-
-  grid.innerHTML = cards.map(c => `
-    <div class="kpi" style="--kpi-accent:${c.accent}">
-      <div class="kpi-top"><div class="label">${c.label}</div>${c.spark||''}</div>
-      <div class="value">${c.value}</div>
-      <div class="row">${c.badge? `<span class="badge ${c.badge.tone}">${ICONS[c.badge.tone==='good'?'up':'down']}${c.badge.text}</span>`:''}</div>
-      <div class="foot">${c.foot}</div>
-    </div>`).join('');
+function renderInsightsPanel(metric){
+  const panel = document.getElementById('insights-panel');
+  const label = METRICS[metric].label;
+  const filtered = cachedInsights.filter(c => c.topic === label);
+  panel.innerHTML = `<h4>Инсайты и рекомендации · ${label}</h4>` + (filtered.length
+    ? filtered.map(c => `<div class="insight tone-${c.tone}"><div class="ic">${ICONS[c.icon]}</div><div class="body">${c.html}</div></div>`).join('')
+    : `<div class="insight tone-neutral"><div class="ic">${ICONS.target}</div><div class="body">По этому показателю пока нет заметных отклонений от плана.</div></div>`);
 }
 
-// ---------------- charts ----------------
+// ==================== charts ====================
 function alignToPlan(planRows, factRows, key){
   const idx = {}; planRows.forEach((r,i)=>idx[+r.date]=i);
   const arr = new Array(planRows.length).fill(null);
   factRows.forEach(r => { const i = idx[+r.date]; if (i!=null) arr[i] = r[key]; });
   return arr;
 }
+function buildProjection(planRows, factRows, key){
+  const factAligned = alignToPlan(planRows, factRows, key);
+  let lastIdx = -1;
+  for (let i=0;i<factAligned.length;i++) if (factAligned[i]!=null) lastIdx = i;
+  const dashed = new Array(planRows.length).fill(null);
+  if (lastIdx < 0) return { solid: factAligned, dashed };
+  const sortedFact = factRows.slice().sort((a,b)=>a.date-b.date);
+  const vals = sortedFact.map(r=>r[key]).filter(v=>v!=null);
+  let avgDelta = 0;
+  if (vals.length >= 2){
+    const from = Math.max(1, vals.length-3);
+    const deltas = [];
+    for (let i=from;i<vals.length;i++) deltas.push(vals[i]-vals[i-1]);
+    avgDelta = deltas.reduce((s,d)=>s+d,0)/deltas.length;
+  }
+  dashed[lastIdx] = factAligned[lastIdx];
+  let cur = factAligned[lastIdx];
+  for (let i=lastIdx+1;i<planRows.length;i++){
+    cur = cur + avgDelta;
+    if (cur < 0) cur = 0;
+    dashed[i] = cur;
+  }
+  return { solid: factAligned, dashed };
+}
 function baseLine(label, color, extra){
   return Object.assign({ label, borderColor:color, backgroundColor:color, borderWidth:2.5,
     pointRadius:2.5, pointHoverRadius:4, tension:.3, spanGaps:false }, extra||{});
 }
-function tooltipMoney(){ return { callbacks:{ label:(ctx)=> ctx.raw==null?'':` ${ctx.dataset.label}: ${fmtRub(ctx.raw,true)}` } }; }
-function yMoney(scales){ return Object.assign({}, scales, { y: Object.assign({}, scales.y, { ticks: Object.assign({}, scales.y.ticks, { callback:(v)=>fmtRub(v,true) }) }) }); }
-
-function renderCharts(planRows, factRows, lastFact, planByDate, be){
-  const labels = planRows.map(r=>fmtMon(r.date));
-  const base = {
+function chartBaseOptions(moneyAxis){
+  return {
     responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
     scales:{
       x:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#8892ad', font:{family:'JetBrains Mono', size:11}, maxRotation:0, autoSkip:true, maxTicksLimit:9} },
-      y:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#8892ad', font:{family:'JetBrains Mono', size:11}} }
+      y:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#8892ad', font:{family:'JetBrains Mono', size:11},
+            callback: moneyAxis ? (v)=>fmtRub(v,true) : undefined } }
     },
     plugins:{ legend:{display:false}, tooltip:{
       backgroundColor:'#121927', borderColor:'rgba(255,255,255,.12)', borderWidth:1,
-      titleFont:{family:'Manrope', weight:700, size:12.5}, bodyFont:{family:'JetBrains Mono', size:12}
+      titleFont:{family:'Manrope', weight:700, size:12.5}, bodyFont:{family:'JetBrains Mono', size:12},
+      callbacks:{ label:(ctx)=> ctx.raw==null?'': ` ${ctx.dataset.label}: ${moneyAxis?fmtRub(ctx.raw,true):fmtNum(ctx.raw)}` }
     }}
   };
+}
 
-  // revenue — both План and Факт as lines (same visual language)
-  if (charts.revenue) charts.revenue.destroy();
-  charts.revenue = new Chart(document.getElementById('chart-revenue'), {
+function renderMetricChart(metric, planRows, factRows){
+  const m = METRICS[metric];
+  document.getElementById('metric-chart-title').textContent = m.label;
+  document.getElementById('metric-chart-sub').textContent = m.sub;
+  const labels = planRows.map(r=>fmtMon(r.date));
+  const { solid, dashed } = buildProjection(planRows, factRows, m.field);
+  if (charts.metric) charts.metric.destroy();
+  charts.metric = new Chart(document.getElementById('chart-metric'), {
     type:'line',
     data:{ labels, datasets:[
-      baseLine('План','#39d98a',{data:planRows.map(r=>r.revenue)}),
-      baseLine('Факт','#ff8a3d',{data:alignToPlan(planRows, factRows, 'revenue')}),
+      baseLine('План','#39d98a',{data:planRows.map(r=>r[m.field])}),
+      baseLine('Факт','#ff8a3d',{data:solid}),
+      baseLine('Прогноз','#ff8a3d',{data:dashed, borderDash:[6,5], pointRadius:0, borderWidth:2}),
     ]},
-    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, tooltipMoney()) }), scales: yMoney(base.scales) })
-  });
-
-  // expenses — same line style as revenue, for direct visual comparison
-  if (charts.expenses) charts.expenses.destroy();
-  charts.expenses = new Chart(document.getElementById('chart-expenses'), {
-    type:'line',
-    data:{ labels, datasets:[
-      baseLine('План','#39d98a',{data:planRows.map(r=>r.expenses)}),
-      baseLine('Факт','#ff8a3d',{data:alignToPlan(planRows, factRows, 'expenses')}),
-    ]},
-    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, tooltipMoney()) }), scales: yMoney(base.scales) })
-  });
-
-  // payoff / break-even: cumulative profit vs investment amount (dashed reference)
-  if (charts.cumprofit) charts.cumprofit.destroy();
-  const invLine = be && be.investment!=null ? planRows.map(()=>be.investment) : null;
-  const cumDatasets = [
-    baseLine('План','#39d98a',{data:planRows.map(r=>r.cumProfit)}),
-    baseLine('Факт','#ff8a3d',{data:alignToPlan(planRows, factRows, 'cumProfit')}),
-  ];
-  if (invLine){
-    cumDatasets.push({ label:'Сумма вложений', data:invLine, borderColor:'rgba(200,206,224,.55)', borderWidth:1.5,
-      borderDash:[6,5], pointRadius:0, tension:0, fill:false });
-  }
-  charts.cumprofit = new Chart(document.getElementById('chart-cumprofit'), {
-    type:'line',
-    data:{ labels, datasets:cumDatasets },
-    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, tooltipMoney()) }), scales: yMoney(base.scales) })
-  });
-
-  // expense structure: plan vs fact for last fact month
-  const structSub = document.getElementById('structure-sub');
-  const catDefs = [['partnerPrice','Партнерка'], ['royalty','Роялти'], ['salary','ЗП'], ['salaryTax','Налоги ФОТ'], ['loanInterest','Займ %']];
-  let structPlan, structFact, structLabels;
-  if (lastFact){
-    const p = planByDate[+lastFact.date];
-    structSub.textContent = `По статьям · ${fmtMon(lastFact.date)}`;
-    structLabels = catDefs.map(c=>c[1]);
-    structPlan = catDefs.map(([k])=> p ? (p[k]||0) : null);
-    structFact = catDefs.map(([k])=> lastFact[k]||0);
-  } else {
-    structSub.textContent = 'По статьям · план (мес. 1)';
-    structLabels = catDefs.map(c=>c[1]);
-    structPlan = catDefs.map(([k])=> planRows[0] ? (planRows[0][k]||0) : null);
-    structFact = catDefs.map(()=>null);
-  }
-  if (charts.structure) charts.structure.destroy();
-  charts.structure = new Chart(document.getElementById('chart-structure'), {
-    type:'bar',
-    data:{ labels:structLabels, datasets:[
-      { label:'План', data:structPlan, backgroundColor:'rgba(57,217,138,.55)', borderRadius:4 },
-      { label:'Факт', data:structFact, backgroundColor:'rgba(255,138,61,.75)', borderRadius:4 },
-    ]},
-    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, tooltipMoney()) }), scales: yMoney(base.scales) })
-  });
-
-  // avg check (unit economics) — with defensive fallback already applied in data
-  if (charts.check) charts.check.destroy();
-  charts.check = new Chart(document.getElementById('chart-check'), {
-    type:'line',
-    data:{ labels, datasets:[
-      baseLine('План','#39d98a',{data:planRows.map(r=>r.avgCheck)}),
-      baseLine('Факт','#ff8a3d',{data:alignToPlan(planRows, factRows, 'avgCheck')}),
-    ]},
-    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, {
-      callbacks:{ label:(ctx)=> ctx.raw==null?'':` ${ctx.dataset.label}: ${fmtRub(ctx.raw)}` } }) }), scales: yMoney(base.scales) })
-  });
-
-  // margin %
-  const planMargin = planRows.map(r => r.revenue ? r.netProfit/r.revenue*100 : null);
-  const factMarginAligned = alignToPlan(planRows, factRows, 'revenue').map((_,i) => {
-    const fr = factRows.find(r => fmtMon(r.date)===labels[i]);
-    return fr && fr.revenue ? fr.netProfit/fr.revenue*100 : null;
-  });
-  if (charts.margin) charts.margin.destroy();
-  charts.margin = new Chart(document.getElementById('chart-margin'), {
-    type:'line',
-    data:{ labels, datasets:[ baseLine('План','#39d98a',{data:planMargin}), baseLine('Факт','#ff8a3d',{data:factMarginAligned}) ] },
-    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, {
-      callbacks:{ label:(ctx)=> ctx.raw==null?'':` ${ctx.dataset.label}: ${ctx.raw.toFixed(1)}%` } }) }),
-      scales: Object.assign({}, base.scales, { y: Object.assign({}, base.scales.y, { ticks: Object.assign({}, base.scales.y.ticks, { callback:(v)=>v+'%' }) }) }) })
+    options: chartBaseOptions(m.money)
   });
 }
 
-// ---------------- table ----------------
-function renderTable(planByDate){
-  let rows = allRows.slice().sort((a,b)=>a.date-b.date || (a.type==='План'?1:-1));
-  if (currentFilter !== 'all') rows = rows.filter(r=>r.type===currentFilter);
-  const byTypeSorted = { 'План': allRows.filter(r=>r.type==='План').sort((a,b)=>a.date-b.date),
-                          'Факт': allRows.filter(r=>r.type==='Факт').sort((a,b)=>a.date-b.date) };
-  const body = document.getElementById('table-body');
-  body.innerHTML = rows.map(r => {
-    const badge = r.type==='План' ? '<span class="type-badge plan">План</span>' : '<span class="type-badge fact">Факт</span>';
-    const seq = byTypeSorted[r.type];
-    const idx = seq.findIndex(x=>+x.date===+r.date);
-    const prev = idx>0 ? seq[idx-1] : null;
-    let momHtml = '—';
-    if (prev && prev.revenue){
-      const mom = (r.revenue-prev.revenue)/prev.revenue*100;
-      momHtml = `<span class="${mom>0.5?'mom-up':mom<-0.5?'mom-down':'mom-flat'}">${fmtPct(mom,1)}</span>`;
+function renderPayoffChart(planRows, factRows, be){
+  const labels = planRows.map(r=>fmtMon(r.date));
+  const { solid, dashed } = buildProjection(planRows, factRows, 'cumProfit');
+  const invLine = be && be.investment!=null ? planRows.map(()=>be.investment) : null;
+  const datasets = [
+    baseLine('План','#39d98a',{data:planRows.map(r=>r.cumProfit)}),
+    baseLine('Факт','#ff8a3d',{data:solid}),
+    baseLine('Прогноз','#ff8a3d',{data:dashed, borderDash:[6,5], pointRadius:0, borderWidth:2}),
+  ];
+  if (invLine) datasets.push({ label:'Сумма вложений', data:invLine, borderColor:'rgba(200,206,224,.55)', borderWidth:1.5, borderDash:[3,4], pointRadius:0, tension:0, fill:false });
+  if (charts.payoff) charts.payoff.destroy();
+  charts.payoff = new Chart(document.getElementById('chart-payoff'), {
+    type:'line', data:{ labels, datasets }, options: chartBaseOptions(true)
+  });
+}
+
+// ==================== detail table ====================
+function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
+  const m = METRICS[metric];
+  const title = document.getElementById('detail-table-title');
+  const thead = document.getElementById('detail-thead');
+  const tbody = document.getElementById('detail-tbody');
+
+  if (metric === 'expenses'){
+    title.textContent = 'Расходы по статьям затрат';
+    const catDefs = [
+      ['partnerPrice','Партнерский прайс'], ['royalty','Роялти'], ['salary','ЗП с ФОТ'],
+      ['salaryTax','Зарплатные налоги'], ['loanInterest','Проценты по займу'],
+      ['vatOut','НДС исходящий'], ['vatIn','НДС вход'],
+    ];
+    thead.innerHTML = `<tr><th>Статья</th><th>План</th><th>Факт</th><th>Отклонение</th><th>% к плану</th></tr>`;
+    const cutoff = lastFact ? lastFact.date : null;
+    const planCum = cutoff ? planRows.filter(r=>r.date<=cutoff) : [];
+    tbody.innerHTML = catDefs.map(([key,label]) => {
+      const planSum = planCum.reduce((s,r)=>s+(r[key]||0),0);
+      const factSum = factRows.reduce((s,r)=>s+(r[key]||0),0);
+      const delta = factSum - planSum;
+      const pct = planSum ? factSum/planSum*100 : (factSum?Infinity:null);
+      return `<tr>
+        <td>${label}</td><td>${fmtRub(planSum)}</td><td>${fmtRub(factSum)}</td>
+        <td class="${delta>0?'delta-neg':'delta-pos'}">${delta>=0?'+':''}${fmtRub(delta)}</td>
+        <td>${pct==null?'—':(pct===Infinity?'внеплан.':pct.toFixed(0)+'%')}</td>
+      </tr>`;
+    }).join('');
+    return;
+  }
+
+  title.textContent = m.label + ' по месяцам';
+  thead.innerHTML = `<tr><th>Дата</th><th>План</th><th>Факт</th><th>Отклонение</th></tr>`;
+  const factByDate = {}; factRows.forEach(r=>factByDate[+r.date]=r);
+  tbody.innerHTML = planRows.map(pr => {
+    const fr = factByDate[+pr.date];
+    const planVal = pr[m.field];
+    const factVal = fr ? fr[m.field] : null;
+    let deltaCell = '—';
+    if (factVal!=null && planVal){
+      const pct = (factVal-planVal)/planVal*100;
+      deltaCell = `<span class="${pct>=0?'delta-pos':'delta-neg'}">${fmtPct(pct,1)}</span>`;
     }
-    const margin = r.revenue ? (r.netProfit/r.revenue*100) : null;
-    let pctCell = '—';
-    if (r.type==='Факт'){
-      const p = planByDate[+r.date];
-      if (p && p.revenue){
-        const pct = r.revenue/p.revenue*100;
-        const bg = pct>=100 ? 'rgba(57,217,138,'+Math.min(.35,.1+Math.abs(pct-100)/200)+')' : 'rgba(255,93,120,'+Math.min(.35,.1+Math.abs(pct-100)/200)+')';
-        pctCell = `<span class="cell-pct" style="background:${bg}">${pct.toFixed(0)}%</span>`;
-      }
-    }
-    return `<tr>
-      <td>${fmtDate(r.date)}</td><td>${badge}</td><td>${fmtNum(r.orders)}</td>
-      <td>${fmtRub(r.revenue)}</td><td>${momHtml}</td><td>${fmtRub(r.expenses)}</td>
-      <td>${fmtRub(r.netProfit)}</td><td>${margin!=null?margin.toFixed(1)+'%':'—'}</td>
-      <td>${fmtRub(r.cumProfit)}</td><td>${pctCell}</td>
-    </tr>`;
+    const fmtVal = (v) => v==null ? '—' : (m.money ? fmtRub(v) : fmtNum(v));
+    return `<tr><td>${fmtMon(pr.date)}</td><td>${fmtVal(planVal)}</td><td>${fmtVal(factVal)}</td><td>${deltaCell}</td></tr>`;
   }).join('');
 }
 
-document.getElementById('filter-btns').addEventListener('click', (e) => {
+// ==================== toggle wiring ====================
+document.getElementById('metric-toggle').addEventListener('click', (e) => {
   const btn = e.target.closest('button'); if (!btn) return;
-  document.querySelectorAll('#filter-btns button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#metric-toggle button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  currentFilter = btn.dataset.f;
-  const planByDate = {}; allRows.filter(r=>r.type==='План').forEach(r=>planByDate[+r.date]=r);
-  renderTable(planByDate);
+  currentMetric = btn.dataset.m;
+  renderInsightsPanel(currentMetric);
+  renderMetricChart(currentMetric, cachedPlanRows, cachedFactRows);
+  renderDetailTable(currentMetric, cachedPlanRows, cachedFactRows, cachedLastFact, cachedPlanByDate);
 });
 
 loadData();
