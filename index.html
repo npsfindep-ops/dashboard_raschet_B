@@ -89,7 +89,7 @@
   .metric-toggle button:hover:not(.active){background:#333333;}
 
   /* ---------------- split rows (fill remaining vertical space, equal 1:1 like reference) ---------------- */
-  .split-21{display:grid; grid-template-columns:2fr 1fr; gap:12px; min-height:0;}
+  .split-21{display:grid; grid-template-columns:2fr 1fr; gap:12px; min-height:0; width:100%;}
   .row-top{flex:1 1 0; min-height:0;}
   .row-bottom{flex:1 1 0; min-height:0;}
 
@@ -97,7 +97,7 @@
   .insights-panel{
     background:var(--card-bg);
     border:1px solid var(--line); border-radius:var(--radius); padding:14px;
-    display:flex; flex-direction:column; gap:9px; min-height:0; overflow-y:auto;
+    display:flex; flex-direction:column; gap:9px; min-height:0; min-width:0; overflow-y:auto;
   }
   .insights-panel h4{margin:0 0 1px; font-size:10px; font-weight:600; color:#ffffff; text-transform:uppercase; letter-spacing:.06em; flex:none;}
   .insight{
@@ -137,7 +137,7 @@
   .chart-card{
     background:var(--card-bg);
     border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px 10px;
-    display:flex; flex-direction:column; min-height:0;
+    display:flex; flex-direction:column; min-height:0; min-width:0;
   }
   .chart-head{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex:none;}
   .chart-head h3{margin:0; font-size:10px; font-weight:600; color:#ffffff; text-transform:uppercase; letter-spacing:.06em;}
@@ -151,19 +151,19 @@
   .table-card{
     background:var(--card-bg);
     border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px;
-    display:flex; flex-direction:column; min-height:0;
+    display:flex; flex-direction:column; min-height:0; min-width:0;
   }
   .table-card h3{margin:0 0 8px; font-size:10px; font-weight:600; color:#ffffff; text-transform:uppercase; letter-spacing:.06em; flex:none;}
   .table-scroll{overflow-y:auto; overflow-x:hidden; min-height:0; flex:1;}
   table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11.5px;}
   thead th{
-    text-align:right; font-weight:600; color:#ffffff; font-size:9.5px;
+    text-align:right; font-weight:400; color:#ffffff; font-size:9.5px;
     text-transform:uppercase; letter-spacing:.02em; padding:6px 10px; border-bottom:1px solid var(--line-strong);
     position:sticky; top:0; background:var(--card-bg);
   }
   thead th:first-child{text-align:left;}
   tbody td{padding:5px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap; font-weight:400;}
-  tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:600; color:var(--text);}
+  tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:400; color:var(--text);}
   tbody tr:hover{background:rgba(255,255,255,.025);}
   .cell-pct{border-radius:5px; padding:1px 7px; font-weight:700;}
   .delta-pos{color:var(--good);} .delta-neg{color:var(--danger);}
@@ -214,7 +214,7 @@
     </div>
     <div class="chart-card">
       <div class="chart-head">
-        <div><h3>Окупаемость</h3></div>
+        <div><h3 id="payoff-chart-title">Окупаемость</h3></div>
       </div>
       <div class="chart-wrap"><canvas id="chart-payoff"></canvas></div>
     </div>
@@ -677,42 +677,69 @@ function alignToPlan(planRows, factRows, key){
 // Holt's damped-trend exponential smoothing — standard method for short business series
 // without seasonality. Uses the FULL actual history (recency-weighted via alpha/beta,
 // so old months naturally matter less without arbitrarily discarding them), and damps
-// the trend at each future step (phi<1) so the forecast converges to a stable level
-// instead of running off in a straight line.
-// Ratio-to-plan projection: rather than extrapolating a generic statistical trend (which has no
-// way to "know" about seasonality), we scale the PLAN's own future trajectory — which already
-// encodes whatever seasonal assumptions the business built in (e.g. a Q4 uplift) — by how the
-// actuals have recently been tracking against plan. This preserves the plan's shape (including
-// seasonal swings) while reflecting the current performance level, instead of a near-straight
-// line that a pure trend model produces when it has no seasonal signal to work from.
-function computeAvgRatio(planRows, factRows, key, windowSize){
-  const idx = {}; planRows.forEach((r,i)=>idx[+r.date]=i);
-  const sortedFact = factRows.slice().sort((a,b)=>a.date-b.date);
-  const ratios = [];
-  sortedFact.forEach(r => {
-    const i = idx[+r.date]; if (i==null) return;
-    const planVal = planRows[i][key];
-    if (planVal) ratios.push(r[key]/planVal);
-  });
-  const recent = ratios.slice(-(windowSize||6));
-  return recent.length ? recent.reduce((s,v)=>s+v,0)/recent.length : 1;
+// ==================== fact-only trend + seasonality ====================
+// Fits the underlying trend using only the "steady state" (non-Q4) actual months, then measures
+// an explicit Q4 multiplier by comparing the actual Oct/Nov/Dec months to what that trend would
+// have predicted for them. Fact data starts in October 2025, so the very first observed months
+// ARE Q4 — if the business shows a seasonal uplift there, this multiplier captures it and carries
+// it into the projected Q4 2026. Fitting trend+season jointly on such a short series (as an
+// all-points OLS+residual decomposition would) lets the launch quarter distort the trend line
+// itself, understating the seasonal effect — separating them like this avoids that.
+function fitTrendAndSeasonality(factRows, key){
+  const sorted = factRows.slice().sort((a,b)=>a.date-b.date);
+  const n = sorted.length;
+  if (n === 0) return null;
+  const Q4 = new Set([9,10,11]); // Oct, Nov, Dec (JS 0-based months)
+  const nonQ4 = sorted.filter(r => !Q4.has(r.date.getMonth()) && r[key]!=null);
+  const q4Rows = sorted.filter(r => Q4.has(r.date.getMonth()) && r[key]!=null);
+
+  let slope = 0, intercept = 0, baseDate = sorted[0].date;
+  if (nonQ4.length >= 2){
+    const xs = nonQ4.map(r => monthsBetween(baseDate, r.date));
+    const ys = nonQ4.map(r => r[key]);
+    const xMean = xs.reduce((s,v)=>s+v,0)/xs.length;
+    const yMean = ys.reduce((s,v)=>s+v,0)/ys.length;
+    let num=0, den=0;
+    for (let i=0;i<xs.length;i++){ num += (xs[i]-xMean)*(ys[i]-yMean); den += (xs[i]-xMean)*(xs[i]-xMean); }
+    slope = den ? num/den : 0;
+    intercept = yMean - slope*xMean;
+  } else if (nonQ4.length === 1){
+    intercept = nonQ4[0][key]; slope = 0; baseDate = nonQ4[0].date;
+  } else {
+    const vals = sorted.map(r=>r[key]).filter(v=>v!=null);
+    intercept = vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : 0; slope = 0;
+  }
+
+  let q4Multiplier = 1;
+  if (q4Rows.length){
+    const ratios = q4Rows.map(r => {
+      const x = monthsBetween(baseDate, r.date);
+      const trendVal = intercept + slope*x;
+      return trendVal>0 ? r[key]/trendVal : null;
+    }).filter(v=>v!=null);
+    if (ratios.length) q4Multiplier = ratios.reduce((s,v)=>s+v,0)/ratios.length;
+  }
+
+  const lastDate = sorted[n-1].date;
+  const lastX = monthsBetween(baseDate, lastDate);
+  return { slope, intercept, baseDate, lastFitted: intercept + slope*lastX, lastDate, q4Multiplier };
 }
 
-// For metrics that can be negative or cross zero (net profit), a fact/plan RATIO is unstable and
-// can even flip sign: e.g. plan=-50k, fact=-80k (a worse loss) gives ratio=1.6, which reads as
-// "160% of plan" — misleadingly implying better-than-plan performance. An absolute deviation
-// (fact-plan, in rubles) has no such sign trap and is the correct basis for projecting these.
-function computeAvgDelta(planRows, factRows, key, windowSize){
-  const idx = {}; planRows.forEach((r,i)=>idx[+r.date]=i);
-  const sortedFact = factRows.slice().sort((a,b)=>a.date-b.date);
-  const deltas = [];
-  sortedFact.forEach(r => {
-    const i = idx[+r.date]; if (i==null) return;
-    const planVal = planRows[i][key];
-    if (planVal!=null) deltas.push(r[key]-planVal);
-  });
-  const recent = deltas.slice(-(windowSize||6));
-  return recent.length ? recent.reduce((s,v)=>s+v,0)/recent.length : 0;
+function forecastFromTrend(model, targetDate, phi){
+  phi = phi==null ? 0.85 : phi;
+  if (!model) return null;
+  const h = monthsBetween(model.lastDate, targetDate);
+  let trendVal;
+  if (h <= 0){
+    trendVal = model.lastFitted;
+  } else {
+    let phiSum = 0;
+    for (let s=1; s<=h; s++) phiSum += Math.pow(phi, s);
+    trendVal = model.lastFitted + phiSum*model.slope;
+  }
+  const cm = targetDate.getMonth();
+  const isQ4 = (cm===9 || cm===10 || cm===11);
+  return isQ4 ? trendVal*model.q4Multiplier : trendVal;
 }
 
 function buildProjection(planRows, factRows, key){
@@ -722,38 +749,15 @@ function buildProjection(planRows, factRows, key){
   const dashed = new Array(planRows.length).fill(null);
   if (lastIdx < 0) return { solid: factAligned, dashed };
 
-  const signedMetric = (key === 'netProfit' || key === 'profitBeforeTax' || key === 'cumProfit');
+  const model = fitTrendAndSeasonality(factRows, key);
+  const nonNegative = !(key === 'netProfit' || key === 'profitBeforeTax' || key === 'cumProfit');
   dashed[lastIdx] = factAligned[lastIdx];
-  if (signedMetric){
-    const avgDelta = computeAvgDelta(planRows, factRows, key);
-    for (let i=lastIdx+1; i<planRows.length; i++){
-      const planVal = planRows[i][key];
-      dashed[i] = planVal!=null ? planVal + avgDelta : null;
-    }
-  } else {
-    const avgRatio = computeAvgRatio(planRows, factRows, key);
-    for (let i=lastIdx+1; i<planRows.length; i++){
-      const planVal = planRows[i][key];
-      let v = planVal!=null ? planVal*avgRatio : null;
-      if (v!=null && v<0) v = 0;
-      dashed[i] = v;
-    }
+  for (let i=lastIdx+1; i<planRows.length; i++){
+    let v = forecastFromTrend(model, planRows[i].date);
+    if (v!=null && nonNegative && v<0) v = 0;
+    dashed[i] = v;
   }
   return { solid: factAligned, dashed };
-}
-
-// Orders and average check are the primitive drivers — project each independently (ratio-to-plan).
-// Everything else must stay mathematically consistent with them in the forecast:
-//   Выручка = Заказы × Средний чек   (an identity, not a coincidence)
-//   Прибыль = Выручка × маржа (недавняя фактическая рентабельность)
-//   Расходы = Выручка − Прибыль      (so Прибыль and Расходы never disagree with Выручка)
-// Projecting all five independently (as before) let them silently drift apart in the forecast.
-function computeRatioDirect(rows, numKey, denKey, windowSize){
-  const sorted = rows.slice().sort((a,b)=>a.date-b.date);
-  const ratios = [];
-  sorted.forEach(r => { if (r[denKey]) ratios.push(r[numKey]/r[denKey]); });
-  const recent = ratios.slice(-(windowSize||6));
-  return recent.length ? recent.reduce((s,v)=>s+v,0)/recent.length : 0;
 }
 
 function buildConsistentProjections(planRows, factRows){
@@ -771,19 +775,14 @@ function buildConsistentProjections(planRows, factRows){
     revenueDashed[i] = (o!=null && c!=null) ? o*c : null;
   }
 
-  // Profit is tied to the PLAN's own month-by-month profit trajectory, shifted by the average
-  // absolute rouble gap between fact and plan over the recent months — not a margin ratio applied
-  // to a (possibly already-scaled-down) revenue figure. A margin-ratio approach could accidentally
-  // imply the business will out-earn plan even while revenue underperforms, with no real basis for
-  // that in the actuals. The additive gap can never claim "better than plan" unless the fact data
-  // has actually been running ahead of plan by that amount recently.
-  const avgProfitDelta = computeAvgDelta(planRows, factRows, 'netProfit');
+  // Profit: same fact-only trend+seasonality fit, applied directly to net profit itself (an OLS
+  // trend fit has no sign issues, unlike a ratio, so it works fine even through loss-making months).
+  const profitModel = fitTrendAndSeasonality(factRows, 'netProfit');
   const profitSolid = alignToPlan(planRows, factRows, 'netProfit');
   const profitDashed = new Array(planRows.length).fill(null);
   if (lastIdx>=0) profitDashed[lastIdx] = profitSolid[lastIdx];
   for (let i=lastIdx+1; i<planRows.length; i++){
-    const planNet = planRows[i].netProfit;
-    profitDashed[i] = planNet!=null ? planNet + avgProfitDelta : null;
+    profitDashed[i] = forecastFromTrend(profitModel, planRows[i].date);
   }
 
   const expensesSolid = alignToPlan(planRows, factRows, 'expenses');
@@ -819,7 +818,14 @@ if (typeof Chart !== 'undefined' && Chart.defaults && Chart.defaults.font){
   Chart.defaults.devicePixelRatio = 2;
 }
 
-function chartBaseOptions(moneyAxis, tickColor){
+function pickScale(maxAbs){
+  if (maxAbs >= 1000000) return { divisor:1000000, unit:'млн ₽', digits:2 };
+  if (maxAbs >= 1000) return { divisor:1000, unit:'тыс ₽', digits:1 };
+  return { divisor:1, unit:'₽', digits:0 };
+}
+
+function chartBaseOptions(moneyAxis, tickColor, divisor){
+  divisor = divisor || 1;
   return {
     responsive:true, maintainAspectRatio:false,
     events:['click','touchstart'],
@@ -827,12 +833,12 @@ function chartBaseOptions(moneyAxis, tickColor){
     scales:{
       x:{ grid:{color:'rgba(255,255,255,0.08)'}, ticks:{color:tickColor||'#888888', font:{family:'Geologica', weight:'400', size:13}, maxRotation:0, autoSkip:true, maxTicksLimit:9} },
       y:{ grid:{color:'rgba(255,255,255,0.08)'}, ticks:{color:tickColor||'#888888', font:{family:'Geologica', weight:'400', size:13},
-            callback: moneyAxis ? (v)=>fmtRub(v,true) : undefined } }
+            callback: moneyAxis ? (v)=>(v/divisor).toLocaleString('ru-RU',{maximumFractionDigits: divisor>=1000000?2:(divisor>=1000?1:0)}) : (v)=>fmtNum(v) } }
     },
     plugins:{ legend:{display:false}, tooltip:{
       mode:'nearest', intersect:true,
       backgroundColor:'#1e1e1e', borderColor:'#333333', borderWidth:1,
-      titleFont:{family:'Geologica', weight:700, size:12.5}, bodyFont:{family:'Geologica', size:12},
+      titleFont:{family:'Geologica', weight:700, size:12.5}, bodyFont:{family:'Geologica', weight:'400', size:12},
       callbacks:{ label:(ctx)=> ctx.raw==null?'': ` ${ctx.dataset.label}: ${moneyAxis?fmtRub(ctx.raw,true):fmtNum(ctx.raw)}` }
     }}
   };
@@ -846,15 +852,17 @@ function renderMetricChart(metric, planRows, factRows, projections){
   document.getElementById('sw-plan').style.background = planColor;
   document.getElementById('sw-fact').style.background = accent;
   document.getElementById('sw-forecast').style.borderTopColor = accent;
-  document.getElementById('metric-chart-title').textContent = m.label;
   document.getElementById('metric-chart-sub').textContent = m.sub;
   const labels = planRows.map(r=>fmtMon(r.date));
   const proj = (projections && projections[metric]) || buildProjection(planRows, factRows, m.field);
   const { solid, dashed } = proj;
   const planVals = planRows.map(r=>r[m.field]);
 
-  const options = chartBaseOptions(m.money, accent);
   const allVals = [].concat(planVals, solid, dashed).filter(v => v!=null && !isNaN(v));
+  const scale = m.money ? pickScale(allVals.length ? Math.max(...allVals.map(Math.abs)) : 0) : { divisor:1, unit:'шт' };
+  document.getElementById('metric-chart-title').textContent = `${m.label}, ${scale.unit}`;
+
+  const options = chartBaseOptions(m.money, accent, scale.divisor);
   if (allVals.length){
     const minV = Math.min(...allVals), maxV = Math.max(...allVals);
     const pad = (maxV - minV) * 0.15 || Math.abs(maxV) * 0.1 || 10;
@@ -894,7 +902,7 @@ const payoffMarkerPlugin = {
       ctx.stroke();
       ctx.setLineDash([]);
       ctx.fillStyle = mk.color;
-      ctx.font = "600 11px 'Geologica'";
+      ctx.font = "400 11px 'Geologica'";
       const align = mk.index > chart.data.labels.length*0.7 ? 'right' : 'left';
       ctx.textAlign = align;
       ctx.fillText(mk.label, x + (align==='right'?-5:5), chartArea.top + 13 + i*14);
@@ -936,6 +944,10 @@ function renderPayoffChart(planRows, factRows, be, projections){
   ];
   if (invLine) datasets.push({ label:'Сумма вложений', data:invLine, borderColor:'rgba(200,206,224,.55)', borderWidth:1.5, borderDash:[3,4], pointRadius:0, tension:0, fill:false });
 
+  const allVals = [].concat(planRows.map(r=>r.cumProfit), solid, dashed, invLine||[]).filter(v=>v!=null && !isNaN(v));
+  const scale = pickScale(allVals.length ? Math.max(...allVals.map(Math.abs)) : 0);
+  document.getElementById('payoff-chart-title').textContent = `Окупаемость, ${scale.unit}`;
+
   const markers = [];
   if (be && be.planBE){
     const idx = planRows.findIndex(r => +r.date === +be.planBE.date);
@@ -947,7 +959,7 @@ function renderPayoffChart(planRows, factRows, be, projections){
   }
 
   if (charts.payoff) charts.payoff.destroy();
-  const options = chartBaseOptions(true, '#ffffff');
+  const options = chartBaseOptions(true, '#ffffff', scale.divisor);
   options.plugins.payoffMarkers = { markers };
   charts.payoff = new Chart(document.getElementById('chart-payoff'), {
     type:'line', data:{ labels, datasets }, options, plugins:[payoffMarkerPlugin]
