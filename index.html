@@ -123,10 +123,10 @@
     border:1px solid var(--line); border-radius:var(--radius); padding:10px 14px;
     display:flex; flex-direction:column;
   }
-  .kpi .label{font-size:10px; color:#ffffff; font-weight:600; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .kpi .label{font-size:10px; color:rgba(255,255,255,.95); font-weight:600; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .kpi .value{font-size:24px; font-weight:700; letter-spacing:-.02em; color:#ffffff; line-height:1; margin-bottom:5px;}
   .kpi .indicators{display:flex; flex-direction:column; gap:3px;}
-  .ind-row{display:flex; justify-content:space-between; align-items:center; font-size:10px;}
+  .ind-row{display:flex; justify-content:space-between; align-items:center; font-size:12px;}
   .ind-row .ind-label{color:#888888; font-weight:400;}
   .ind-row .ind-value{font-weight:600;}
   .ind-row .ind-value.good{color:#a3e635;}
@@ -141,10 +141,10 @@
   }
   .chart-head{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex:none;}
   .chart-head h3{margin:0; font-size:10px; font-weight:600; color:#ffffff; text-transform:uppercase; letter-spacing:.06em;}
-  .chart-head p{margin:3px 0 0; font-size:11px; color:var(--text-dim); text-transform:none; letter-spacing:0;}
-  .legend-inline{display:flex; gap:11px; font-family:var(--mono); font-size:10.5px; color:var(--text-dim); flex:none;}
+  .chart-head p{margin:3px 0 0; font-size:11px; color:#ffffff; text-transform:none; letter-spacing:0;}
+  .legend-inline{display:flex; gap:11px; font-family:var(--mono); font-size:10.5px; color:#ffffff; flex:none;}
   .legend-inline .sw{display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:4px; vertical-align:middle;}
-  .legend-inline .sw.dash{background:none; border-top:2px dashed var(--text-dim); width:10px; height:0; margin-top:3px;}
+  .legend-inline .sw.dash{background:none; border-top:2px dashed #ffffff; width:10px; height:0; margin-top:3px;}
   .chart-wrap{position:relative; flex:1; min-height:0; margin-top:6px;}
 
   /* ---------------- table ---------------- */
@@ -157,7 +157,7 @@
   .table-scroll{overflow-y:auto; overflow-x:hidden; min-height:0; flex:1;}
   table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11.5px;}
   thead th{
-    text-align:right; font-weight:600; color:var(--text-dim); font-size:9.5px;
+    text-align:right; font-weight:600; color:#ffffff; font-size:9.5px;
     text-transform:uppercase; letter-spacing:.02em; padding:6px 10px; border-bottom:1px solid var(--line-strong);
     position:sticky; top:0; background:var(--card-bg);
   }
@@ -167,7 +167,7 @@
   tbody tr:hover{background:rgba(255,255,255,.025);}
   .cell-pct{border-radius:5px; padding:1px 7px; font-weight:700;}
   .delta-pos{color:var(--good);} .delta-neg{color:var(--danger);}
-  .delta-arrow{width:9px; height:9px; vertical-align:-1px; margin-right:3px;}
+  .delta-arrow{width:9px; height:9px; vertical-align:-1px; margin-left:4px;}
 
   @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
 </style>
@@ -195,7 +195,7 @@
   <div class="split-21 row-top">
     <div class="chart-card">
       <div class="chart-head">
-        <div><h3 id="metric-chart-title">Прибыль</h3><p id="metric-chart-sub">Чистая прибыль по месяцам, план vs факт</p></div>
+        <div><h3 id="metric-chart-title">Прибыль</h3><p id="metric-chart-sub"></p></div>
         <div class="legend-inline">
           <span><span class="sw" id="sw-plan"></span>План</span>
           <span><span class="sw" id="sw-fact"></span>Факт</span>
@@ -214,7 +214,7 @@
     </div>
     <div class="chart-card">
       <div class="chart-head">
-        <div><h3>Окупаемость</h3><p>Прибыль нарастающим итогом vs сумма вложений</p></div>
+        <div><h3>Окупаемость</h3></div>
       </div>
       <div class="chart-wrap"><canvas id="chart-payoff"></canvas></div>
     </div>
@@ -231,10 +231,12 @@ const ICONS = {
   down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8l6 6 4-4 6 8"/><path d="M14 18h6v-6"/></svg>',
   target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".7" fill="currentColor"/></svg>',
   alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
+  arrowUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
+  arrowDown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>',
 };
 
 const METRICS = {
-  profit:    { label:'Прибыль',      field:'netProfit', money:true,  sub:'Чистая прибыль по месяцам, план vs факт' },
+  profit:    { label:'Прибыль',      field:'netProfit', money:true,  sub:'' },
   revenue:   { label:'Выручка',      field:'revenue',    money:true,  sub:'Динамика по месяцам, план vs факт' },
   expenses:  { label:'Расходы',      field:'expenses',   money:true,  sub:'Динамика по месяцам, план vs факт' },
   avgCheck:  { label:'Средний чек',  field:'avgCheck',   money:true,  sub:'Выручка / количество заказов, ₽ на 1 заказ' },
@@ -331,6 +333,7 @@ function fmtRub(n, compact){
   }
   return Math.round(n).toLocaleString('ru-RU') + " ₽";
 }
+function fmtRubPlain(n){ return n==null||isNaN(n) ? "—" : Math.round(n).toLocaleString('ru-RU'); }
 function fmtNum(n, digits){ return n==null||isNaN(n) ? "—" : n.toLocaleString('ru-RU', {maximumFractionDigits: digits||0}); }
 function fmtPct(n, digits){ return n==null||isNaN(n) ? "—" : (n>=0?'+':'') + n.toFixed(digits==null?0:digits) + '%'; }
 function fmtPP(n){ return n==null||isNaN(n) ? "—" : (n>=0?'+':'') + n.toFixed(1) + ' п.п.'; }
@@ -341,7 +344,7 @@ let charts = {};
 let allRows = [];
 let currentMetric = 'profit';
 let cachedInsights = [];
-let cachedPlanRows = [], cachedFactRows = [], cachedLastFact = null, cachedPlanByDate = {}, cachedBE = null;
+let cachedPlanRows = [], cachedFactRows = [], cachedLastFact = null, cachedPlanByDate = {}, cachedBE = null, cachedProjections = null;
 
 async function loadData(){
   const banner = document.getElementById('status-banner');
@@ -365,23 +368,24 @@ function render(){
   const factRows = allRows.filter(r=>r.type==='Факт').sort((a,b)=>a.date-b.date);
   const lastFact = factRows[factRows.length-1] || null;
   const planByDate = {}; planRows.forEach(r=>planByDate[+r.date]=r);
-  const be = computeBreakEven(planRows, factRows, lastFact);
+  const projections = buildConsistentProjections(planRows, factRows);
+  const be = computeBreakEven(planRows, factRows, lastFact, projections);
 
   cachedPlanRows = planRows; cachedFactRows = factRows; cachedLastFact = lastFact;
-  cachedPlanByDate = planByDate; cachedBE = be;
+  cachedPlanByDate = planByDate; cachedBE = be; cachedProjections = projections;
 
   const steps = [
     ['KPI', () => renderKPIs(planRows, factRows, lastFact, planByDate, be)],
     ['Insights', () => { cachedInsights = computeAllInsights(planRows, factRows, lastFact, planByDate, be); renderInsightsPanel(currentMetric); }],
-    ['MetricChart', () => renderMetricChart(currentMetric, planRows, factRows)],
-    ['PayoffChart', () => renderPayoffChart(planRows, factRows, be)],
+    ['MetricChart', () => renderMetricChart(currentMetric, planRows, factRows, projections)],
+    ['PayoffChart', () => renderPayoffChart(planRows, factRows, be, projections)],
     ['DetailTable', () => renderDetailTable(currentMetric, planRows, factRows, lastFact, planByDate)],
   ];
   for (const [name, fn] of steps){ try{ fn(); } catch(e){ console.error(`Render step "${name}" failed:`, e); } }
 }
 
 // ==================== break-even engine ====================
-function computeBreakEven(planRows, factRows, lastFact){
+function computeBreakEven(planRows, factRows, lastFact, projections){
   const invRow = factRows.find(r => r.investment != null) || planRows.find(r => r.investment != null);
   const investment = invRow ? invRow.investment : (planRows[0] ? planRows[0].loanStart : null);
 
@@ -394,23 +398,25 @@ function computeBreakEven(planRows, factRows, lastFact){
   if (investment!=null && lastFact){
     const sample = factRows.slice(-3);
     actualRecentMonthlyProfit = sample.reduce((s,r)=>s+(r.netProfit||0),0) / sample.length;
-    if (!factBE){
-      const avgDelta = computeAvgDelta(planRows, factRows, 'netProfit');
-      const idx = {}; planRows.forEach((r,i)=>idx[+r.date]=i);
-      const lastFactIdx = idx[+lastFact.date];
+    if (!factBE && projections){
+      // integrate the SAME orders×check→revenue→margin→profit projection used on the charts,
+      // so the KPI and the payoff chart can never disagree with each other.
+      const profitDashed = projections.profit.dashed;
       let cum = lastFact.cumProfit;
       let foundDate = null;
+      const idx = {}; planRows.forEach((r,i)=>idx[+r.date]=i);
+      const lastFactIdx = idx[+lastFact.date];
       if (lastFactIdx != null){
         for (let i=lastFactIdx+1; i<planRows.length; i++){
-          const planNet = planRows[i].netProfit;
-          cum += (planNet!=null ? planNet+avgDelta : 0);
+          const projNet = profitDashed[i];
+          cum += (projNet!=null ? projNet : 0);
           if (cum >= investment){ foundDate = planRows[i].date; break; }
         }
       }
       if (foundDate){
         factBE = { date: foundDate };
         factBEIsProjection = true;
-      } else if (avgDelta <= 0 && actualRecentMonthlyProfit <= 0){
+      } else if (actualRecentMonthlyProfit <= 0){
         projFailed = true;
       }
     }
@@ -433,6 +439,12 @@ function fmtThousand(n){
   if (n==null || isNaN(n)) return '—';
   return (n/1000).toLocaleString('ru-RU', {maximumFractionDigits:1});
 }
+function fmtAdaptive(n){
+  if (n==null || isNaN(n)) return { value:'—', unit:'тыс ₽' };
+  const abs = Math.abs(n);
+  if (abs >= 1000000) return { value: (n/1000000).toLocaleString('ru-RU',{maximumFractionDigits:2}), unit:'млн ₽' };
+  return { value: (n/1000).toLocaleString('ru-RU',{maximumFractionDigits:1}), unit:'тыс ₽' };
+}
 
 function renderKPIs(planRows, factRows, lastFact, planByDate, be){
   const grid = document.getElementById('kpi-grid');
@@ -447,9 +459,10 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const planAtCutoff = planByDate[+lastFact.date];
     const planPct = planAtCutoff ? planAtCutoff.cumProfit/be.investment*100 : null;
     const stillNeeded = Math.max(0, be.investment - lastFact.cumProfit);
+    const stillNeededF = fmtAdaptive(stillNeeded);
     cards.push({ label:'ОКУПАЕМОСТЬ, %', value: factPct.toFixed(0), rows:[
       { label:'к плану', value: planPct!=null?fmtPP(factPct-planPct):'—', tone: planPct!=null?(factPct>=planPct?'good':'bad'):'neutral' },
-      { label:'ещё нужно, тыс ₽', value: fmtThousand(stillNeeded), tone:'neutral' },
+      { label:`ещё нужно, ${stillNeededF.unit}`, value: stillNeededF.value, tone:'neutral' },
     ]});
   }
 
@@ -463,23 +476,29 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     ]});
   }
 
-  // 3) Заём, тыс ₽
+  // 3) Заём
   {
     const planAtCutoff = planByDate[+lastFact.date];
     const pct = planAtCutoff && planAtCutoff.loanEnd ? (lastFact.loanEnd-planAtCutoff.loanEnd)/planAtCutoff.loanEnd*100 : null;
-    cards.push({ label:'ЗАЁМ, ТЫС ₽', value: fmtThousand(lastFact.loanEnd), rows:[
+    const loanF = fmtAdaptive(lastFact.loanEnd);
+    const startF = fmtAdaptive(planRows[0]?.loanStart);
+    cards.push({ label:`ЗАЁМ, ${loanF.unit.toUpperCase()}`, value: loanF.value, rows:[
       { label:'к плану', value: pct!=null?fmtPct(pct,0):'—', tone: pct!=null?(pct<=0?'good':'bad'):'neutral' },
-      { label:'старт, тыс ₽', value: fmtThousand(planRows[0]?.loanStart), tone:'neutral' },
+      { label:`старт, ${startF.unit}`, value: startF.value, tone:'neutral' },
     ]});
   }
 
-  // 4) Выручка, тыс ₽ (накопительно)
+  // 4) Выручка (среднемесячная)
   {
     const revFactCum = factRows.reduce((s,r)=>s+(r.revenue||0),0);
-    const revPlanCum = planRows.filter(r=>r.date<=lastFact.date).reduce((s,r)=>s+(r.revenue||0),0);
-    const pct = revPlanCum ? (revFactCum/revPlanCum*100-100) : null;
+    const planCumRows = planRows.filter(r=>r.date<=lastFact.date);
+    const revPlanCum = planCumRows.reduce((s,r)=>s+(r.revenue||0),0);
+    const avgRevFact = factRows.length ? revFactCum/factRows.length : null;
+    const avgRevPlan = planCumRows.length ? revPlanCum/planCumRows.length : null;
+    const pct = (avgRevFact!=null && avgRevPlan) ? (avgRevFact/avgRevPlan*100-100) : null;
     const mom = (prevFact && prevFact.revenue) ? (lastFact.revenue-prevFact.revenue)/prevFact.revenue*100 : null;
-    cards.push({ label:'ВЫРУЧКА, ТЫС ₽', value: fmtThousand(revFactCum), rows:[
+    const avgRevF = fmtAdaptive(avgRevFact);
+    cards.push({ label:`ВЫРУЧКА, ${avgRevF.unit.toUpperCase()}/МЕС.`, value: avgRevF.value, rows:[
       { label:'к плану', value: pct!=null?fmtPct(pct,0):'—', tone: pct!=null?(pct>=0?'good':'bad'):'neutral' },
       { label:'рост MoM', value: mom!=null?fmtPct(mom,1):'—', tone: mom!=null?(mom>=0?'good':'bad'):'neutral' },
     ]});
@@ -722,9 +741,63 @@ function buildProjection(planRows, factRows, key){
   }
   return { solid: factAligned, dashed };
 }
+
+// Orders and average check are the primitive drivers — project each independently (ratio-to-plan).
+// Everything else must stay mathematically consistent with them in the forecast:
+//   Выручка = Заказы × Средний чек   (an identity, not a coincidence)
+//   Прибыль = Выручка × маржа (недавняя фактическая рентабельность)
+//   Расходы = Выручка − Прибыль      (so Прибыль and Расходы never disagree with Выручка)
+// Projecting all five independently (as before) let them silently drift apart in the forecast.
+function computeRatioDirect(rows, numKey, denKey, windowSize){
+  const sorted = rows.slice().sort((a,b)=>a.date-b.date);
+  const ratios = [];
+  sorted.forEach(r => { if (r[denKey]) ratios.push(r[numKey]/r[denKey]); });
+  const recent = ratios.slice(-(windowSize||6));
+  return recent.length ? recent.reduce((s,v)=>s+v,0)/recent.length : 0;
+}
+
+function buildConsistentProjections(planRows, factRows){
+  const ordersProj = buildProjection(planRows, factRows, 'orders');
+  const checkProj  = buildProjection(planRows, factRows, 'avgCheck');
+
+  let lastIdx = -1;
+  for (let i=0;i<ordersProj.solid.length;i++) if (ordersProj.solid[i]!=null) lastIdx = i;
+
+  const revenueSolid = alignToPlan(planRows, factRows, 'revenue');
+  const revenueDashed = new Array(planRows.length).fill(null);
+  if (lastIdx>=0) revenueDashed[lastIdx] = revenueSolid[lastIdx];
+  for (let i=lastIdx+1; i<planRows.length; i++){
+    const o = ordersProj.dashed[i], c = checkProj.dashed[i];
+    revenueDashed[i] = (o!=null && c!=null) ? o*c : null;
+  }
+
+  const marginRatio = computeRatioDirect(factRows, 'netProfit', 'revenue');
+  const profitSolid = alignToPlan(planRows, factRows, 'netProfit');
+  const profitDashed = new Array(planRows.length).fill(null);
+  if (lastIdx>=0) profitDashed[lastIdx] = profitSolid[lastIdx];
+  for (let i=lastIdx+1; i<planRows.length; i++){
+    profitDashed[i] = revenueDashed[i]!=null ? revenueDashed[i]*marginRatio : null;
+  }
+
+  const expensesSolid = alignToPlan(planRows, factRows, 'expenses');
+  const expensesDashed = new Array(planRows.length).fill(null);
+  if (lastIdx>=0) expensesDashed[lastIdx] = expensesSolid[lastIdx];
+  for (let i=lastIdx+1; i<planRows.length; i++){
+    expensesDashed[i] = (revenueDashed[i]!=null && profitDashed[i]!=null) ? revenueDashed[i]-profitDashed[i] : null;
+  }
+
+  return {
+    orders: ordersProj,
+    avgCheck: checkProj,
+    revenue: { solid: revenueSolid, dashed: revenueDashed },
+    profit: { solid: profitSolid, dashed: profitDashed },
+    expenses: { solid: expensesSolid, dashed: expensesDashed },
+  };
+}
+
 function baseLine(label, color, extra){
   return Object.assign({ label, borderColor:color, backgroundColor:color, borderWidth:2.5,
-    pointRadius:2.5, pointHoverRadius:4, tension:.3, spanGaps:false }, extra||{});
+    pointRadius:2.5, pointHoverRadius:5, pointHitRadius:10, tension:.3, spanGaps:false }, extra||{});
 }
 const METRIC_COLORS = { profit:'#38bdf8', revenue:'#a3e635', expenses:'#fb923c', avgCheck:'#a78bfa', orders:'#34d399' };
 const PLAN_COLORS   = { profit:'#3b82f6', revenue:'#2dd4bf', expenses:'#facc15', avgCheck:'#f472b6', orders:'#22d3ee' };
@@ -741,13 +814,16 @@ if (typeof Chart !== 'undefined' && Chart.defaults && Chart.defaults.font){
 
 function chartBaseOptions(moneyAxis, tickColor){
   return {
-    responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
+    responsive:true, maintainAspectRatio:false,
+    events:['click','touchstart'],
+    interaction:{mode:'nearest', intersect:true},
     scales:{
       x:{ grid:{color:'rgba(255,255,255,0.08)'}, ticks:{color:tickColor||'#888888', font:{family:'Geologica', weight:'600', size:13}, maxRotation:0, autoSkip:true, maxTicksLimit:9} },
       y:{ grid:{color:'rgba(255,255,255,0.08)'}, ticks:{color:tickColor||'#888888', font:{family:'Geologica', weight:'600', size:13},
             callback: moneyAxis ? (v)=>fmtRub(v,true) : undefined } }
     },
     plugins:{ legend:{display:false}, tooltip:{
+      mode:'nearest', intersect:true,
       backgroundColor:'#1e1e1e', borderColor:'#333333', borderWidth:1,
       titleFont:{family:'Geologica', weight:700, size:12.5}, bodyFont:{family:'Geologica', size:12},
       callbacks:{ label:(ctx)=> ctx.raw==null?'': ` ${ctx.dataset.label}: ${moneyAxis?fmtRub(ctx.raw,true):fmtNum(ctx.raw)}` }
@@ -755,7 +831,7 @@ function chartBaseOptions(moneyAxis, tickColor){
   };
 }
 
-function renderMetricChart(metric, planRows, factRows){
+function renderMetricChart(metric, planRows, factRows, projections){
   const m = METRICS[metric];
   const accent = METRIC_COLORS[metric] || '#a3e635';
   const planColor = PLAN_COLORS[metric] || '#2dd4bf';
@@ -766,16 +842,28 @@ function renderMetricChart(metric, planRows, factRows){
   document.getElementById('metric-chart-title').textContent = m.label;
   document.getElementById('metric-chart-sub').textContent = m.sub;
   const labels = planRows.map(r=>fmtMon(r.date));
-  const { solid, dashed } = buildProjection(planRows, factRows, m.field);
+  const proj = (projections && projections[metric]) || buildProjection(planRows, factRows, m.field);
+  const { solid, dashed } = proj;
+  const planVals = planRows.map(r=>r[m.field]);
+
+  const options = chartBaseOptions(m.money, accent);
+  const allVals = [].concat(planVals, solid, dashed).filter(v => v!=null && !isNaN(v));
+  if (allVals.length){
+    const minV = Math.min(...allVals), maxV = Math.max(...allVals);
+    const pad = (maxV - minV) * 0.15 || Math.abs(maxV) * 0.1 || 10;
+    options.scales.y.min = minV >= 0 ? Math.max(0, minV - pad) : minV - pad;
+    options.scales.y.max = maxV + pad;
+  }
+
   if (charts.metric) charts.metric.destroy();
   charts.metric = new Chart(document.getElementById('chart-metric'), {
     type:'line',
     data:{ labels, datasets:[
-      baseLine('План', planColor, {data:planRows.map(r=>r[m.field])}),
+      baseLine('План', planColor, {data:planVals}),
       baseLine('Факт', accent, {data:solid}),
       baseLine('Прогноз', accent, {data:dashed, borderDash:[6,5], pointRadius:0, borderWidth:2}),
     ]},
-    options: chartBaseOptions(m.money, accent)
+    options
   });
 }
 
@@ -808,33 +896,31 @@ const payoffMarkerPlugin = {
   }
 };
 
-function buildCumProfitProjection(planRows, factRows, lastFact){
+function buildCumProfitProjection(planRows, factRows, lastFact, projections){
   const factAligned = alignToPlan(planRows, factRows, 'cumProfit');
   let lastIdx = -1;
   for (let i=0;i<factAligned.length;i++) if (factAligned[i]!=null) lastIdx = i;
   const dashed = new Array(planRows.length).fill(null);
   if (lastIdx < 0 || !lastFact) return { solid: factAligned, dashed };
 
-  // cumProfit itself can cross zero, and monthly net profit is often negative early on, so a
-  // fact/plan RATIO is unstable (can even flip sign — see computeAvgDelta's comment). We instead
-  // project seasonal-aware MONTHLY net profit as plan + average absolute deviation, then
-  // integrate it forward from the last actual cumulative figure.
-  const avgDelta = computeAvgDelta(planRows, factRows, 'netProfit');
+  // Integrate the SAME orders×check→revenue→margin→profit projection shown on the "Прибыль" tab —
+  // this is what keeps the payoff chart, the "Прибыль" chart, and the "Срок окупаемости" KPI
+  // from disagreeing with each other (they used to be computed independently).
+  const profitDashed = (projections && projections.profit.dashed) || null;
   dashed[lastIdx] = factAligned[lastIdx];
   let cum = lastFact.cumProfit;
   for (let i=lastIdx+1; i<planRows.length; i++){
-    const planNet = planRows[i].netProfit;
-    const projectedNet = planNet!=null ? planNet+avgDelta : 0;
+    const projectedNet = profitDashed ? (profitDashed[i]||0) : 0;
     cum += projectedNet;
     dashed[i] = cum;
   }
   return { solid: factAligned, dashed };
 }
 
-function renderPayoffChart(planRows, factRows, be){
+function renderPayoffChart(planRows, factRows, be, projections){
   const labels = planRows.map(r=>fmtMon(r.date));
   const lastFact = factRows.length ? factRows.slice().sort((a,b)=>a.date-b.date).slice(-1)[0] : null;
-  const { solid, dashed } = buildCumProfitProjection(planRows, factRows, lastFact);
+  const { solid, dashed } = buildCumProfitProjection(planRows, factRows, lastFact, projections);
   const invLine = be && be.investment!=null ? planRows.map(()=>be.investment) : null;
   const datasets = [
     baseLine('План','#a3e635',{data:planRows.map(r=>r.cumProfit)}),
@@ -854,7 +940,7 @@ function renderPayoffChart(planRows, factRows, be){
   }
 
   if (charts.payoff) charts.payoff.destroy();
-  const options = chartBaseOptions(true);
+  const options = chartBaseOptions(true, '#ffffff');
   options.plugins.payoffMarkers = { markers };
   charts.payoff = new Chart(document.getElementById('chart-payoff'), {
     type:'line', data:{ labels, datasets }, options, plugins:[payoffMarkerPlugin]
@@ -875,7 +961,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
       ['salaryTax','Зарплатные налоги'], ['loanInterest','Проценты по займу'],
       ['vatOut','НДС исходящий'], ['vatIn','НДС вход'],
     ];
-    thead.innerHTML = `<tr><th>Статья</th><th>План</th><th>Факт</th><th>Отклонение</th><th>% к плану</th></tr>`;
+    thead.innerHTML = `<tr><th>Статья</th><th>План, ₽</th><th>Факт, ₽</th><th>Отклонение, ₽</th><th>% к плану</th></tr>`;
     const cutoff = lastFact ? lastFact.date : null;
     const planCum = cutoff ? planRows.filter(r=>r.date<=cutoff) : [];
     tbody.innerHTML = catDefs.map(([key,label]) => {
@@ -884,16 +970,17 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
       const delta = factSum - planSum;
       const pct = planSum ? factSum/planSum*100 : (factSum?Infinity:null);
       return `<tr>
-        <td>${label}</td><td>${fmtRub(planSum)}</td><td>${fmtRub(factSum)}</td>
-        <td class="${delta>0?'delta-neg':'delta-pos'}" style="color:${delta>0?'#ff4d4d':'#a3e635'}">${ICONS[delta>0?'down':'up'].replace('<svg ','<svg class="delta-arrow" ')}${delta>=0?'+':''}${fmtRub(delta)}</td>
+        <td>${label}</td><td>${fmtRubPlain(planSum)}</td><td>${fmtRubPlain(factSum)}</td>
+        <td style="color:#ffffff">${delta>=0?'+':''}${fmtRubPlain(delta)}${ICONS[delta>0?'arrowDown':'arrowUp'].replace('<svg ',`<svg class="delta-arrow" style="color:${delta>0?'#ff4d4d':'#a3e635'}" `)}</td>
         <td>${pct==null?'—':(pct===Infinity?'внеплан.':pct.toFixed(0)+'%')}</td>
       </tr>`;
     }).join('');
     return;
   }
 
+  const unit = m.money ? '₽' : 'шт';
   title.textContent = m.label + ' по месяцам';
-  thead.innerHTML = `<tr><th>Дата</th><th>План</th><th>Факт</th><th>Откл., ${m.money?'₽':'шт'}</th><th>Откл., %</th></tr>`;
+  thead.innerHTML = `<tr><th>Дата</th><th>План, ${unit}</th><th>Факт, ${unit}</th><th>Откл., ${unit}</th><th>Откл., %</th></tr>`;
   const factByDate = {}; factRows.forEach(r=>factByDate[+r.date]=r);
   tbody.innerHTML = planRows.map(pr => {
     const fr = factByDate[+pr.date];
@@ -902,14 +989,14 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     let deltaAbsCell = '—', deltaPctCell = '—';
     if (factVal!=null && planVal!=null){
       const deltaAbs = factVal - planVal;
-      const fmtDelta = (v) => m.money ? fmtRub(v) : fmtNum(v);
-      deltaAbsCell = `<span class="${deltaAbs>=0?'delta-pos':'delta-neg'}" style="color:${deltaAbs>=0?'#a3e635':'#ff4d4d'}">${ICONS[deltaAbs>=0?'up':'down'].replace('<svg ','<svg class="delta-arrow" ')}${deltaAbs>=0?'+':''}${fmtDelta(deltaAbs)}</span>`;
+      const fmtDelta = (v) => m.money ? fmtRubPlain(v) : fmtNum(v);
+      deltaAbsCell = `<span style="color:#ffffff">${deltaAbs>=0?'+':''}${fmtDelta(deltaAbs)}${ICONS[deltaAbs>=0?'arrowUp':'arrowDown'].replace('<svg ',`<svg class="delta-arrow" style="color:${deltaAbs>=0?'#a3e635':'#ff4d4d'}" `)}</span>`;
       if (planVal){
         const pct = deltaAbs/planVal*100;
         deltaPctCell = `<span class="${pct>=0?'delta-pos':'delta-neg'}">${fmtPct(pct,1)}</span>`;
       }
     }
-    const fmtVal = (v) => v==null ? '—' : (m.money ? fmtRub(v) : fmtNum(v));
+    const fmtVal = (v) => v==null ? '—' : (m.money ? fmtRubPlain(v) : fmtNum(v));
     return `<tr><td>${fmtMon(pr.date)}</td><td>${fmtVal(planVal)}</td><td>${fmtVal(factVal)}</td><td>${deltaAbsCell}</td><td>${deltaPctCell}</td></tr>`;
   }).join('');
 }
@@ -921,7 +1008,7 @@ document.getElementById('metric-toggle').addEventListener('click', (e) => {
   btn.classList.add('active');
   currentMetric = btn.dataset.m;
   renderInsightsPanel(currentMetric);
-  renderMetricChart(currentMetric, cachedPlanRows, cachedFactRows);
+  renderMetricChart(currentMetric, cachedPlanRows, cachedFactRows, cachedProjections);
   renderDetailTable(currentMetric, cachedPlanRows, cachedFactRows, cachedLastFact, cachedPlanByDate);
 });
 
