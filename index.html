@@ -471,8 +471,9 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const factVal = be.factMonths!=null ? String(be.factMonths) : (be.projFailed?'—':'…');
     const remaining = be.factBE ? monthsBetween(lastFact.date, be.factBE.date) : null;
     const payoffMonthTxt = be.factBE ? fmtMon(be.factBE.date) : null;
+    const deltaTxt = be.delta!=null ? (be.delta===0?'вовремя':(be.delta>0?`+${be.delta} мес.`:`−${Math.abs(be.delta)} мес.`)) : null;
     cards.push({ label:'СРОК ОКУПАЕМОСТИ, МЕС.', value: factVal, rows:[
-      { label:'к плану', value: be.planBE ? fmtMon(be.planBE.date) : '—',
+      { label:'к плану', value: be.planBE ? `${fmtMon(be.planBE.date)}${deltaTxt?' ('+deltaTxt+')':''}` : '—',
         tone: be.delta!=null ? (be.delta<=0?'good':'bad') : 'neutral' },
       { label:'осталось', value: remaining!=null ? `${remaining} мес. (${payoffMonthTxt})` : '—', tone:'neutral' },
     ]});
@@ -857,7 +858,7 @@ function chartBaseOptions(moneyAxis, tickColor, divisor){
     scales:{
       x:{ grid:{color:'rgba(255,255,255,0.08)'}, ticks:{color:tickColor||'#888888', font:{family:'Geologica', weight:'400', size:13}, maxRotation:0, autoSkip:true, maxTicksLimit:9} },
       y:{ grid:{color:'rgba(255,255,255,0.08)'}, ticks:{color:tickColor||'#888888', font:{family:'Geologica', weight:'400', size:13},
-            callback: moneyAxis ? (v)=>(v/divisor).toLocaleString('ru-RU',{maximumFractionDigits: divisor>=1000000?2:(divisor>=1000?1:0)}) : (v)=>fmtNum(v) } }
+            callback: moneyAxis ? (v)=>{ const d = divisor>=1000000?1:0; return (v/divisor).toLocaleString('ru-RU',{minimumFractionDigits:d, maximumFractionDigits:d}); } : (v)=>fmtNum(v) } }
     },
     plugins:{ legend:{display:false}, tooltip:{
       mode:'nearest', intersect:true,
@@ -1036,7 +1037,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
       deltaAbsCell = `<span style="color:#ffffff">${deltaAbs>=0?'+':''}${fmtDelta(deltaAbs)}${ICONS[deltaAbs>=0?'arrowUp':'arrowDown'].replace('<svg ',`<svg class="delta-arrow" style="color:${deltaAbs>=0?'#a3e635':'#ff4d4d'}" `)}</span>`;
       if (planVal){
         const pct = deltaAbs/planVal*100;
-        deltaPctCell = `<span class="${pct>=0?'delta-pos':'delta-neg'}">${fmtPct(pct,1)}</span>`;
+        deltaPctCell = `<span class="${pct>=0?'delta-pos':'delta-neg'}">${fmtPct(pct,0)}</span>`;
       }
     }
     const fmtVal = (v) => v==null ? '—' : (m.money ? fmtRubPlain(v) : fmtNum(v));
