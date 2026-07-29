@@ -240,21 +240,21 @@
   <section class="charts">
     <div class="chart-card">
       <div class="chart-head">
-        <div><h3>Выручка</h3><p>План (столбцы) vs факт (линия)</p></div>
+        <div><h3>Выручка</h3><p>Динамика по месяцам, план vs факт</p></div>
         <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
       </div>
       <div class="chart-wrap"><canvas id="chart-revenue"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-head">
-        <div><h3>Расходы</h3><p>План (столбцы) vs факт (линия)</p></div>
+        <div><h3>Расходы</h3><p>Динамика по месяцам, план vs факт</p></div>
         <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
       </div>
       <div class="chart-wrap"><canvas id="chart-expenses"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-head">
-        <div><h3>Прибыль нарастающим итогом</h3><p>Пересечение нуля — точка безубыточности</p></div>
+        <div><h3>Окупаемость проекта</h3><p>Прибыль нарастающим итогом vs сумма вложений (пунктир)</p></div>
         <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
       </div>
       <div class="chart-wrap"><canvas id="chart-cumprofit"></canvas></div>
@@ -268,14 +268,14 @@
     </div>
     <div class="chart-card">
       <div class="chart-head">
-        <div><h3>Средний чек</h3><p>Юнит-экономика, ₽ / заказ</p></div>
+        <div><h3>Средний чек</h3><p>Выручка / количество заказов, ₽ на 1 заказ</p></div>
         <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
       </div>
       <div class="chart-wrap"><canvas id="chart-check"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-head">
-        <div><h3>Маржинальность</h3><p>Чистая прибыль / выручка, % за месяц</p></div>
+        <div><h3>Рентабельность</h3><p>Чистая прибыль / выручка, % за месяц</p></div>
         <div class="legend-inline"><span><span class="sw" style="background:var(--plan)"></span>План</span><span><span class="sw" style="background:var(--fact)"></span>Факт</span></div>
       </div>
       <div class="chart-wrap"><canvas id="chart-margin"></canvas></div>
@@ -324,9 +324,13 @@ const FIELD_MAP = {
   partnerPrice:'Партнерский прайс, руб.', royalty:'Роялти, руб.',
   salary:'ЗП с ФОТ менеджера сервиса', salaryTax:'Зарплатные налоги', bonus:'Премии с продаж/прибыли',
   loanInterest:'Проценты по займу, руб.', vatOut:'НДС исходящий, руб.', vatIn:'НДС вход, руб.',
-  expenses:'Расходы, руб', profitBeforeTax:'Прибыль до налогообложения, руб', netProfit:'Чистая прибыль, руб.',
+  expenses:'Расходы, руб', profitBeforeTax:'Прибыль до налогообложения, руб', incomeTax:'Налог на прибыль',
+  netProfit:'Чистая прибыль, руб.',
   cumProfit:'Прибыль накопительно, руб', periodNo:'Номер периода (мес.)',
-  loanStart:'Займ на начало периода', loanEnd:'Займ на конец периода',
+  loanStart:'Займ на начало периода', loanRepay:'Гашение займа', loanEnd:'Займ на конец периода',
+  investment:'Сумма вложений',
+  cacAmort:'Отражение затрат на покупку клиента в БДР', cacVat:'НДС входящий с покупки клиента',
+  finResultPeriod:'Фин. рез. по проекту в БДР (за период)', finResultCum:'Фин. рез. по проекту нарастающим итогом',
 };
 
 function parseGvizDate(v){
@@ -356,17 +360,19 @@ function extractRowsFromGviz(json){
     const revenue = get('revenue');
     if (!date || !type || revenue == null) continue;
     const orders = get('orders');
-    let avgCheck = get('avgCheck');
-    // defensive fallback: some conversions lose/zero this column — reconstruct from revenue/orders
-    if ((avgCheck == null || avgCheck === 0) && orders) avgCheck = revenue / orders;
+    // always derive from revenue/orders — the raw column proved unreliable across sheet conversions
+    const avgCheck = orders ? revenue/orders : get('avgCheck');
     rows.push({
       date, type, orders, avgCheck, revenue,
       partnerPrice:get('partnerPrice'), royalty:get('royalty'), salary:get('salary'),
       salaryTax:get('salaryTax'), bonus:get('bonus'), loanInterest:get('loanInterest'),
       vatOut:get('vatOut'), vatIn:get('vatIn'),
-      expenses:get('expenses'), profitBeforeTax:get('profitBeforeTax'),
+      expenses:get('expenses'), profitBeforeTax:get('profitBeforeTax'), incomeTax:get('incomeTax'),
       netProfit:get('netProfit'), cumProfit:get('cumProfit'),
-      loanStart:get('loanStart'), loanEnd:get('loanEnd'), periodNo:get('periodNo'),
+      loanStart:get('loanStart'), loanRepay:get('loanRepay'), loanEnd:get('loanEnd'), periodNo:get('periodNo'),
+      investment:get('investment'),
+      cacAmort:get('cacAmort'), cacVat:get('cacVat'),
+      finResultPeriod:get('finResultPeriod'), finResultCum:get('finResultCum'),
     });
   }
   rows.sort((a,b) => a.date - b.date || (a.type==='План'?1:-1));
@@ -472,7 +478,7 @@ function render(){
     ['Insights', () => renderInsights(planRows, factRows, lastFact, planByDate, be)],
     ['Breakeven', () => renderBreakeven(be)],
     ['KPI', () => renderKPIs(planRows, factRows, lastFact, planByDate)],
-    ['Charts', () => renderCharts(planRows, factRows, lastFact, planByDate)],
+    ['Charts', () => renderCharts(planRows, factRows, lastFact, planByDate, be)],
     ['Table', () => renderTable(planByDate)],
   ];
   for (const [name, fn] of steps){ try{ fn(); } catch(e){ console.error(`Render step "${name}" failed:`, e); } }
@@ -480,23 +486,42 @@ function render(){
 
 // ---------------- break-even engine ----------------
 function computeBreakEven(planRows, factRows, lastFact){
-  const planBE = planRows.find(r => (r.cumProfit||0) >= 0) || null;
-  let factBE = factRows.find(r => (r.cumProfit||0) >= 0) || null;
+  // "Окупаемость" = когда прибыль нарастающим итогом покрывает сумму вложений
+  // (не путать с погашением займа — заём лишь способ финансирования, сумма может отличаться).
+  const invRow = factRows.find(r => r.investment != null) || planRows.find(r => r.investment != null);
+  const investment = invRow ? invRow.investment : (planRows[0] ? planRows[0].loanStart : null);
+
+  const planBE = investment!=null ? (planRows.find(r => (r.cumProfit||0) >= investment) || null) : null;
+  let factBE = investment!=null ? (factRows.find(r => (r.cumProfit||0) >= investment) || null) : null;
   let factBEIsProjection = false;
   let projFailed = false;
-  if (!factBE && lastFact){
+  let requiredMonthlyProfit = null, actualRecentMonthlyProfit = null;
+
+  if (investment!=null && lastFact){
     const sample = factRows.slice(-3);
-    const avgNet = sample.reduce((s,r)=>s+(r.netProfit||0),0) / sample.length;
-    if (avgNet > 0 && lastFact.cumProfit < 0){
-      const monthsNeeded = Math.ceil(-lastFact.cumProfit / avgNet);
-      factBE = { date: addMonths(lastFact.date, monthsNeeded) };
-      factBEIsProjection = true;
-    } else if (avgNet <= 0){
-      projFailed = true;
+    actualRecentMonthlyProfit = sample.reduce((s,r)=>s+(r.netProfit||0),0) / sample.length;
+    if (!factBE){
+      const remaining = investment - lastFact.cumProfit;
+      if (actualRecentMonthlyProfit > 0 && remaining > 0){
+        const monthsNeeded = Math.ceil(remaining / actualRecentMonthlyProfit);
+        factBE = { date: addMonths(lastFact.date, monthsNeeded) };
+        factBEIsProjection = true;
+      } else if (actualRecentMonthlyProfit <= 0){
+        projFailed = true;
+      }
+    }
+    // сколько нужно зарабатывать в среднем в месяц, чтобы уложиться в плановый срок
+    if (planBE){
+      const monthsToPlanDeadline = monthsBetween(lastFact.date, planBE.date);
+      const remaining = investment - lastFact.cumProfit;
+      if (monthsToPlanDeadline > 0 && remaining > 0){
+        requiredMonthlyProfit = remaining / monthsToPlanDeadline;
+      }
     }
   }
+
   const delta = (planBE && factBE) ? monthsBetween(planBE.date, factBE.date) : null;
-  return { planBE, factBE, factBEIsProjection, projFailed, delta };
+  return { investment, planBE, factBE, factBEIsProjection, projFailed, delta, requiredMonthlyProfit, actualRecentMonthlyProfit };
 }
 
 function renderBreakeven(be){
@@ -505,7 +530,7 @@ function renderBreakeven(be){
   let factTxt, factSub;
   if (be.factBE && !be.factBEIsProjection){ factTxt = fmtMon(be.factBE.date); factSub = 'уже достигнуто по факту'; }
   else if (be.factBE && be.factBEIsProjection){ factTxt = fmtMon(be.factBE.date); factSub = 'прогноз по темпу последних 3 факт. месяцев'; }
-  else if (be.projFailed){ factTxt = 'не прогнозируется'; factSub = 'при текущем темпе прибыль не растёт'; }
+  else if (be.projFailed){ factTxt = 'не прогнозируется'; factSub = 'при текущем темпе чистая прибыль не растёт'; }
   else { factTxt = '—'; factSub = 'недостаточно фактических данных'; }
 
   let deltaHtml = '';
@@ -514,8 +539,9 @@ function renderBreakeven(be){
     deltaHtml = `<div class="be-delta"><div class="n ${good?'good':'bad'}">${be.delta===0?'0':(good?'−':'+')+Math.abs(be.delta)}</div><div class="lbl">${be.delta===0?'точно по плану':'мес. '+(good?'раньше':'позже')+' плана'}</div></div>`;
   }
 
+  const invSub = be.investment!=null ? `прибыль нарастающим итогом ≥ ${fmtRub(be.investment,true)} вложений` : 'прибыль нарастающим итогом ≥ суммы вложений';
   el.innerHTML = `
-    <div class="be-stat plan"><div class="be-label">План выхода на безубыточность</div><div class="be-value">${planTxt}</div><div class="be-sub">прибыль нарастающим итогом ≥ 0</div></div>
+    <div class="be-stat plan"><div class="be-label">План окупаемости</div><div class="be-value">${planTxt}</div><div class="be-sub">${invSub}</div></div>
     <div class="be-stat fact"><div class="be-label">Факт / прогноз</div><div class="be-value">${factTxt}</div><div class="be-sub">${factSub}</div></div>
     ${deltaHtml}
   `;
@@ -527,55 +553,99 @@ function renderInsights(planRows, factRows, lastFact, planByDate, be){
   if (!lastFact){ grid.innerHTML = `<div class="insight tone-neutral"><div class="ic">${ICONS.target}</div><div class="body">Фактических данных пока нет — как только появится первый факт-месяц, здесь будет разбор отклонений от плана.</div></div>`; return; }
 
   const cards = [];
+  const planCumRows = planRows.filter(r=>r.date<=lastFact.date);
+  const revFactCum = factRows.reduce((s,r)=>s+(r.revenue||0),0);
+  const revPlanCum = planCumRows.reduce((s,r)=>s+(r.revenue||0),0);
 
-  // revenue gap streak
-  const gaps = factRows.map(r => { const p = planByDate[+r.date]; return p && p.revenue ? (r.revenue-p.revenue)/p.revenue*100 : null; }).filter(v=>v!=null);
+  // 1) revenue trend + driver + recommendation
+  const gaps = factRows.map(r => { const pr = planByDate[+r.date]; return pr && pr.revenue ? (r.revenue-pr.revenue)/pr.revenue*100 : null; }).filter(v=>v!=null);
   if (gaps.length){
     const lastGap = gaps[gaps.length-1];
     let streak = 0;
     for (let i=gaps.length-1;i>=0;i--){ if ((gaps[i]<0)===(lastGap<0)) streak++; else break; }
     const below = lastGap < 0;
+    const p = planByDate[+lastFact.date];
+    let driverTxt = '';
+    if (p && p.orders && p.avgCheck){
+      const ordersVar = (lastFact.orders-p.orders)/p.orders*100;
+      const checkVar = (lastFact.avgCheck-p.avgCheck)/p.avgCheck*100;
+      const byOrders = Math.abs(ordersVar) >= Math.abs(checkVar);
+      const rec = byOrders
+        ? (ordersVar<0 ? 'рекомендация: разобрать воронку привлечения/удержания клиентов — падение объясняется количеством заказов, а не ценой' : '')
+        : (checkVar<0 ? 'рекомендация: проверить средний чек — возможно, демпинг или рост доли мелких заказов' : '');
+      driverTxt = ` Основной драйвер — <b>${byOrders?'заказы':'средний чек'}</b> (заказы ${fmtPct(ordersVar,1)}, чек ${fmtPct(checkVar,1)}).${rec?' '+rec+'.':''}`;
+    }
     cards.push({ tone: below?'bad':'good', icon: below?'down':'up',
-      html: `Выручка <b>${below?'ниже':'выше'} плана ${streak} мес. подряд</b> (сейчас ${fmtPct(lastGap,1)}).` });
+      html: `Выручка <b>${below?'ниже':'выше'} плана ${streak} мес. подряд</b> (сейчас ${fmtPct(lastGap,1)}).${driverTxt}` });
   }
 
-  // driver decomposition
-  const p = planByDate[+lastFact.date];
-  if (p && p.orders && p.avgCheck){
-    const ordersVar = (lastFact.orders-p.orders)/p.orders*100;
-    const checkVar = (lastFact.avgCheck-p.avgCheck)/p.avgCheck*100;
-    const driver = Math.abs(ordersVar) >= Math.abs(checkVar) ? 'заказы' : 'средний чек';
-    const driverVal = Math.abs(ordersVar) >= Math.abs(checkVar) ? ordersVar : checkVar;
-    cards.push({ tone: driverVal<0?'warn':'neutral', icon:'target',
-      html: `Причина отклонения выручки в ${fmtMon(lastFact.date)} — <b>${driver}</b> (${fmtPct(driverVal,1)}). Заказы: ${fmtPct(ordersVar,1)}, чек: ${fmtPct(checkVar,1)}.` });
-  }
-
-  // biggest expense overspend category
+  // 2) expense structure: ratio-to-revenue analysis + unplanned line items
   const catDefs = [
     ['partnerPrice','Партнерский прайс'], ['royalty','Роялти'],
-    ['salary','ЗП с ФОТ'], ['salaryTax','Зарплатные налоги'],
-    ['loanInterest','Проценты по займу'],
+    ['salary','ЗП с ФОТ'], ['salaryTax','Зарплатные налоги'], ['loanInterest','Проценты по займу'],
   ];
-  const planCumRows = planRows.filter(r=>r.date<=lastFact.date);
-  let worstCat = null, worstDelta = 0;
+  let unplanned = null, worstRatio = null;
   catDefs.forEach(([key,label]) => {
     const factSum = factRows.reduce((s,r)=>s+(r[key]||0),0);
     const planSum = planCumRows.reduce((s,r)=>s+(r[key]||0),0);
-    const d = factSum - planSum;
-    if (Math.abs(d) > Math.abs(worstDelta)){ worstDelta = d; worstCat = label; }
+    if (!factSum && !planSum) return;
+    const factRatio = revFactCum ? factSum/revFactCum*100 : 0;
+    const planRatio = revPlanCum ? planSum/revPlanCum*100 : 0;
+    const isUnplanned = planSum < revPlanCum*0.002 && factSum > revFactCum*0.01;
+    if (isUnplanned && (!unplanned || factSum > unplanned.factSum)){
+      unplanned = { label, factSum, factRatio };
+    }
+    const ratioDelta = factRatio - planRatio;
+    if (!isUnplanned && (!worstRatio || ratioDelta > worstRatio.ratioDelta)){
+      worstRatio = { label, ratioDelta, factRatio, planRatio, factSum, planSum };
+    }
   });
-  if (worstCat && Math.abs(worstDelta) > 1000){
-    cards.push({ tone: worstDelta>0?'bad':'good', icon: worstDelta>0?'alert':'up',
-      html: `Главное отклонение по расходам — статья <b>«${worstCat}»</b>: ${worstDelta>0?'перерасход':'экономия'} на ${fmtRub(Math.abs(worstDelta),true)} нарастающим итогом.` });
+  if (unplanned){
+    cards.push({ tone:'bad', icon:'alert',
+      html: `Статья <b>«${unplanned.label}»</b> не заложена в план на этот период, но по факту уже составляет <b>${unplanned.factRatio.toFixed(1)}% выручки</b> (${fmtRub(unplanned.factSum,true)}) — внеплановые расходы. Рекомендация: уточнить условия начисления у контрагента и внести статью в план.` });
+  }
+  if (worstRatio && worstRatio.ratioDelta > 1.5){
+    cards.push({ tone:'warn', icon:'alert',
+      html: `Статья <b>«${worstRatio.label}»</b> растёт как доля выручки: план ${worstRatio.planRatio.toFixed(1)}% → факт ${worstRatio.factRatio.toFixed(1)}% (+${worstRatio.ratioDelta.toFixed(1)} п.п.). Это не просто рост в рублях из-за масштаба — эффективность по этой статье падает. Рекомендация: пересмотреть условия/тариф по «${worstRatio.label}».` });
   }
 
-  // break-even delay
-  if (be.planBE && be.delta != null){
-    cards.push({ tone: be.delta<=0?'good':'warn', icon: be.delta<=0?'up':'alert',
-      html: be.delta===0 ? `Проект выходит на безубыточность <b>точно по плану</b> — ${fmtMon(be.planBE.date)}.`
-        : `Точка безубыточности ${be.delta>0?'сдвигается позже плана':'наступает раньше плана'} на <b>${Math.abs(be.delta)} мес.</b> — из-за отставания по выручке и/или перерасхода, см. выше.` });
-  } else if (be.planBE && be.projFailed){
-    cards.push({ tone:'bad', icon:'alert', html:`При текущем темпе прибыль не растёт — безубыточность (план: ${fmtMon(be.planBE.date)}) под риском срыва.` });
+  // 3) rentability trend
+  const netFactCum = factRows.reduce((s,r)=>s+(r.netProfit||0),0);
+  const netPlanCum = planCumRows.reduce((s,r)=>s+(r.netProfit||0),0);
+  if (revFactCum && revPlanCum){
+    const rFact = netFactCum/revFactCum*100;
+    const rPlan = netPlanCum/revPlanCum*100;
+    const d = rFact-rPlan;
+    cards.push({ tone: d>=0?'good':'bad', icon: d>=0?'up':'down',
+      html: `Рентабельность нарастающим итогом: факт <b>${rFact.toFixed(1)}%</b> против плана ${rPlan.toFixed(1)}% (${fmtPP(d)}).${d<0?' Это напрямую отдаляет точку окупаемости — см. ниже.':''}` });
+  }
+
+  // 3b) BDR-adjusted result (accounts for amortized customer-acquisition cost) — Факт-only metric
+  if (lastFact.finResultCum != null && lastFact.cumProfit != null){
+    const gap = lastFact.cumProfit - lastFact.finResultCum;
+    if (Math.abs(gap) > Math.abs(lastFact.cumProfit)*0.03 + 5000){
+      cards.push({ tone:'warn', icon:'alert',
+        html: `С учётом равномерного списания стоимости привлечения клиента (БДР), реальный накопленный финрезультат — <b>${fmtRub(lastFact.finResultCum,true)}</b>, это на ${fmtRub(Math.abs(gap),true)} ${gap>0?'ниже':'выше'} операционной чистой прибыли (${fmtRub(lastFact.cumProfit,true)}). Более консервативная и корректная цифра для оценки реального состояния проекта — эта.` });
+    }
+  }
+
+  // 4) break-even delay + actionable recommendation
+  if (be.investment!=null && be.planBE){
+    if (be.delta != null){
+      let rec = '';
+      if (be.requiredMonthlyProfit!=null && be.actualRecentMonthlyProfit!=null){
+        if (be.requiredMonthlyProfit > be.actualRecentMonthlyProfit){
+          const gap = be.requiredMonthlyProfit - be.actualRecentMonthlyProfit;
+          rec = ` Чтобы уложиться в плановый срок (${fmtMon(be.planBE.date)}), нужно нарастить среднюю чистую прибыль минимум на <b>${fmtRub(gap,true)}/мес</b> (сейчас в среднем ${fmtRub(be.actualRecentMonthlyProfit,true)}/мес, требуется ${fmtRub(be.requiredMonthlyProfit,true)}/мес).`;
+        } else {
+          rec = ` Текущий темп прибыли (${fmtRub(be.actualRecentMonthlyProfit,true)}/мес) уже выше необходимого для планового срока — задержка объясняется стартовым отставанием, а не текущей динамикой.`;
+        }
+      }
+      cards.push({ tone: be.delta<=0?'good':'warn', icon: be.delta<=0?'up':'alert',
+        html: (be.delta===0 ? `Проект окупается <b>точно по плану</b> — ${fmtMon(be.planBE.date)}.` : `Точка окупаемости ${be.delta>0?'сдвигается позже плана':'наступает раньше плана'} на <b>${Math.abs(be.delta)} мес.</b>` ) + rec });
+    } else if (be.projFailed){
+      cards.push({ tone:'bad', icon:'alert', html:`При текущем темпе чистая прибыль не растёт — окупаемость (план: ${fmtMon(be.planBE.date)}, ${fmtRub(be.investment,true)} вложений) под риском срыва. Рекомендация: приоритет — остановить снижение выручки и/или сократить статью с наибольшим отклонением, см. выше.` });
+    }
   }
 
   grid.innerHTML = cards.map(c => `
@@ -616,7 +686,7 @@ function renderKPIs(planRows, factRows, lastFact, planByDate){
     { accent:'var(--fact)', label:'Расходы нарастающим итогом', value:fmtRub(expFactCum,true), spark:expSpark,
       badge: pctExpenses!=null ? {tone:pctExpenses<=100?'good':'bad', text:fmtPct(pctExpenses-100,0)+' к плану'} : null,
       foot: `план: ${fmtRub(expPlanCum,true)}` },
-    { accent:'var(--plan)', label:'Маржинальность (факт)', value: marginFact!=null?marginFact.toFixed(1)+'%':'—', spark:marginSpark,
+    { accent:'var(--plan)', label:'Рентабельность (чистая)', value: marginFact!=null?marginFact.toFixed(1)+'%':'—', spark:marginSpark,
       badge: (marginFact!=null && marginPlan!=null) ? {tone:marginFact>=marginPlan?'good':'bad', text:fmtPP(marginFact-marginPlan)} : null,
       foot: `план: ${marginPlan!=null?marginPlan.toFixed(1)+'%':'—'}` },
     { accent:'var(--plan)', label:'Рост заказов MoM', value: ordersGrowth!=null?fmtPct(ordersGrowth,1):'—', spark:ordersSpark,
@@ -647,7 +717,7 @@ function baseLine(label, color, extra){
 function tooltipMoney(){ return { callbacks:{ label:(ctx)=> ctx.raw==null?'':` ${ctx.dataset.label}: ${fmtRub(ctx.raw,true)}` } }; }
 function yMoney(scales){ return Object.assign({}, scales, { y: Object.assign({}, scales.y, { ticks: Object.assign({}, scales.y.ticks, { callback:(v)=>fmtRub(v,true) }) }) }); }
 
-function renderCharts(planRows, factRows, lastFact, planByDate){
+function renderCharts(planRows, factRows, lastFact, planByDate, be){
   const labels = planRows.map(r=>fmtMon(r.date));
   const base = {
     responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
@@ -661,36 +731,43 @@ function renderCharts(planRows, factRows, lastFact, planByDate){
     }}
   };
 
-  // revenue
+  // revenue — both План and Факт as lines (same visual language)
   if (charts.revenue) charts.revenue.destroy();
   charts.revenue = new Chart(document.getElementById('chart-revenue'), {
-    data:{ labels, datasets:[
-      { type:'bar', label:'План', data:planRows.map(r=>r.revenue), backgroundColor:'rgba(57,217,138,.22)', borderColor:'#39d98a', borderWidth:1, borderRadius:3 },
-      { type:'line', label:'Факт', data:alignToPlan(planRows, factRows, 'revenue'), borderColor:'#ff8a3d', backgroundColor:'#ff8a3d', borderWidth:2.5, pointRadius:3, tension:.3 },
-    ]},
-    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, tooltipMoney()) }), scales: yMoney(base.scales) })
-  });
-
-  // expenses
-  if (charts.expenses) charts.expenses.destroy();
-  charts.expenses = new Chart(document.getElementById('chart-expenses'), {
-    data:{ labels, datasets:[
-      { type:'bar', label:'План', data:planRows.map(r=>r.expenses), backgroundColor:'rgba(255,138,61,.18)', borderColor:'#ff8a3d', borderWidth:1, borderRadius:3 },
-      { type:'line', label:'Факт', data:alignToPlan(planRows, factRows, 'expenses'), borderColor:'#ff5d78', backgroundColor:'#ff5d78', borderWidth:2.5, pointRadius:3, tension:.3 },
-    ]},
-    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, tooltipMoney()) }), scales: yMoney(base.scales) })
-  });
-
-  // cumulative profit / break-even
-  if (charts.cumprofit) charts.cumprofit.destroy();
-  charts.cumprofit = new Chart(document.getElementById('chart-cumprofit'), {
     type:'line',
     data:{ labels, datasets:[
-      baseLine('План','#39d98a',{data:planRows.map(r=>r.cumProfit)}),
-      baseLine('Факт','#ff8a3d',{data:alignToPlan(planRows, factRows, 'cumProfit')}),
+      baseLine('План','#39d98a',{data:planRows.map(r=>r.revenue)}),
+      baseLine('Факт','#ff8a3d',{data:alignToPlan(planRows, factRows, 'revenue')}),
     ]},
-    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, tooltipMoney()),
-      annotation:undefined }), scales: yMoney(base.scales) })
+    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, tooltipMoney()) }), scales: yMoney(base.scales) })
+  });
+
+  // expenses — same line style as revenue, for direct visual comparison
+  if (charts.expenses) charts.expenses.destroy();
+  charts.expenses = new Chart(document.getElementById('chart-expenses'), {
+    type:'line',
+    data:{ labels, datasets:[
+      baseLine('План','#39d98a',{data:planRows.map(r=>r.expenses)}),
+      baseLine('Факт','#ff8a3d',{data:alignToPlan(planRows, factRows, 'expenses')}),
+    ]},
+    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, tooltipMoney()) }), scales: yMoney(base.scales) })
+  });
+
+  // payoff / break-even: cumulative profit vs investment amount (dashed reference)
+  if (charts.cumprofit) charts.cumprofit.destroy();
+  const invLine = be && be.investment!=null ? planRows.map(()=>be.investment) : null;
+  const cumDatasets = [
+    baseLine('План','#39d98a',{data:planRows.map(r=>r.cumProfit)}),
+    baseLine('Факт','#ff8a3d',{data:alignToPlan(planRows, factRows, 'cumProfit')}),
+  ];
+  if (invLine){
+    cumDatasets.push({ label:'Сумма вложений', data:invLine, borderColor:'rgba(200,206,224,.55)', borderWidth:1.5,
+      borderDash:[6,5], pointRadius:0, tension:0, fill:false });
+  }
+  charts.cumprofit = new Chart(document.getElementById('chart-cumprofit'), {
+    type:'line',
+    data:{ labels, datasets:cumDatasets },
+    options: Object.assign({}, base, { plugins: Object.assign({}, base.plugins, { tooltip: Object.assign({}, base.plugins.tooltip, tooltipMoney()) }), scales: yMoney(base.scales) })
   });
 
   // expense structure: plan vs fact for last fact month
