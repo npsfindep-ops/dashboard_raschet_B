@@ -471,11 +471,11 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const factVal = be.factMonths!=null ? String(be.factMonths) : (be.projFailed?'—':'…');
     const remaining = be.factBE ? monthsBetween(lastFact.date, be.factBE.date) : null;
     const payoffMonthTxt = be.factBE ? fmtMon(be.factBE.date) : null;
-    const deltaTxt = be.delta!=null ? (be.delta===0?'вовремя':(be.delta>0?`+${be.delta} мес.`:`−${Math.abs(be.delta)} мес.`)) : null;
+    const deltaTxt = be.delta!=null ? (be.delta===0?'0':(be.delta>0?`+${be.delta}`:`−${Math.abs(be.delta)}`)) : null;
     cards.push({ label:'СРОК ОКУПАЕМОСТИ, МЕС.', value: factVal, rows:[
-      { label:'к плану', value: be.planBE ? `${fmtMon(be.planBE.date)}${deltaTxt?' ('+deltaTxt+')':''}` : '—',
+      { label:'к плану', value: (deltaTxt && be.planBE) ? `${deltaTxt} (${fmtMon(be.planBE.date)})` : '—',
         tone: be.delta!=null ? (be.delta<=0?'good':'bad') : 'neutral' },
-      { label:'осталось', value: remaining!=null ? `${remaining} мес. (${payoffMonthTxt})` : '—', tone:'neutral' },
+      { label:'осталось', value: remaining!=null ? `${remaining} (${payoffMonthTxt})` : '—', tone:'neutral' },
     ]});
   }
 
