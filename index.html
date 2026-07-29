@@ -678,6 +678,7 @@ function baseLine(label, color, extra){
     pointRadius:2.5, pointHoverRadius:4, tension:.3, spanGaps:false }, extra||{});
 }
 const METRIC_COLORS = { profit:'#38bdf8', revenue:'#a3e635', expenses:'#fb923c', avgCheck:'#a78bfa', orders:'#34d399' };
+const PLAN_COLORS   = { profit:'#3b82f6', revenue:'#2dd4bf', expenses:'#facc15', avgCheck:'#f472b6', orders:'#22d3ee' };
 function hexToRgba(hex, alpha){
   const h = hex.replace('#','');
   const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
@@ -707,8 +708,9 @@ function chartBaseOptions(moneyAxis){
 function renderMetricChart(metric, planRows, factRows){
   const m = METRICS[metric];
   const accent = METRIC_COLORS[metric] || '#a3e635';
+  const planColor = PLAN_COLORS[metric] || '#2dd4bf';
   document.getElementById('metric-toggle').style.setProperty('--m-accent', accent);
-  document.getElementById('sw-plan').style.background = hexToRgba(accent,.5);
+  document.getElementById('sw-plan').style.background = planColor;
   document.getElementById('sw-fact').style.background = accent;
   document.getElementById('sw-forecast').style.borderTopColor = accent;
   document.getElementById('metric-chart-title').textContent = m.label;
@@ -719,7 +721,7 @@ function renderMetricChart(metric, planRows, factRows){
   charts.metric = new Chart(document.getElementById('chart-metric'), {
     type:'line',
     data:{ labels, datasets:[
-      baseLine('План', hexToRgba(accent,.5), {data:planRows.map(r=>r[m.field])}),
+      baseLine('План', planColor, {data:planRows.map(r=>r[m.field])}),
       baseLine('Факт', accent, {data:solid}),
       baseLine('Прогноз', accent, {data:dashed, borderDash:[6,5], pointRadius:0, borderWidth:2}),
     ]},
