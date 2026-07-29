@@ -15,7 +15,7 @@
     --line:#2a2a2a;
     --line-strong:#333333;
     --text-hi:#ffffff;
-    --text:#aaaaaa;
+    --text:#ffffff;
     --text-dim:#888888;
     --plan:#a3e635;
     --plan-soft:rgba(163,230,53,.15);
@@ -167,6 +167,7 @@
   tbody tr:hover{background:rgba(255,255,255,.025);}
   .cell-pct{border-radius:5px; padding:1px 7px; font-weight:700;}
   .delta-pos{color:var(--good);} .delta-neg{color:var(--danger);}
+  .delta-arrow{width:9px; height:9px; vertical-align:-1px; margin-right:3px;}
 
   @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
 </style>
@@ -394,12 +395,22 @@ function computeBreakEven(planRows, factRows, lastFact){
     const sample = factRows.slice(-3);
     actualRecentMonthlyProfit = sample.reduce((s,r)=>s+(r.netProfit||0),0) / sample.length;
     if (!factBE){
-      const remaining = investment - lastFact.cumProfit;
-      if (actualRecentMonthlyProfit > 0 && remaining > 0){
-        const monthsNeeded = Math.ceil(remaining / actualRecentMonthlyProfit);
-        factBE = { date: addMonths(lastFact.date, monthsNeeded) };
+      const avgDelta = computeAvgDelta(planRows, factRows, 'netProfit');
+      const idx = {}; planRows.forEach((r,i)=>idx[+r.date]=i);
+      const lastFactIdx = idx[+lastFact.date];
+      let cum = lastFact.cumProfit;
+      let foundDate = null;
+      if (lastFactIdx != null){
+        for (let i=lastFactIdx+1; i<planRows.length; i++){
+          const planNet = planRows[i].netProfit;
+          cum += (planNet!=null ? planNet+avgDelta : 0);
+          if (cum >= investment){ foundDate = planRows[i].date; break; }
+        }
+      }
+      if (foundDate){
+        factBE = { date: foundDate };
         factBEIsProjection = true;
-      } else if (actualRecentMonthlyProfit <= 0){
+      } else if (avgDelta <= 0 && actualRecentMonthlyProfit <= 0){
         projFailed = true;
       }
     }
@@ -649,25 +660,40 @@ function alignToPlan(planRows, factRows, key){
 // so old months naturally matter less without arbitrarily discarding them), and damps
 // the trend at each future step (phi<1) so the forecast converges to a stable level
 // instead of running off in a straight line.
-function holtDampedForecast(vals, horizon, alpha, beta, phi){
-  alpha = alpha==null?0.35:alpha; beta = beta==null?0.15:beta; phi = phi==null?0.85:phi;
-  if (!vals.length) return new Array(horizon).fill(0);
-  if (vals.length === 1) return new Array(horizon).fill(vals[0]);
-  let level = vals[0];
-  let trend = vals[1]-vals[0];
-  for (let t=1; t<vals.length; t++){
-    const y = vals[t];
-    const prevLevel = level;
-    level = alpha*y + (1-alpha)*(prevLevel + phi*trend);
-    trend = beta*(level-prevLevel) + (1-beta)*phi*trend;
-  }
-  const out = [];
-  let phiSum = 0;
-  for (let h=1; h<=horizon; h++){
-    phiSum += Math.pow(phi, h);
-    out.push(level + phiSum*trend);
-  }
-  return out;
+// Ratio-to-plan projection: rather than extrapolating a generic statistical trend (which has no
+// way to "know" about seasonality), we scale the PLAN's own future trajectory — which already
+// encodes whatever seasonal assumptions the business built in (e.g. a Q4 uplift) — by how the
+// actuals have recently been tracking against plan. This preserves the plan's shape (including
+// seasonal swings) while reflecting the current performance level, instead of a near-straight
+// line that a pure trend model produces when it has no seasonal signal to work from.
+function computeAvgRatio(planRows, factRows, key, windowSize){
+  const idx = {}; planRows.forEach((r,i)=>idx[+r.date]=i);
+  const sortedFact = factRows.slice().sort((a,b)=>a.date-b.date);
+  const ratios = [];
+  sortedFact.forEach(r => {
+    const i = idx[+r.date]; if (i==null) return;
+    const planVal = planRows[i][key];
+    if (planVal) ratios.push(r[key]/planVal);
+  });
+  const recent = ratios.slice(-(windowSize||6));
+  return recent.length ? recent.reduce((s,v)=>s+v,0)/recent.length : 1;
+}
+
+// For metrics that can be negative or cross zero (net profit), a fact/plan RATIO is unstable and
+// can even flip sign: e.g. plan=-50k, fact=-80k (a worse loss) gives ratio=1.6, which reads as
+// "160% of plan" — misleadingly implying better-than-plan performance. An absolute deviation
+// (fact-plan, in rubles) has no such sign trap and is the correct basis for projecting these.
+function computeAvgDelta(planRows, factRows, key, windowSize){
+  const idx = {}; planRows.forEach((r,i)=>idx[+r.date]=i);
+  const sortedFact = factRows.slice().sort((a,b)=>a.date-b.date);
+  const deltas = [];
+  sortedFact.forEach(r => {
+    const i = idx[+r.date]; if (i==null) return;
+    const planVal = planRows[i][key];
+    if (planVal!=null) deltas.push(r[key]-planVal);
+  });
+  const recent = deltas.slice(-(windowSize||6));
+  return recent.length ? recent.reduce((s,v)=>s+v,0)/recent.length : 0;
 }
 
 function buildProjection(planRows, factRows, key){
@@ -677,16 +703,22 @@ function buildProjection(planRows, factRows, key){
   const dashed = new Array(planRows.length).fill(null);
   if (lastIdx < 0) return { solid: factAligned, dashed };
 
-  const sortedFact = factRows.slice().sort((a,b)=>a.date-b.date);
-  const vals = sortedFact.map(r=>r[key]).filter(v=>v!=null);
-  const horizon = planRows.length - lastIdx - 1;
-  const forecast = horizon > 0 ? holtDampedForecast(vals, horizon) : [];
-
+  const signedMetric = (key === 'netProfit' || key === 'profitBeforeTax' || key === 'cumProfit');
   dashed[lastIdx] = factAligned[lastIdx];
-  for (let h=1; h<=horizon; h++){
-    let v = forecast[h-1];
-    if (v < 0) v = 0;
-    dashed[lastIdx+h] = v;
+  if (signedMetric){
+    const avgDelta = computeAvgDelta(planRows, factRows, key);
+    for (let i=lastIdx+1; i<planRows.length; i++){
+      const planVal = planRows[i][key];
+      dashed[i] = planVal!=null ? planVal + avgDelta : null;
+    }
+  } else {
+    const avgRatio = computeAvgRatio(planRows, factRows, key);
+    for (let i=lastIdx+1; i<planRows.length; i++){
+      const planVal = planRows[i][key];
+      let v = planVal!=null ? planVal*avgRatio : null;
+      if (v!=null && v<0) v = 0;
+      dashed[i] = v;
+    }
   }
   return { solid: factAligned, dashed };
 }
@@ -776,9 +808,33 @@ const payoffMarkerPlugin = {
   }
 };
 
+function buildCumProfitProjection(planRows, factRows, lastFact){
+  const factAligned = alignToPlan(planRows, factRows, 'cumProfit');
+  let lastIdx = -1;
+  for (let i=0;i<factAligned.length;i++) if (factAligned[i]!=null) lastIdx = i;
+  const dashed = new Array(planRows.length).fill(null);
+  if (lastIdx < 0 || !lastFact) return { solid: factAligned, dashed };
+
+  // cumProfit itself can cross zero, and monthly net profit is often negative early on, so a
+  // fact/plan RATIO is unstable (can even flip sign — see computeAvgDelta's comment). We instead
+  // project seasonal-aware MONTHLY net profit as plan + average absolute deviation, then
+  // integrate it forward from the last actual cumulative figure.
+  const avgDelta = computeAvgDelta(planRows, factRows, 'netProfit');
+  dashed[lastIdx] = factAligned[lastIdx];
+  let cum = lastFact.cumProfit;
+  for (let i=lastIdx+1; i<planRows.length; i++){
+    const planNet = planRows[i].netProfit;
+    const projectedNet = planNet!=null ? planNet+avgDelta : 0;
+    cum += projectedNet;
+    dashed[i] = cum;
+  }
+  return { solid: factAligned, dashed };
+}
+
 function renderPayoffChart(planRows, factRows, be){
   const labels = planRows.map(r=>fmtMon(r.date));
-  const { solid, dashed } = buildProjection(planRows, factRows, 'cumProfit');
+  const lastFact = factRows.length ? factRows.slice().sort((a,b)=>a.date-b.date).slice(-1)[0] : null;
+  const { solid, dashed } = buildCumProfitProjection(planRows, factRows, lastFact);
   const invLine = be && be.investment!=null ? planRows.map(()=>be.investment) : null;
   const datasets = [
     baseLine('План','#a3e635',{data:planRows.map(r=>r.cumProfit)}),
@@ -829,7 +885,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
       const pct = planSum ? factSum/planSum*100 : (factSum?Infinity:null);
       return `<tr>
         <td>${label}</td><td>${fmtRub(planSum)}</td><td>${fmtRub(factSum)}</td>
-        <td class="${delta>0?'delta-neg':'delta-pos'}">${delta>=0?'+':''}${fmtRub(delta)}</td>
+        <td class="${delta>0?'delta-neg':'delta-pos'}" style="color:${delta>0?'#ff4d4d':'#a3e635'}">${ICONS[delta>0?'down':'up'].replace('<svg ','<svg class="delta-arrow" ')}${delta>=0?'+':''}${fmtRub(delta)}</td>
         <td>${pct==null?'—':(pct===Infinity?'внеплан.':pct.toFixed(0)+'%')}</td>
       </tr>`;
     }).join('');
@@ -847,7 +903,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     if (factVal!=null && planVal!=null){
       const deltaAbs = factVal - planVal;
       const fmtDelta = (v) => m.money ? fmtRub(v) : fmtNum(v);
-      deltaAbsCell = `<span class="${deltaAbs>=0?'delta-pos':'delta-neg'}">${deltaAbs>=0?'+':''}${fmtDelta(deltaAbs)}</span>`;
+      deltaAbsCell = `<span class="${deltaAbs>=0?'delta-pos':'delta-neg'}" style="color:${deltaAbs>=0?'#a3e635':'#ff4d4d'}">${ICONS[deltaAbs>=0?'up':'down'].replace('<svg ','<svg class="delta-arrow" ')}${deltaAbs>=0?'+':''}${fmtDelta(deltaAbs)}</span>`;
       if (planVal){
         const pct = deltaAbs/planVal*100;
         deltaPctCell = `<span class="${pct>=0?'delta-pos':'delta-neg'}">${fmtPct(pct,1)}</span>`;
