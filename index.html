@@ -162,7 +162,7 @@
     position:sticky; top:0; background:var(--card-bg);
   }
   thead th:first-child{text-align:left;}
-  tbody td{padding:5px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap;}
+  tbody td{padding:5px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap; font-weight:400;}
   tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:600; color:var(--text);}
   tbody tr:hover{background:rgba(255,255,255,.025);}
   .cell-pct{border-radius:5px; padding:1px 7px; font-weight:700;}
@@ -771,12 +771,19 @@ function buildConsistentProjections(planRows, factRows){
     revenueDashed[i] = (o!=null && c!=null) ? o*c : null;
   }
 
-  const marginRatio = computeRatioDirect(factRows, 'netProfit', 'revenue');
+  // Profit is tied to the PLAN's own month-by-month profit trajectory, shifted by the average
+  // absolute rouble gap between fact and plan over the recent months — not a margin ratio applied
+  // to a (possibly already-scaled-down) revenue figure. A margin-ratio approach could accidentally
+  // imply the business will out-earn plan even while revenue underperforms, with no real basis for
+  // that in the actuals. The additive gap can never claim "better than plan" unless the fact data
+  // has actually been running ahead of plan by that amount recently.
+  const avgProfitDelta = computeAvgDelta(planRows, factRows, 'netProfit');
   const profitSolid = alignToPlan(planRows, factRows, 'netProfit');
   const profitDashed = new Array(planRows.length).fill(null);
   if (lastIdx>=0) profitDashed[lastIdx] = profitSolid[lastIdx];
   for (let i=lastIdx+1; i<planRows.length; i++){
-    profitDashed[i] = revenueDashed[i]!=null ? revenueDashed[i]*marginRatio : null;
+    const planNet = planRows[i].netProfit;
+    profitDashed[i] = planNet!=null ? planNet + avgProfitDelta : null;
   }
 
   const expensesSolid = alignToPlan(planRows, factRows, 'expenses');
@@ -818,8 +825,8 @@ function chartBaseOptions(moneyAxis, tickColor){
     events:['click','touchstart'],
     interaction:{mode:'nearest', intersect:true},
     scales:{
-      x:{ grid:{color:'rgba(255,255,255,0.08)'}, ticks:{color:tickColor||'#888888', font:{family:'Geologica', weight:'600', size:13}, maxRotation:0, autoSkip:true, maxTicksLimit:9} },
-      y:{ grid:{color:'rgba(255,255,255,0.08)'}, ticks:{color:tickColor||'#888888', font:{family:'Geologica', weight:'600', size:13},
+      x:{ grid:{color:'rgba(255,255,255,0.08)'}, ticks:{color:tickColor||'#888888', font:{family:'Geologica', weight:'400', size:13}, maxRotation:0, autoSkip:true, maxTicksLimit:9} },
+      y:{ grid:{color:'rgba(255,255,255,0.08)'}, ticks:{color:tickColor||'#888888', font:{family:'Geologica', weight:'400', size:13},
             callback: moneyAxis ? (v)=>fmtRub(v,true) : undefined } }
     },
     plugins:{ legend:{display:false}, tooltip:{
