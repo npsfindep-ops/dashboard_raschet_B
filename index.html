@@ -119,11 +119,12 @@
   /* ---------------- KPI cards — always one row of 7 ---------------- */
   .kpis{display:grid; grid-template-columns:repeat(7,1fr); gap:10px; flex:none;}
   .kpi{
+    position:relative;
     background:var(--card-bg);
     border:1px solid var(--line); border-radius:var(--radius); padding:10px 14px;
     display:flex; flex-direction:column;
   }
-  .kpi .label{font-size:10px; color:rgba(255,255,255,.95); font-weight:600; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .kpi .label{font-size:10px; color:rgba(255,255,255,.95); font-weight:600; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:16px;}
   .kpi .value{font-size:24px; font-weight:700; letter-spacing:-.02em; color:#ffffff; line-height:1; margin-bottom:5px;}
   .kpi .indicators{display:flex; flex-direction:column; gap:3px;}
   .ind-row{display:flex; justify-content:space-between; align-items:center; font-size:12px;}
@@ -132,6 +133,17 @@
   .ind-row .ind-value.good{color:#a3e635;}
   .ind-row .ind-value.bad{color:#ff4d4d;}
   .ind-row .ind-value.neutral{color:var(--text);}
+  .kpi-info{
+    position:absolute; top:9px; right:9px; width:15px; height:15px; border-radius:50%;
+    background:rgba(255,255,255,.14); color:#ffffff; font-size:9.5px; font-family:var(--sans); font-weight:700;
+    border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; padding:0;
+  }
+  .kpi-info:hover{background:rgba(255,255,255,.26);}
+  #kpi-tooltip{
+    position:fixed; z-index:80; max-width:230px; background:#1e1e1e; border:1px solid #333333;
+    border-radius:8px; padding:10px 12px; font-size:11.5px; color:#ffffff; line-height:1.5;
+    display:none; box-shadow:0 10px 28px rgba(0,0,0,.45);
+  }
 
   /* ---------------- chart cards ---------------- */
   .chart-card{
@@ -154,6 +166,27 @@
     display:flex; flex-direction:column; min-height:0; min-width:0;
   }
   .table-card h3{margin:0 0 8px; font-size:10px; font-weight:600; color:#ffffff; text-transform:uppercase; letter-spacing:.06em; flex:none;}
+  .table-head-row{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex:none;}
+  #detail-table-period{font-size:10.5px; color:#888888; margin-left:8px;}
+  .expand-btn{
+    font-family:var(--sans); font-size:11.5px; font-weight:600; color:#ffffff;
+    background:#252525; border:1px solid #333333; border-radius:7px; padding:5px 12px; cursor:pointer;
+  }
+  .expand-btn:hover{background:#333333;}
+  .modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:300; display:none; align-items:center; justify-content:center; padding:30px;}
+  .modal-overlay.open{display:flex;}
+  .modal-panel{background:#1e1e1e; border:1px solid #333333; border-radius:12px; padding:18px 22px 22px; width:min(1000px,94vw); max-height:88vh; display:flex; flex-direction:column;}
+  .modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex:none;}
+  .modal-head h3{margin:0; font-size:13px; font-weight:600; color:#ffffff; text-transform:uppercase; letter-spacing:.05em;}
+  #modal-close{background:none; border:none; color:#888888; font-size:22px; cursor:pointer; line-height:1; padding:0 4px;}
+  #modal-close:hover{color:#ffffff;}
+  .modal-body{overflow:auto;}
+  #expense-modal-table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px;}
+  #expense-modal-table th{position:sticky; top:0; background:#1e1e1e; text-align:right; font-weight:600; color:#ffffff; font-size:10.5px; text-transform:uppercase; padding:8px 10px; border-bottom:1px solid #333333;}
+  #expense-modal-table th:first-child{text-align:left;}
+  #expense-modal-table td{padding:6px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap; font-weight:400; color:#ffffff;}
+  #expense-modal-table td:first-child{text-align:left; font-family:var(--sans); font-weight:600; color:var(--text);}
+  #expense-modal-table tr.modal-total td{font-weight:700; border-top:1px solid #333333; border-bottom:none;}
   .table-scroll{overflow-y:auto; overflow-x:hidden; min-height:0; flex:1;}
   table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11.5px;}
   thead th{
@@ -185,6 +218,7 @@
   <div id="status-banner"></div>
 
   <section class="kpis" id="kpi-grid"></section>
+  <div id="kpi-tooltip"></div>
 
   <div class="metric-toggle" id="metric-toggle">
     <button data-m="profit" class="active">Прибыль</button>
@@ -192,6 +226,7 @@
     <button data-m="expenses">Расходы</button>
     <button data-m="avgCheck">Средний чек</button>
     <button data-m="orders">Заказы</button>
+    <button data-m="bdr">БДР</button>
   </div>
 
   <div class="split-21 row-top">
@@ -199,9 +234,9 @@
       <div class="chart-head">
         <div><h3 id="metric-chart-title">Прибыль</h3><p id="metric-chart-sub"></p></div>
         <div class="legend-inline">
-          <span><span class="sw" id="sw-plan"></span>План</span>
-          <span><span class="sw" id="sw-fact"></span>Факт</span>
-          <span><span class="sw dash" id="sw-forecast"></span>Прогноз</span>
+          <span id="legend-plan-item"><span class="sw" id="sw-plan"></span><span id="legend-plan-text">План</span></span>
+          <span id="legend-fact-item"><span class="sw" id="sw-fact"></span><span id="legend-fact-text">Факт</span></span>
+          <span id="legend-forecast-item"><span class="sw dash" id="sw-forecast"></span>Прогноз</span>
         </div>
       </div>
       <div class="chart-wrap"><canvas id="chart-metric"></canvas></div>
@@ -211,7 +246,10 @@
 
   <div class="split-21 row-bottom">
     <div class="table-card">
-      <h3 id="detail-table-title">Прибыль по месяцам</h3>
+      <div class="table-head-row">
+        <div><h3 id="detail-table-title" style="display:inline">Прибыль по месяцам</h3><span id="detail-table-period"></span></div>
+        <button id="expand-btn" class="expand-btn" type="button" style="display:none">Развернуть</button>
+      </div>
       <div class="table-scroll"><table><thead id="detail-thead"></thead><tbody id="detail-tbody"></tbody></table></div>
     </div>
     <div class="chart-card">
@@ -229,6 +267,17 @@
   </div>
 
 </div>
+
+<div id="expense-modal" class="modal-overlay">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h3>Расходы по статьям — по месяцам</h3>
+      <button id="modal-close" type="button" aria-label="Закрыть">×</button>
+    </div>
+    <div class="modal-body"><table id="expense-modal-table"><thead></thead><tbody></tbody></table></div>
+  </div>
+</div>
+
 <script>
 const SHEET_ID = "1XLsirVOVZWja5InJHN_3cha7KdlH-Wi1_NPQphGyrKE";
 const SHEET_NAME = "Свод план-факт";
@@ -249,6 +298,7 @@ const METRICS = {
   expenses:  { label:'Расходы',      field:'expenses',   money:true,  sub:'' },
   avgCheck:  { label:'Средний чек',  field:'avgCheck',   money:true,  sub:'' },
   orders:    { label:'Заказы',       field:'orders',     money:false, sub:'' },
+  bdr:       { label:'БДР',          field:'netProfit',  money:true,  sub:'' },
 };
 
 const FIELD_MAP = {
@@ -353,6 +403,7 @@ let allRows = [];
 let currentMetric = 'profit';
 let cachedInsights = [];
 let cachedPlanRows = [], cachedFactRows = [], cachedLastFact = null, cachedPlanByDate = {}, cachedBE = null, cachedProjections = null;
+let cachedExpenseModalData = null;
 
 async function loadData(){
   const banner = document.getElementById('status-banner');
@@ -514,7 +565,8 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const neededRevenue = (be.requiredMonthlyProfit!=null && currentMarginRow4>0) ? be.requiredMonthlyProfit/currentMarginRow4 : null;
     const neededRevF = fmtAdaptive(neededRevenue);
     const avgRevF = fmtAdaptive(avgRevFact);
-    cards.push({ label:`СР.ВЫРУЧКА, ${avgRevF.unit.toUpperCase()}/МЕС.`, value: avgRevF.value, rows:[
+    cards.push({ label:`СР.ВЫРУЧКА, ${avgRevF.unit.toUpperCase()}/МЕС.`, value: avgRevF.value,
+      info:'Средняя выручка в месяц, при текущей рентабельности, нужная для выхода на окупаемость в плановый срок.', rows:[
       { label:'к плану', value: pct!=null?fmtPct(pct,0):'—', tone: pct!=null?(pct>=0?'good':'bad'):'neutral' },
       { label:'нужно для окуп.', value: neededRevenue!=null?`${neededRevF.value} ${neededRevF.unit}`:'—', tone: (neededRevenue!=null&&avgRevFact!=null)?(avgRevFact>=neededRevenue?'good':'bad'):'neutral' },
     ]});
@@ -531,7 +583,8 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const rPlan = revPlanCum ? netPlanCum/revPlanCum*100 : null;
     const avgRevFactRow5 = factRows.length ? revFactCum/factRows.length : null;
     const neededMargin = (be.requiredMonthlyProfit!=null && avgRevFactRow5) ? be.requiredMonthlyProfit/avgRevFactRow5*100 : null;
-    cards.push({ label:'РЕНТАБЕЛЬНОСТЬ, %', value: rFact!=null?rFact.toFixed(1):'—', rows:[
+    cards.push({ label:'РЕНТАБЕЛЬНОСТЬ, %', value: rFact!=null?rFact.toFixed(1):'—',
+      info:'Минимальная рентабельность, при текущей выручке, необходимая для выхода на окупаемость в плановый срок.', rows:[
       { label:'к плану', value: (rFact!=null&&rPlan!=null)?fmtPP(rFact-rPlan):'—', tone: (rFact!=null&&rPlan!=null)?(rFact>=rPlan?'good':'bad'):'neutral' },
       { label:'мин. для окуп.', value: neededMargin!=null?neededMargin.toFixed(1)+'%':'—', tone: (neededMargin!=null&&rFact!=null)?(rFact>=neededMargin?'good':'bad'):'neutral' },
     ]});
@@ -548,7 +601,8 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const currentMarginRow6 = revFactCumRow6 ? netFactCumRow6/revFactCumRow6 : null;
     const neededRevenueRow6 = (be.requiredMonthlyProfit!=null && currentMarginRow6>0) ? be.requiredMonthlyProfit/currentMarginRow6 : null;
     const neededCheck = (neededRevenueRow6!=null && avgOrdersFactRow6) ? neededRevenueRow6/avgOrdersFactRow6 : null;
-    cards.push({ label:'СРЕДНИЙ ЧЕК, ₽', value: fmtNum(lastFact.avgCheck), rows:[
+    cards.push({ label:'СРЕДНИЙ ЧЕК, ₽', value: fmtNum(lastFact.avgCheck),
+      info:'Средний чек, при текущем количестве заказов, нужный для выхода на окупаемость в плановый срок.', rows:[
       { label:'к плану', value: pct!=null?fmtPct(pct,1):'—', tone: pct!=null?(pct>=0?'good':'bad'):'neutral' },
       { label:'нужно для окуп.', value: neededCheck!=null?fmtNum(neededCheck)+' ₽':'—', tone: (neededCheck!=null)?(lastFact.avgCheck>=neededCheck?'good':'bad'):'neutral' },
     ]});
@@ -567,7 +621,8 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const avgCheckRow7 = ordersFactCumRow7 ? revFactCumRow7/ordersFactCumRow7 : null;
     const neededRevenueRow7 = (be.requiredMonthlyProfit!=null && currentMarginRow7>0) ? be.requiredMonthlyProfit/currentMarginRow7 : null;
     const neededOrders = (neededRevenueRow7!=null && avgCheckRow7) ? neededRevenueRow7/avgCheckRow7 : null;
-    cards.push({ label:'ЗАКАЗЫ, СРЕД./МЕС.', value: fmtNum(Math.round(avgOrdersFact)), rows:[
+    cards.push({ label:'ЗАКАЗЫ, СРЕД./МЕС.', value: fmtNum(Math.round(avgOrdersFact)),
+      info:'Среднее число заказов в месяц, при текущем среднем чеке, нужное для выхода на окупаемость в плановый срок.', rows:[
       { label:'к плану', value: pct!=null?fmtPct(pct,1):'—', tone: pct!=null?(pct>=0?'good':'bad'):'neutral' },
       { label:'нужно для окуп.', value: neededOrders!=null?fmtNum(Math.round(neededOrders))+' шт':'—', tone: (neededOrders!=null)?(avgOrdersFact>=neededOrders?'good':'bad'):'neutral' },
     ]});
@@ -575,6 +630,7 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
 
   grid.innerHTML = cards.map(c => `
     <div class="kpi">
+      ${c.info?`<button class="kpi-info" type="button" data-tip="${c.info.replace(/"/g,'&quot;')}">i</button>`:''}
       <div class="label">${c.label}</div>
       <div class="value">${c.value}</div>
       <div class="indicators">
@@ -790,15 +846,10 @@ function buildProjection(planRows, factRows, key){
 
   const model = fitTrendAndSeasonality(factRows, key);
   const applySeasonal = (key === 'orders');
-  // Price is a decision the business makes, not a market force with momentum — a raw trend
-  // fit on a few noisy months shouldn't be extrapolated far into the future the way order
-  // volume can be. Damp its influence away quickly instead of riding a possibly-noisy slope
-  // for 10+ months.
-  const phi = (key === 'avgCheck') ? 0.45 : 0.85;
   const nonNegative = !(key === 'netProfit' || key === 'profitBeforeTax' || key === 'cumProfit');
   dashed[lastIdx] = factAligned[lastIdx];
   for (let i=lastIdx+1; i<planRows.length; i++){
-    let v = forecastFromTrend(model, planRows[i].date, applySeasonal, phi);
+    let v = forecastFromTrend(model, planRows[i].date, applySeasonal);
     if (v!=null && nonNegative && v<0) v = 0;
     dashed[i] = v;
   }
@@ -855,8 +906,8 @@ function baseLine(label, color, extra){
   return Object.assign({ label, borderColor:color, backgroundColor:color, borderWidth:2.5,
     pointRadius:2.5, pointHoverRadius:5, pointHitRadius:10, tension:.3, spanGaps:false }, extra||{});
 }
-const METRIC_COLORS = { profit:'#38bdf8', revenue:'#a3e635', expenses:'#fb923c', avgCheck:'#a78bfa', orders:'#34d399' };
-const PLAN_COLORS   = { profit:'#3b82f6', revenue:'#2dd4bf', expenses:'#facc15', avgCheck:'#f472b6', orders:'#22d3ee' };
+const METRIC_COLORS = { profit:'#38bdf8', revenue:'#a3e635', expenses:'#fb923c', avgCheck:'#a78bfa', orders:'#34d399', bdr:'#f472b6' };
+const PLAN_COLORS   = { profit:'#3b82f6', revenue:'#2dd4bf', expenses:'#facc15', avgCheck:'#f472b6', orders:'#22d3ee', bdr:'#a78bfa' };
 function hexToRgba(hex, alpha){
   const h = hex.replace('#','');
   const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
@@ -899,10 +950,50 @@ function renderMetricChart(metric, planRows, factRows, projections){
   const accent = METRIC_COLORS[metric] || '#a3e635';
   const planColor = PLAN_COLORS[metric] || '#2dd4bf';
   document.getElementById('metric-toggle').style.setProperty('--m-accent', accent);
+  document.getElementById('metric-chart-sub').textContent = m.sub;
+
+  if (metric === 'bdr'){
+    document.getElementById('legend-plan-text').textContent = 'Затраты на клиента (БДР)';
+    document.getElementById('legend-fact-text').textContent = 'Чистая прибыль';
+    document.getElementById('sw-plan').style.background = '#fb923c';
+    document.getElementById('sw-fact').style.background = '#38bdf8';
+    document.getElementById('legend-forecast-item').style.display = 'none';
+
+    const sortedFact = factRows.slice().sort((a,b)=>a.date-b.date);
+    const labels = sortedFact.map(r=>fmtMon(r.date));
+    const cacNet = sortedFact.map(r => (r.cacAmort!=null && r.cacVat!=null) ? (r.cacAmort - r.cacVat) : null);
+    const netProfitSeries = sortedFact.map(r => r.netProfit);
+
+    const allVals = [].concat(cacNet, netProfitSeries).filter(v => v!=null && !isNaN(v));
+    const scale = pickScale(allVals.length ? Math.max(...allVals.map(Math.abs)) : 0);
+    document.getElementById('metric-chart-title').textContent = `БДР, ${scale.unit}`;
+
+    const options = chartBaseOptions(true, accent, scale.divisor);
+    if (allVals.length){
+      const minV = Math.min(...allVals), maxV = Math.max(...allVals);
+      const pad = (maxV - minV) * 0.15 || Math.abs(maxV) * 0.1 || 10;
+      options.scales.y.min = minV >= 0 ? Math.max(0, minV - pad) : minV - pad;
+      options.scales.y.max = maxV + pad;
+    }
+
+    if (charts.metric) charts.metric.destroy();
+    charts.metric = new Chart(document.getElementById('chart-metric'), {
+      type:'line',
+      data:{ labels, datasets:[
+        baseLine('Затраты на клиента (БДР)', '#fb923c', {data:cacNet}),
+        baseLine('Чистая прибыль', '#38bdf8', {data:netProfitSeries}),
+      ]},
+      options
+    });
+    return;
+  }
+
+  document.getElementById('legend-plan-text').textContent = 'План';
+  document.getElementById('legend-fact-text').textContent = 'Факт';
+  document.getElementById('legend-forecast-item').style.display = '';
   document.getElementById('sw-plan').style.background = planColor;
   document.getElementById('sw-fact').style.background = accent;
   document.getElementById('sw-forecast').style.borderTopColor = accent;
-  document.getElementById('metric-chart-sub').textContent = m.sub;
   const labels = planRows.map(r=>fmtMon(r.date));
   const proj = (projections && projections[metric]) || buildProjection(planRows, factRows, m.field);
   const { solid, dashed } = proj;
@@ -960,15 +1051,16 @@ const payoffMarkerPlugin = {
       ctx.strokeStyle = '#121927';
       ctx.stroke();
 
-      // label offset above the point (clears the flat investment line); the two markers are
-      // staggered at different heights so they don't collide with each other either
-      const labelY = Math.max(chartArea.top + 10, y - 16 - i*16);
-      const align = x > midX + spanX*0.15 ? 'right' : (x < midX - spanX*0.15 ? 'left' : 'center');
+      // both labels sit at the same height above the intersection point; the plan marker's
+      // label is nudged left so it doesn't sit right on top of its own line
+      const labelY = Math.max(chartArea.top + 10, y - 16);
+      const labelX = x + (mk.role === 'plan' ? -14 : 0);
+      const align = mk.role === 'plan' ? 'right' : (labelX > midX + spanX*0.15 ? 'right' : (labelX < midX - spanX*0.15 ? 'left' : 'center'));
       ctx.fillStyle = mk.color;
       ctx.font = "400 11px 'Geologica'";
       ctx.textAlign = align;
       ctx.textBaseline = 'bottom';
-      ctx.fillText(mk.label, x, labelY);
+      ctx.fillText(mk.label, labelX, labelY);
       ctx.restore();
     });
   }
@@ -1014,7 +1106,7 @@ function renderPayoffChart(planRows, factRows, be, projections){
   const markers = [];
   if (be && be.planBE){
     const idx = planRows.findIndex(r => +r.date === +be.planBE.date);
-    if (idx >= 0) markers.push({ index: idx, color:'#a3e635', label:fmtMonNoDot(be.planBE.date) });
+    if (idx >= 0) markers.push({ index: idx, color:'#a3e635', label:fmtMonNoDot(be.planBE.date), role:'plan' });
   }
   if (be && be.factBE){
     const idx = planRows.findIndex(r => r.date.getFullYear()===be.factBE.date.getFullYear() && r.date.getMonth()===be.factBE.date.getMonth());
@@ -1033,20 +1125,27 @@ function renderPayoffChart(planRows, factRows, be, projections){
 function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
   const m = METRICS[metric];
   const title = document.getElementById('detail-table-title');
+  const period = document.getElementById('detail-table-period');
+  const expandBtn = document.getElementById('expand-btn');
   const thead = document.getElementById('detail-thead');
   const tbody = document.getElementById('detail-tbody');
 
+  const CAT_DEFS = [
+    ['partnerPrice','Партнерский прайс'], ['royalty','Роялти'], ['salary','ЗП с ФОТ'],
+    ['salaryTax','Зарплатные налоги'], ['loanInterest','Проценты по займу'],
+    ['vatOut','НДС исходящий'], ['vatIn','НДС вход'],
+  ];
+
   if (metric === 'expenses'){
     title.textContent = 'Расходы по статьям затрат';
-    const catDefs = [
-      ['partnerPrice','Партнерский прайс'], ['royalty','Роялти'], ['salary','ЗП с ФОТ'],
-      ['salaryTax','Зарплатные налоги'], ['loanInterest','Проценты по займу'],
-      ['vatOut','НДС исходящий'], ['vatIn','НДС вход'],
-    ];
-    thead.innerHTML = `<tr><th>Статья</th><th>План, ₽</th><th>Факт, ₽</th><th>Отклонение, ₽</th><th>% к плану</th></tr>`;
     const cutoff = lastFact ? lastFact.date : null;
     const planCum = cutoff ? planRows.filter(r=>r.date<=cutoff) : [];
-    tbody.innerHTML = catDefs.map(([key,label]) => {
+    period.textContent = (planRows.length && cutoff) ? `(${fmtMon(planRows[0].date)} – ${fmtMon(cutoff)})` : '';
+    expandBtn.style.display = '';
+    cachedExpenseModalData = { factRows: factRows.slice().sort((a,b)=>a.date-b.date), catDefs: CAT_DEFS };
+
+    thead.innerHTML = `<tr><th>Статья</th><th>План, ₽</th><th>Факт, ₽</th><th>Отклонение, ₽</th><th>% к плану</th></tr>`;
+    tbody.innerHTML = CAT_DEFS.map(([key,label]) => {
       const planSum = planCum.reduce((s,r)=>s+(r[key]||0),0);
       const factSum = factRows.reduce((s,r)=>s+(r[key]||0),0);
       const delta = factSum - planSum;
@@ -1059,6 +1158,22 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     }).join('');
     return;
   }
+
+  if (metric === 'bdr'){
+    title.textContent = 'БДР по месяцам';
+    period.textContent = '';
+    expandBtn.style.display = 'none';
+    thead.innerHTML = `<tr><th>Дата</th><th>Затраты на клиента (БДР), ₽</th><th>Чистая прибыль, ₽</th><th>Фин. рез. БДР, ₽</th></tr>`;
+    const sortedFact = factRows.slice().sort((a,b)=>a.date-b.date);
+    tbody.innerHTML = sortedFact.map(r => {
+      const cacNet = (r.cacAmort!=null && r.cacVat!=null) ? (r.cacAmort - r.cacVat) : null;
+      return `<tr><td>${fmtMon(r.date)}</td><td>${cacNet!=null?fmtRubPlain(cacNet):'—'}</td><td>${r.netProfit!=null?fmtRubPlain(r.netProfit):'—'}</td><td>${r.finResultPeriod!=null?fmtRubPlain(r.finResultPeriod):'—'}</td></tr>`;
+    }).join('');
+    return;
+  }
+
+  period.textContent = '';
+  expandBtn.style.display = 'none';
 
   const unit = m.money ? '₽' : 'шт';
   title.textContent = m.label + ' по месяцам';
@@ -1086,6 +1201,51 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
   const lastFactRow = document.getElementById('row-last-fact');
   if (lastFactRow && typeof lastFactRow.scrollIntoView === 'function') lastFactRow.scrollIntoView({ block:'nearest' });
 }
+
+// ==================== expense-by-month modal ====================
+function openExpenseModal(){
+  if (!cachedExpenseModalData) return;
+  const { factRows, catDefs } = cachedExpenseModalData;
+  const thead = document.querySelector('#expense-modal-table thead');
+  const tbody = document.querySelector('#expense-modal-table tbody');
+  thead.innerHTML = `<tr><th>Месяц</th>${catDefs.map(([,label])=>`<th>${label}, ₽</th>`).join('')}<th>Итого, ₽</th></tr>`;
+  const rowsHtml = factRows.map(r => {
+    const cells = catDefs.map(([key]) => fmtRubPlain(r[key]||0));
+    const total = catDefs.reduce((s,[key])=>s+(r[key]||0),0);
+    return `<tr><td>${fmtMon(r.date)}</td>${cells.map(c=>`<td>${c}</td>`).join('')}<td>${fmtRubPlain(total)}</td></tr>`;
+  }).join('');
+  const totalsRow = `<tr class="modal-total"><td>Итого</td>${catDefs.map(([key])=>`<td>${fmtRubPlain(factRows.reduce((s,r)=>s+(r[key]||0),0))}</td>`).join('')}<td>${fmtRubPlain(factRows.reduce((s,r)=>s+catDefs.reduce((s2,[key])=>s2+(r[key]||0),0),0))}</td></tr>`;
+  tbody.innerHTML = rowsHtml + totalsRow;
+  document.getElementById('expense-modal').classList.add('open');
+}
+function closeExpenseModal(){ document.getElementById('expense-modal').classList.remove('open'); }
+
+document.getElementById('expand-btn').addEventListener('click', openExpenseModal);
+document.getElementById('modal-close').addEventListener('click', closeExpenseModal);
+document.getElementById('expense-modal').addEventListener('click', (e) => { if (e.target.id==='expense-modal') closeExpenseModal(); });
+
+// ==================== KPI info tooltip ====================
+document.getElementById('kpi-grid').addEventListener('click', (e) => {
+  const btn = e.target.closest('.kpi-info');
+  const tip = document.getElementById('kpi-tooltip');
+  if (!btn){ tip.style.display = 'none'; return; }
+  e.stopPropagation();
+  const alreadyOpenFor = tip.dataset.forBtn;
+  if (alreadyOpenFor === btn.dataset.tip && tip.style.display === 'block'){
+    tip.style.display = 'none';
+    return;
+  }
+  tip.textContent = btn.dataset.tip;
+  tip.dataset.forBtn = btn.dataset.tip;
+  tip.style.display = 'block';
+  const r = btn.getBoundingClientRect();
+  const tipWidth = 230;
+  let left = r.right - tipWidth;
+  if (left < 8) left = 8;
+  tip.style.left = left + 'px';
+  tip.style.top = (r.bottom + 6) + 'px';
+});
+document.addEventListener('click', () => { document.getElementById('kpi-tooltip').style.display = 'none'; });
 
 // ==================== toggle wiring ====================
 document.getElementById('metric-toggle').addEventListener('click', (e) => {
