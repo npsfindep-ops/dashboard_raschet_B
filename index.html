@@ -99,7 +99,7 @@
     border:1px solid var(--line); border-radius:var(--radius); padding:14px;
     display:flex; flex-direction:column; gap:9px; min-height:0; min-width:0; overflow-y:auto;
   }
-  .insights-panel h4{margin:0 0 1px; font-size:10px; font-weight:600; color:#ffffff; text-transform:uppercase; letter-spacing:.06em; flex:none;}
+  .insights-panel h4{margin:0 0 1px; font-size:10px; font-weight:600; color:rgba(255,255,255,.8); text-transform:uppercase; letter-spacing:.06em; flex:none;}
   .insight{
     background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:var(--radius-sm); padding:10px 12px;
     display:flex; gap:9px; align-items:flex-start; flex:none;
@@ -124,7 +124,7 @@
     border:1px solid var(--line); border-radius:var(--radius); padding:10px 14px;
     display:flex; flex-direction:column;
   }
-  .kpi .label{font-size:10px; color:rgba(255,255,255,.95); font-weight:600; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:16px;}
+  .kpi .label{font-size:10px; color:rgba(255,255,255,.8); font-weight:600; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:16px;}
   .kpi .value{font-size:24px; font-weight:700; letter-spacing:-.02em; color:#ffffff; line-height:1; margin-bottom:5px;}
   .kpi .indicators{display:flex; flex-direction:column; gap:3px;}
   .ind-row{display:flex; justify-content:space-between; align-items:center; font-size:12px;}
@@ -152,7 +152,7 @@
     display:flex; flex-direction:column; min-height:0; min-width:0;
   }
   .chart-head{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex:none;}
-  .chart-head h3{margin:0; font-size:10px; font-weight:600; color:#ffffff; text-transform:uppercase; letter-spacing:.06em;}
+  .chart-head h3{margin:0; font-size:10px; font-weight:600; color:rgba(255,255,255,.8); text-transform:uppercase; letter-spacing:.06em;}
   .chart-head p{margin:3px 0 0; font-size:11px; color:#ffffff; text-transform:none; letter-spacing:0;}
   .legend-inline{display:flex; gap:11px; font-family:var(--mono); font-size:10.5px; color:#ffffff; flex:none;}
   .legend-inline .sw{display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:4px; vertical-align:middle;}
@@ -165,28 +165,36 @@
     border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px;
     display:flex; flex-direction:column; min-height:0; min-width:0;
   }
-  .table-card h3{margin:0 0 8px; font-size:10px; font-weight:600; color:#ffffff; text-transform:uppercase; letter-spacing:.06em; flex:none;}
+  .table-card h3{margin:0 0 8px; font-size:10px; font-weight:600; color:rgba(255,255,255,.8); text-transform:uppercase; letter-spacing:.06em; flex:none;}
   .table-head-row{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex:none;}
   #detail-table-period{font-size:10.5px; color:#888888; margin-left:8px;}
   .expand-btn{
-    font-family:var(--sans); font-size:11.5px; font-weight:600; color:#ffffff;
+    font-family:var(--sans); font-size:11.5px; font-weight:600; color:rgba(255,255,255,.8);
     background:#252525; border:1px solid #333333; border-radius:7px; padding:5px 12px; cursor:pointer;
   }
   .expand-btn:hover{background:#333333;}
   .modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:300; display:none; align-items:center; justify-content:center; padding:30px;}
   .modal-overlay.open{display:flex;}
   .modal-panel{background:#1e1e1e; border:1px solid #333333; border-radius:12px; padding:18px 22px 22px; width:min(1000px,94vw); max-height:88vh; display:flex; flex-direction:column;}
-  .modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex:none;}
-  .modal-head h3{margin:0; font-size:13px; font-weight:600; color:#ffffff; text-transform:uppercase; letter-spacing:.05em;}
+  .modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex:none; gap:14px;}
+  .modal-head h3{flex:1;}
+  .modal-type-toggle{display:flex; gap:6px; flex:none;}
+  .modal-type-toggle button{
+    font-family:var(--sans); font-size:11.5px; font-weight:600; color:#ffffff;
+    background:#252525; border:1px solid #333333; border-radius:16px; padding:4px 12px; cursor:pointer;
+  }
+  .modal-type-toggle button.active{background:#a3e635; color:#0a0e17; border-color:transparent;}
+  .modal-type-toggle button:hover:not(.active){background:#333333;}
+  .modal-head h3{margin:0; font-size:13px; font-weight:400; color:#ffffff; text-transform:uppercase; letter-spacing:.05em;}
   #modal-close{background:none; border:none; color:#888888; font-size:22px; cursor:pointer; line-height:1; padding:0 4px;}
   #modal-close:hover{color:#ffffff;}
   .modal-body{overflow:auto;}
   #expense-modal-table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px;}
-  #expense-modal-table th{position:sticky; top:0; background:#1e1e1e; text-align:right; font-weight:600; color:#ffffff; font-size:10.5px; text-transform:uppercase; padding:8px 10px; border-bottom:1px solid #333333;}
+  #expense-modal-table th{position:sticky; top:0; background:#1e1e1e; text-align:right; font-weight:400; color:#ffffff; font-size:10.5px; text-transform:uppercase; padding:8px 10px; border-bottom:1px solid #333333;}
   #expense-modal-table th:first-child{text-align:left;}
   #expense-modal-table td{padding:6px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap; font-weight:400; color:#ffffff;}
-  #expense-modal-table td:first-child{text-align:left; font-family:var(--sans); font-weight:600; color:var(--text);}
-  #expense-modal-table tr.modal-total td{font-weight:700; border-top:1px solid #333333; border-bottom:none;}
+  #expense-modal-table td:first-child{text-align:left; font-family:var(--sans); font-weight:400; color:#ffffff;}
+  #expense-modal-table tr.modal-total td{font-weight:400; border-top:1px solid #333333; border-bottom:none;}
   .table-scroll{overflow-y:auto; overflow-x:hidden; min-height:0; flex:1;}
   table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11.5px;}
   thead th{
@@ -271,7 +279,11 @@
 <div id="expense-modal" class="modal-overlay">
   <div class="modal-panel">
     <div class="modal-head">
-      <h3>Расходы по статьям — по месяцам</h3>
+      <h3>Расходы по статьям — по месяцам, ₽</h3>
+      <div class="modal-type-toggle" id="modal-type-toggle">
+        <button data-type="Факт" class="active" type="button">Факт</button>
+        <button data-type="План" type="button">План</button>
+      </div>
       <button id="modal-close" type="button" aria-label="Закрыть">×</button>
     </div>
     <div class="modal-body"><table id="expense-modal-table"><thead></thead><tbody></tbody></table></div>
@@ -977,11 +989,19 @@ function renderMetricChart(metric, planRows, factRows, projections){
     }
 
     if (charts.metric) charts.metric.destroy();
+    const n = sortedFact.length;
+    const emphasizeLast = (color) => ({
+      pointRadius: Array.from({length:n}, (_,i)=> i===n-1 ? 6 : 2.5),
+      pointBackgroundColor: Array.from({length:n}, (_,i)=> i===n-1 ? '#ffffff' : color),
+      pointBorderColor: Array.from({length:n}, (_,i)=> i===n-1 ? color : color),
+      pointBorderWidth: Array.from({length:n}, (_,i)=> i===n-1 ? 2.5 : 0),
+      pointHoverRadius: Array.from({length:n}, (_,i)=> i===n-1 ? 7 : 5),
+    });
     charts.metric = new Chart(document.getElementById('chart-metric'), {
       type:'line',
       data:{ labels, datasets:[
-        baseLine('Затраты на клиента (БДР)', '#fb923c', {data:cacNet}),
-        baseLine('Чистая прибыль', '#38bdf8', {data:netProfitSeries}),
+        baseLine('Затраты на клиента (БДР)', '#fb923c', Object.assign({data:cacNet}, emphasizeLast('#fb923c'))),
+        baseLine('Чистая прибыль', '#38bdf8', Object.assign({data:netProfitSeries}, emphasizeLast('#38bdf8'))),
       ]},
       options
     });
@@ -1142,7 +1162,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     const planCum = cutoff ? planRows.filter(r=>r.date<=cutoff) : [];
     period.textContent = (planRows.length && cutoff) ? `(${fmtMon(planRows[0].date)} – ${fmtMon(cutoff)})` : '';
     expandBtn.style.display = '';
-    cachedExpenseModalData = { factRows: factRows.slice().sort((a,b)=>a.date-b.date), catDefs: CAT_DEFS };
+    cachedExpenseModalData = { factRows: factRows.slice().sort((a,b)=>a.date-b.date), planRows: planRows.slice().sort((a,b)=>a.date-b.date), catDefs: CAT_DEFS };
 
     thead.innerHTML = `<tr><th>Статья</th><th>План, ₽</th><th>Факт, ₽</th><th>Отклонение, ₽</th><th>% к плану</th></tr>`;
     tbody.innerHTML = CAT_DEFS.map(([key,label]) => {
@@ -1203,19 +1223,29 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
 }
 
 // ==================== expense-by-month modal ====================
-function openExpenseModal(){
+let expenseModalType = 'Факт';
+
+function populateExpenseModalTable(type){
   if (!cachedExpenseModalData) return;
-  const { factRows, catDefs } = cachedExpenseModalData;
+  const { factRows, planRows, catDefs } = cachedExpenseModalData;
+  const rows = type === 'План' ? planRows : factRows;
   const thead = document.querySelector('#expense-modal-table thead');
   const tbody = document.querySelector('#expense-modal-table tbody');
-  thead.innerHTML = `<tr><th>Месяц</th>${catDefs.map(([,label])=>`<th>${label}, ₽</th>`).join('')}<th>Итого, ₽</th></tr>`;
-  const rowsHtml = factRows.map(r => {
+  thead.innerHTML = `<tr><th>Месяц</th>${catDefs.map(([,label])=>`<th>${label}</th>`).join('')}<th>Итого</th></tr>`;
+  const rowsHtml = rows.map(r => {
     const cells = catDefs.map(([key]) => fmtRubPlain(r[key]||0));
     const total = catDefs.reduce((s,[key])=>s+(r[key]||0),0);
     return `<tr><td>${fmtMon(r.date)}</td>${cells.map(c=>`<td>${c}</td>`).join('')}<td>${fmtRubPlain(total)}</td></tr>`;
   }).join('');
-  const totalsRow = `<tr class="modal-total"><td>Итого</td>${catDefs.map(([key])=>`<td>${fmtRubPlain(factRows.reduce((s,r)=>s+(r[key]||0),0))}</td>`).join('')}<td>${fmtRubPlain(factRows.reduce((s,r)=>s+catDefs.reduce((s2,[key])=>s2+(r[key]||0),0),0))}</td></tr>`;
+  const totalsRow = `<tr class="modal-total"><td>Итого</td>${catDefs.map(([key])=>`<td>${fmtRubPlain(rows.reduce((s,r)=>s+(r[key]||0),0))}</td>`).join('')}<td>${fmtRubPlain(rows.reduce((s,r)=>s+catDefs.reduce((s2,[key])=>s2+(r[key]||0),0),0))}</td></tr>`;
   tbody.innerHTML = rowsHtml + totalsRow;
+}
+
+function openExpenseModal(){
+  if (!cachedExpenseModalData) return;
+  expenseModalType = 'Факт';
+  document.querySelectorAll('#modal-type-toggle button').forEach(b=>b.classList.toggle('active', b.dataset.type==='Факт'));
+  populateExpenseModalTable('Факт');
   document.getElementById('expense-modal').classList.add('open');
 }
 function closeExpenseModal(){ document.getElementById('expense-modal').classList.remove('open'); }
@@ -1223,6 +1253,13 @@ function closeExpenseModal(){ document.getElementById('expense-modal').classList
 document.getElementById('expand-btn').addEventListener('click', openExpenseModal);
 document.getElementById('modal-close').addEventListener('click', closeExpenseModal);
 document.getElementById('expense-modal').addEventListener('click', (e) => { if (e.target.id==='expense-modal') closeExpenseModal(); });
+document.getElementById('modal-type-toggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  document.querySelectorAll('#modal-type-toggle button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  expenseModalType = btn.dataset.type;
+  populateExpenseModalTable(expenseModalType);
+});
 
 // ==================== KPI info tooltip ====================
 document.getElementById('kpi-grid').addEventListener('click', (e) => {
