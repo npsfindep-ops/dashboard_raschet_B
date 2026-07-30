@@ -482,12 +482,13 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
   // 3) Заём
   {
     const planAtCutoff = planByDate[+lastFact.date];
-    const pct = planAtCutoff && planAtCutoff.loanEnd ? (lastFact.loanEnd-planAtCutoff.loanEnd)/planAtCutoff.loanEnd*100 : null;
     const loanF = fmtAdaptive(lastFact.loanEnd);
     const loanStart = planRows[0]?.loanStart;
     const repaidPct = (loanStart && lastFact.loanEnd!=null) ? (loanStart-lastFact.loanEnd)/loanStart*100 : null;
+    const planRepaidPct = (loanStart && planAtCutoff && planAtCutoff.loanEnd!=null) ? (loanStart-planAtCutoff.loanEnd)/loanStart*100 : null;
+    const repaidDeltaPP = (repaidPct!=null && planRepaidPct!=null) ? repaidPct-planRepaidPct : null;
     cards.push({ label:`ЗАЙМ, ${loanF.unit.toUpperCase()}`, value: loanF.value, rows:[
-      { label:'к плану', value: pct!=null?fmtPct(pct,0):'—', tone: pct!=null?(pct<=0?'good':'bad'):'neutral' },
+      { label:'к плану', value: repaidDeltaPP!=null?fmtPP(repaidDeltaPP):'—', tone: repaidDeltaPP!=null?(repaidDeltaPP>=0?'good':'bad'):'neutral' },
       { label:'погашено', value: repaidPct!=null?repaidPct.toFixed(0)+'%':'—', tone:'neutral' },
     ]});
   }
