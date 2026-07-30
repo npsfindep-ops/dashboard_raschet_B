@@ -113,7 +113,7 @@
   }
   .insight .ic svg{width:13px; height:13px;}
   .insight .body{font-size:12px; line-height:1.45; color:var(--text);}
-  .insight .body b{color:var(--text-hi); font-weight:700;}
+  .insight .body b{color:var(--text-hi); font-weight:400;}
   .insight.tone-good{--tone:var(--good); --tone-soft:var(--plan-soft);}
   .insight.tone-bad{--tone:var(--danger); --tone-soft:var(--danger-soft);}
   .insight.tone-warn{--tone:var(--warn); --tone-soft:rgba(255,200,87,.14);}
@@ -145,7 +145,7 @@
   .kpi-info:hover{background:rgba(255,255,255,.26);}
   #kpi-tooltip{
     position:fixed; z-index:80; width:220px; background:#1e1e1e; border:1px solid #333333;
-    border-radius:8px; padding:10px 12px; font-size:11.5px; color:#ffffff; line-height:1.5;
+    border-radius:8px; padding:10px 12px; font-size:11.5px; font-weight:400; color:#ffffff; line-height:1.5;
     display:none; box-shadow:0 10px 28px rgba(0,0,0,.45); box-sizing:border-box;
   }
 
@@ -177,14 +177,14 @@
     background:#252525; border:1px solid #333333; border-radius:7px; padding:5px 12px; cursor:pointer;
   }
   .expand-btn:hover{background:#333333;}
-  .modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:300; display:none; align-items:center; justify-content:center; padding:30px;}
+  .modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:300; display:none; align-items:center; justify-content:center; padding:30px;}
   .modal-overlay.open{display:flex;}
-  .modal-panel{background:#1e1e1e; border:1px solid #333333; border-radius:12px; padding:18px 22px 22px; width:min(1000px,94vw); max-height:88vh; display:flex; flex-direction:column;}
+  .modal-panel{background:#17171a; border:1px solid #333333; border-radius:12px; padding:18px 22px 22px; width:min(1000px,94vw); max-height:88vh; display:flex; flex-direction:column;}
   .modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex:none; gap:14px;}
   .modal-head h3{flex:1;}
   .modal-type-toggle{display:flex; gap:6px; flex:none;}
   .modal-type-toggle button{
-    font-family:var(--sans); font-size:11.5px; font-weight:600; color:#ffffff;
+    font-family:var(--sans); font-size:11.5px; font-weight:400; color:#ffffff;
     background:#252525; border:1px solid #333333; border-radius:16px; padding:4px 12px; cursor:pointer;
   }
   .modal-type-toggle button.active{background:#a3e635; color:#0a0e17; border-color:transparent;}
@@ -194,7 +194,7 @@
   #modal-close:hover{color:#ffffff;}
   .modal-body{overflow:auto;}
   #expense-modal-table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px;}
-  #expense-modal-table th{position:sticky; top:0; background:#1e1e1e; text-align:right; font-weight:400; color:#ffffff; font-size:10.5px; text-transform:uppercase; padding:8px 10px; border-bottom:1px solid #333333;}
+  #expense-modal-table th{position:sticky; top:0; background:#17171a; text-align:right; font-weight:400; color:#ffffff; font-size:10.5px; text-transform:uppercase; padding:8px 10px; border-bottom:1px solid #333333;}
   #expense-modal-table th:first-child{text-align:left;}
   #expense-modal-table td{padding:6px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap; font-weight:400; color:#ffffff;}
   #expense-modal-table td:first-child{text-align:left; font-family:var(--sans); font-weight:400; color:#ffffff;}
@@ -590,7 +590,7 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const neededRevF = fmtAdaptive(neededRevenue);
     const avgRevF = fmtAdaptive(avgRevFact);
     cards.push({ label:`СР.ВЫРУЧКА, ${avgRevF.unit.toUpperCase()}/МЕС.`, value: avgRevF.value,
-      info:'<b>Ср.выручка</b> — суммарная выручка за весь период факта, делённая на число месяцев.<br><br><b>Нужно для окуп.</b> — какая выручка в среднем нужна (при текущей рентабельности), чтобы уложиться в плановый срок окупаемости.', rows:[
+      info:'<span style="color:#888888">Ср.выручка</span> — суммарная выручка за весь период факта, делённая на число месяцев.<br><br><span style="color:#888888">Нужно для окуп.</span> — какая выручка в среднем нужна (при текущей рентабельности), чтобы уложиться в плановый срок окупаемости.', rows:[
       { label:'к плану', value: pct!=null?fmtPct(pct,0):'—', tone: pct!=null?(pct>=0?'good':'bad'):'neutral' },
       { label:'нужно для окуп.', value: neededRevenue!=null?`${neededRevF.value} ${neededRevF.unit}`:'—', tone: (neededRevenue!=null&&avgRevFact!=null)?(avgRevFact>=neededRevenue?'good':'bad'):'neutral' },
     ]});
@@ -608,7 +608,7 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const avgRevFactRow5 = factRows.length ? revFactCum/factRows.length : null;
     const neededMargin = (be.requiredMonthlyProfit!=null && avgRevFactRow5) ? be.requiredMonthlyProfit/avgRevFactRow5*100 : null;
     cards.push({ label:'РЕНТАБЕЛЬНОСТЬ, %', value: rFact!=null?rFact.toFixed(1):'—',
-      info:'<b>Рентабельность</b> — отношение чистой прибыли к выручке нарастающим итогом с начала проекта.<br><br><b>Мин. для окуп.</b> — минимальная рентабельность (при текущей выручке), необходимая для выхода на окупаемость в плановый срок.', rows:[
+      info:'<span style="color:#888888">Рентабельность</span> — отношение чистой прибыли к выручке нарастающим итогом с начала проекта.<br><br><span style="color:#888888">Мин. для окуп.</span> — минимальная рентабельность (при текущей выручке), необходимая для выхода на окупаемость в плановый срок.', rows:[
       { label:'к плану', value: (rFact!=null&&rPlan!=null)?fmtPP(rFact-rPlan):'—', tone: (rFact!=null&&rPlan!=null)?(rFact>=rPlan?'good':'bad'):'neutral' },
       { label:'мин. для окуп.', value: neededMargin!=null?neededMargin.toFixed(1)+'%':'—', tone: (neededMargin!=null&&rFact!=null)?(rFact>=neededMargin?'good':'bad'):'neutral' },
     ]});
@@ -626,7 +626,7 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const neededRevenueRow6 = (be.requiredMonthlyProfit!=null && currentMarginRow6>0) ? be.requiredMonthlyProfit/currentMarginRow6 : null;
     const neededCheck = (neededRevenueRow6!=null && avgOrdersFactRow6) ? neededRevenueRow6/avgOrdersFactRow6 : null;
     cards.push({ label:'СРЕДНИЙ ЧЕК, ₽', value: fmtNum(lastFact.avgCheck),
-      info:'<b>Средний чек</b> — выручка последнего месяца, делённая на количество заказов в этом месяце.<br><br><b>Нужно для окуп.</b> — какой чек нужен (при текущем количестве заказов), чтобы уложиться в плановый срок окупаемости.', rows:[
+      info:'<span style="color:#888888">Средний чек</span> — выручка последнего месяца, делённая на количество заказов в этом месяце.<br><br><span style="color:#888888">Нужно для окуп.</span> — какой чек нужен (при текущем количестве заказов), чтобы уложиться в плановый срок окупаемости.', rows:[
       { label:'к плану', value: pct!=null?fmtPct(pct,1):'—', tone: pct!=null?(pct>=0?'good':'bad'):'neutral' },
       { label:'нужно для окуп.', value: neededCheck!=null?fmtNum(neededCheck)+' ₽':'—', tone: (neededCheck!=null)?(lastFact.avgCheck>=neededCheck?'good':'bad'):'neutral' },
     ]});
@@ -646,7 +646,7 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const neededRevenueRow7 = (be.requiredMonthlyProfit!=null && currentMarginRow7>0) ? be.requiredMonthlyProfit/currentMarginRow7 : null;
     const neededOrders = (neededRevenueRow7!=null && avgCheckRow7) ? neededRevenueRow7/avgCheckRow7 : null;
     cards.push({ label:'ЗАКАЗЫ, СРЕД./МЕС.', value: fmtNum(Math.round(avgOrdersFact)),
-      info:'<b>Заказы</b> — среднее количество заказов в месяц за весь период факта.<br><br><b>Нужно для окуп.</b> — сколько заказов в среднем нужно (при текущем среднем чеке), чтобы уложиться в плановый срок окупаемости.', rows:[
+      info:'<span style="color:#888888">Заказы</span> — среднее количество заказов в месяц за весь период факта.<br><br><span style="color:#888888">Нужно для окуп.</span> — сколько заказов в среднем нужно (при текущем среднем чеке), чтобы уложиться в плановый срок окупаемости.', rows:[
       { label:'к плану', value: pct!=null?fmtPct(pct,1):'—', tone: pct!=null?(pct>=0?'good':'bad'):'neutral' },
       { label:'нужно для окуп.', value: neededOrders!=null?fmtNum(Math.round(neededOrders))+' шт':'—', tone: (neededOrders!=null)?(avgOrdersFact>=neededOrders?'good':'bad'):'neutral' },
     ]});
@@ -823,21 +823,9 @@ function computeAllInsights(planRows, factRows, lastFact, planByDate, be){
     }
   }
 
-  // Прибыль: rentability + BDR-adjusted + breakeven/recommendation
+  // Прибыль: базовые суммы нужны ниже (для расчёта нужной выручки в согласованном инсайте про окупаемость)
   const netFactCum = factRows.reduce((s,r)=>s+(r.netProfit||0),0);
   const netPlanCum = planCumRows.reduce((s,r)=>s+(r.netProfit||0),0);
-  if (revFactCum && revPlanCum){
-    const rFact = netFactCum/revFactCum*100, rPlan = netPlanCum/revPlanCum*100, d = rFact-rPlan;
-    cards.push({ topic:'Прибыль', tone: d>=0?'good':'bad', icon: d>=0?'up':'down',
-      html: `Рентабельность нарастающим итогом: факт <b>${rFact.toFixed(1)}%</b> против плана ${rPlan.toFixed(1)}% (${fmtPP(d)}).${d<0?' Это напрямую отдаляет точку окупаемости.':''}` });
-  }
-  if (lastFact.finResultCum != null && lastFact.cumProfit != null){
-    const gap = lastFact.cumProfit - lastFact.finResultCum;
-    if (Math.abs(gap) > Math.abs(lastFact.cumProfit)*0.03 + 5000){
-      cards.push({ topic:'Прибыль', tone:'warn', icon:'alert',
-        html: `С учётом равномерного списания стоимости привлечения клиента (БДР), реальный накопленный финрезультат — <b>${fmtRub(lastFact.finResultCum,true)}</b>, это на ${fmtRub(Math.abs(gap),true)} ${gap>0?'ниже':'выше'} операционной чистой прибыли. Более консервативная оценка — эта.` });
-    }
-  }
   if (be.investment!=null && be.planBE){
     if (be.delta != null){
       let rec = '';
@@ -901,8 +889,9 @@ function computeAllInsights(planRows, factRows, lastFact, planByDate, be){
 function renderInsightsPanel(metric){
   const panel = document.getElementById('insights-panel');
   const label = METRICS[metric].label;
+  const accent = METRIC_COLORS[metric] || '#a3e635';
   const filtered = cachedInsights.filter(c => c.topic === label);
-  panel.innerHTML = `<h4>Инсайты и рекомендации · ${label}</h4>` + (filtered.length
+  panel.innerHTML = `<h4>Инсайты и рекомендации · <span style="color:${accent}">${label}</span></h4>` + (filtered.length
     ? filtered.map(c => `<div class="insight tone-${c.tone}"><div class="ic">${ICONS[c.icon]}</div><div class="body">${c.html}</div></div>`).join('')
     : `<div class="insight tone-neutral"><div class="ic">${ICONS.target}</div><div class="body">По этому показателю пока нет заметных отклонений от плана.</div></div>`);
 }
@@ -1341,6 +1330,16 @@ function renderPayoffChart(planRows, factRows, be, projections){
 }
 
 // ==================== detail table ====================
+function stickTotalsRow(thead){
+  // measure the REAL rendered header height rather than assuming a fixed px value —
+  // guarantees the totals row sticks exactly below it with no gap or overlap.
+  const raf = (typeof requestAnimationFrame === 'function') ? requestAnimationFrame : (fn)=>setTimeout(fn,16);
+  raf(() => {
+    const totalsRow = document.querySelector('#detail-tbody tr.row-totals');
+    if (totalsRow && thead) totalsRow.style.top = thead.offsetHeight + 'px';
+  });
+}
+
 function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
   const m = METRICS[metric];
   const title = document.getElementById('detail-table-title');
@@ -1385,6 +1384,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
       <td>${totalPct==null?'—':totalPct.toFixed(0)+'%'}</td>
     </tr>`;
     tbody.innerHTML = totalsRow + catRows.map(r=>r.html).join('');
+    stickTotalsRow(thead);
     return;
   }
 
@@ -1403,6 +1403,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     const sumOrDash = (arr, key) => { const vals = arr.map(r=>r[key]).filter(v=>v!=null); return vals.length ? fmtRubPlain(vals.reduce((s,v)=>s+v,0)) : '—'; };
     const totalsRow = `<tr class="row-totals"><td>Итоги</td><td>${sumOrDash(bdrRows,'cacNet')}</td><td>${sumOrDash(bdrRows,'netProfit')}</td><td>${sumOrDash(bdrRows,'finResultPeriod')}</td></tr>`;
     tbody.innerHTML = totalsRow + bdrRows.map(r=>r.html).join('');
+    stickTotalsRow(thead);
     const lastFactRowBdr = document.getElementById('row-last-fact');
     if (lastFactRowBdr && typeof lastFactRowBdr.scrollIntoView === 'function') lastFactRowBdr.scrollIntoView({ block:'nearest' });
     return;
@@ -1451,6 +1452,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
   const totalsLabel = isAverage ? 'В среднем' : 'Итоги';
   const totalsRow = `<tr class="row-totals"><td>${totalsLabel}</td><td>${fmtAgg(aggPlan)}</td><td>${fmtAgg(aggFact)}</td><td>${totalsDeltaCell}</td><td>${totalsPctCell}</td></tr>`;
   tbody.innerHTML = totalsRow + dataRows.map(r=>r.html).join('');
+  stickTotalsRow(thead);
 
   const lastFactRow = document.getElementById('row-last-fact');
   if (lastFactRow && typeof lastFactRow.scrollIntoView === 'function') lastFactRow.scrollIntoView({ block:'nearest' });
