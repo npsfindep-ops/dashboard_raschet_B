@@ -89,7 +89,9 @@
   .metric-toggle button:hover:not(.active){background:#333333;}
 
   /* ---------------- split rows (fill remaining vertical space, equal 1:1 like reference) ---------------- */
-  .split-21{display:grid; grid-template-columns:2fr 1fr; gap:12px; min-height:0; width:100%;}
+  .split-21{display:grid; grid-template-columns:repeat(7,1fr); gap:10px; min-height:0; width:100%;}
+  .split-21 > *:nth-child(1){ grid-column: span 4; }
+  .split-21 > *:nth-child(2){ grid-column: span 3; }
   .row-top{flex:1 1 0; min-height:0;}
   .row-bottom{flex:1 1 0; min-height:0;}
 
@@ -207,6 +209,9 @@
   tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:400; color:var(--text);}
   tbody tr:hover{background:rgba(255,255,255,.025);}
   tbody tr.row-current{background:rgba(249,115,22,.14); box-shadow:inset 3px 0 0 #f97316;}
+  tbody tr.row-totals{background:rgba(163,230,53,.08); border-bottom:2px solid #333333;}
+  tbody tr.row-totals td{color:#ffffff; border-bottom:2px solid #333333;}
+  tbody tr.row-totals:hover{background:rgba(163,230,53,.13);}
   tbody tr.row-current:hover{background:rgba(249,115,22,.2);}
   .cell-pct{border-radius:5px; padding:1px 7px; font-weight:700;}
   .delta-pos{color:var(--good);} .delta-neg{color:var(--danger);}
@@ -1295,17 +1300,27 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     cachedExpenseModalData = { factRows: factRows.slice().sort((a,b)=>a.date-b.date), planRows: planRows.slice().sort((a,b)=>a.date-b.date), catDefs: CAT_DEFS };
 
     thead.innerHTML = `<tr><th>Статья</th><th>План, ₽</th><th>Факт, ₽</th><th>Отклонение, ₽</th><th>% к плану</th></tr>`;
-    tbody.innerHTML = CAT_DEFS.map(([key,label]) => {
+    const catRows = CAT_DEFS.map(([key,label]) => {
       const planSum = planCum.reduce((s,r)=>s+(r[key]||0),0);
       const factSum = factRows.reduce((s,r)=>s+(r[key]||0),0);
       const delta = factSum - planSum;
       const pct = planSum ? factSum/planSum*100 : (factSum?Infinity:null);
-      return `<tr>
+      return { planSum, factSum, html: `<tr>
         <td>${label}</td><td>${fmtRubPlain(planSum)}</td><td>${fmtRubPlain(factSum)}</td>
         <td style="color:#ffffff">${delta>=0?'+':''}${fmtRubPlain(delta)}${ICONS[delta>0?'arrowDown':'arrowUp'].replace('<svg ',`<svg class="delta-arrow" style="color:${delta>0?'#ff4d4d':'#a3e635'}" `)}</td>
         <td>${pct==null?'—':(pct===Infinity?'внеплан.':pct.toFixed(0)+'%')}</td>
-      </tr>`;
-    }).join('');
+      </tr>` };
+    });
+    const totalPlan = catRows.reduce((s,r)=>s+r.planSum,0);
+    const totalFact = catRows.reduce((s,r)=>s+r.factSum,0);
+    const totalDelta = totalFact - totalPlan;
+    const totalPct = totalPlan ? totalFact/totalPlan*100 : null;
+    const totalsRow = `<tr class="row-totals">
+      <td>Итоги</td><td>${fmtRubPlain(totalPlan)}</td><td>${fmtRubPlain(totalFact)}</td>
+      <td>${totalDelta>=0?'+':''}${fmtRubPlain(totalDelta)}</td>
+      <td>${totalPct==null?'—':totalPct.toFixed(0)+'%'}</td>
+    </tr>`;
+    tbody.innerHTML = totalsRow + catRows.map(r=>r.html).join('');
     return;
   }
 
@@ -1315,11 +1330,15 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     expandBtn.style.display = 'none';
     thead.innerHTML = `<tr><th>Дата</th><th>Затраты на клиента (БДР), ₽</th><th>Чистая прибыль, ₽</th><th>Фин. рез. БДР, ₽</th></tr>`;
     const sortedFact = factRows.slice().sort((a,b)=>a.date-b.date);
-    tbody.innerHTML = sortedFact.map(r => {
+    const bdrRows = sortedFact.map(r => {
       const cacNet = (r.cacAmort!=null && r.cacVat!=null) ? (r.cacAmort - r.cacVat) : null;
       const isLastFact = lastFact && +r.date === +lastFact.date;
-      return `<tr${isLastFact?' id="row-last-fact" class="row-current"':''}><td>${fmtMon(r.date)}</td><td>${cacNet!=null?fmtRubPlain(cacNet):'—'}</td><td>${r.netProfit!=null?fmtRubPlain(r.netProfit):'—'}</td><td>${r.finResultPeriod!=null?fmtRubPlain(r.finResultPeriod):'—'}</td></tr>`;
-    }).join('');
+      return { cacNet, netProfit:r.netProfit, finResultPeriod:r.finResultPeriod,
+        html: `<tr${isLastFact?' id="row-last-fact" class="row-current"':''}><td>${fmtMon(r.date)}</td><td>${cacNet!=null?fmtRubPlain(cacNet):'—'}</td><td>${r.netProfit!=null?fmtRubPlain(r.netProfit):'—'}</td><td>${r.finResultPeriod!=null?fmtRubPlain(r.finResultPeriod):'—'}</td></tr>` };
+    });
+    const sumOrDash = (arr, key) => { const vals = arr.map(r=>r[key]).filter(v=>v!=null); return vals.length ? fmtRubPlain(vals.reduce((s,v)=>s+v,0)) : '—'; };
+    const totalsRow = `<tr class="row-totals"><td>Итоги</td><td>${sumOrDash(bdrRows,'cacNet')}</td><td>${sumOrDash(bdrRows,'netProfit')}</td><td>${sumOrDash(bdrRows,'finResultPeriod')}</td></tr>`;
+    tbody.innerHTML = totalsRow + bdrRows.map(r=>r.html).join('');
     const lastFactRowBdr = document.getElementById('row-last-fact');
     if (lastFactRowBdr && typeof lastFactRowBdr.scrollIntoView === 'function') lastFactRowBdr.scrollIntoView({ block:'nearest' });
     return;
@@ -1332,7 +1351,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
   title.textContent = m.label + ' по месяцам';
   thead.innerHTML = `<tr><th>Дата</th><th>План, ${unit}</th><th>Факт, ${unit}</th><th>Откл., ${unit}</th><th>Откл., %</th></tr>`;
   const factByDate = {}; factRows.forEach(r=>factByDate[+r.date]=r);
-  tbody.innerHTML = planRows.map(pr => {
+  const dataRows = planRows.map(pr => {
     const fr = factByDate[+pr.date];
     const planVal = pr[m.field];
     const factVal = fr ? fr[m.field] : null;
@@ -1348,8 +1367,26 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     }
     const fmtVal = (v) => v==null ? '—' : (m.money ? fmtRubPlain(v) : fmtNum(v));
     const isLastFact = lastFact && +pr.date === +lastFact.date;
-    return `<tr${isLastFact?' id="row-last-fact" class="row-current"':''}><td>${fmtMon(pr.date)}</td><td>${fmtVal(planVal)}</td><td>${fmtVal(factVal)}</td><td>${deltaAbsCell}</td><td>${deltaPctCell}</td></tr>`;
-  }).join('');
+    return { planVal, factVal, html: `<tr${isLastFact?' id="row-last-fact" class="row-current"':''}><td>${fmtMon(pr.date)}</td><td>${fmtVal(planVal)}</td><td>${fmtVal(factVal)}</td><td>${deltaAbsCell}</td><td>${deltaPctCell}</td></tr>` };
+  });
+
+  // Итоги: суммируем потоковые метрики (прибыль/выручка/расходы/заказы), но для среднего чека
+  // сумма бессмысленна — там нужно среднее значение.
+  const isAverage = (metric === 'avgCheck');
+  const planVals = dataRows.map(r=>r.planVal).filter(v=>v!=null);
+  const factVals = dataRows.map(r=>r.factVal).filter(v=>v!=null);
+  const aggPlan = planVals.length ? (isAverage ? planVals.reduce((s,v)=>s+v,0)/planVals.length : planVals.reduce((s,v)=>s+v,0)) : null;
+  const aggFact = factVals.length ? (isAverage ? factVals.reduce((s,v)=>s+v,0)/factVals.length : factVals.reduce((s,v)=>s+v,0)) : null;
+  const fmtAgg = (v) => v==null ? '—' : (m.money ? fmtRubPlain(v) : fmtNum(v));
+  let totalsDeltaCell = '—', totalsPctCell = '—';
+  if (aggPlan!=null && aggFact!=null){
+    const d = aggFact-aggPlan;
+    totalsDeltaCell = `${d>=0?'+':''}${m.money?fmtRubPlain(d):fmtNum(d)}`;
+    if (aggPlan) totalsPctCell = `${fmtPct(d/aggPlan*100,0)}`;
+  }
+  const totalsLabel = isAverage ? 'В среднем' : 'Итоги';
+  const totalsRow = `<tr class="row-totals"><td>${totalsLabel}</td><td>${fmtAgg(aggPlan)}</td><td>${fmtAgg(aggFact)}</td><td>${totalsDeltaCell}</td><td>${totalsPctCell}</td></tr>`;
+  tbody.innerHTML = totalsRow + dataRows.map(r=>r.html).join('');
 
   const lastFactRow = document.getElementById('row-last-fact');
   if (lastFactRow && typeof lastFactRow.scrollIntoView === 'function') lastFactRow.scrollIntoView({ block:'nearest' });
