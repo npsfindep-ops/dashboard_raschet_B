@@ -211,11 +211,12 @@
   tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:400; color:var(--m-accent,var(--text));}
   tbody tr:hover{background:rgba(255,255,255,.025);}
   tbody tr.row-current{background:rgba(249,115,22,.14); box-shadow:inset 3px 0 0 #f97316;}
-  tbody tr.row-totals{position:sticky; top:28px; z-index:1;}
-  tbody tr.row-totals td{
-    color:#ffffff; background:#292e20; border-bottom:2px solid #333333;
+  thead tr.row-totals{position:sticky; top:28px; z-index:1;}
+  thead tr.row-totals td{
+    color:#ffffff; background:#292e20; border-bottom:2px solid #333333; font-weight:400;
   }
-  tbody tr.row-totals:hover td{background:#333a26;}
+  thead tr.row-totals td:first-child{text-align:left;}
+  thead tr.row-totals:hover td{background:#333a26;}
   tbody tr.row-current:hover{background:rgba(249,115,22,.2);}
   .cell-pct{border-radius:5px; padding:1px 7px; font-weight:700;}
   .delta-pos{color:var(--good);} .delta-neg{color:var(--danger);}
@@ -456,7 +457,7 @@ function render(){
 
   const steps = [
     ['KPI', () => renderKPIs(planRows, factRows, lastFact, planByDate, be)],
-    ['Insights', () => { cachedInsights = computeAllInsights(planRows, factRows, lastFact, planByDate, be); renderInsightsPanel(currentMetric); }],
+    ['Insights', () => { cachedInsights = computeAllInsights(planRows, factRows, lastFact, planByDate, be, projections); renderInsightsPanel(currentMetric); }],
     ['MetricChart', () => renderMetricChart(currentMetric, planRows, factRows, projections)],
     ['PayoffChart', () => renderPayoffChart(planRows, factRows, be, projections)],
     ['DetailTable', () => renderDetailTable(currentMetric, planRows, factRows, lastFact, planByDate)],
@@ -664,12 +665,16 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
 }
 
 // ==================== insights (tagged by topic) ====================
-function computeAllInsights(planRows, factRows, lastFact, planByDate, be){
+function computeAllInsights(planRows, factRows, lastFact, planByDate, be, projections){
   if (!lastFact) return [];
   const cards = [];
   const planCumRows = planRows.filter(r=>r.date<=lastFact.date);
   const revFactCum = factRows.reduce((s,r)=>s+(r.revenue||0),0);
   const revPlanCum = planCumRows.reduce((s,r)=>s+(r.revenue||0),0);
+
+  function renderParas(paras){
+    return paras.map((p,i) => `<p style="${p.startsWith('<b>Рекомендация')?'margin:9px 0 0':(i===paras.length-1?'margin:0':'margin:0 0 7px')}">${p}</p>`).join('');
+  }
 
   function streakInfo(key){
     const gaps = factRows.map(r => { const p = planByDate[+r.date]; return p && p[key] ? (r[key]-p[key])/p[key]*100 : null; }).filter(v=>v!=null);
@@ -689,24 +694,41 @@ function computeAllInsights(planRows, factRows, lastFact, planByDate, be){
   const ordersS = streakInfo('orders');
   const checkS = streakInfo('avgCheck');
   if (ordersS){
-    let diagnosis;
+    const opening = `Заказы <b>${ordersS.below?'ниже':'выше'} плана ${ordersS.streak} мес. подряд</b> (сейчас ${fmtPct(ordersS.lastGap,1)}).`;
+    let paras;
     if (ordersS.below){
       const startedBad = ordersS.firstGap < -15;
       const worsenedSignificantly = ordersS.lastGap < ordersS.firstGap - 6;
       if (startedBad && worsenedSignificantly){
-        diagnosis = ` Здесь два фактора одновременно: часть отставания структурная — уже в первый месяц факт был на ${fmtPct(ordersS.firstGap,1)} ниже плана, то есть план изначально был завышен по объёму приобретаемого клиента. Но с тех пор разрыв дополнительно увеличился до ${fmtPct(ordersS.lastGap,1)} — похоже, что часть заказов клиент стал направлять через другие службы доставки с более низкими тарифами. Рекомендация: (1) пересмотреть плановые показатели на основе фактического объёма клиента на момент покупки, и (2) сравнить наши тарифы с конкурентами, чтобы оценить, нужен ли пересмотр условий для удержания оставшегося объёма.`;
+        paras = [
+          opening,
+          `Здесь два фактора одновременно: часть отставания структурная — уже в первый месяц факт был на ${fmtPct(ordersS.firstGap,1)} ниже плана, то есть план изначально был завышен по объёму приобретаемого клиента. Но с тех пор разрыв дополнительно увеличился до ${fmtPct(ordersS.lastGap,1)} — похоже, что часть заказов клиент стал направлять через другие службы доставки с более низкими тарифами.`,
+          `<b>Рекомендация:</b> (1) пересмотреть плановые показатели на основе фактического объёма клиента на момент покупки, и (2) сравнить наши тарифы с конкурентами, чтобы оценить, нужен ли пересмотр условий для удержания оставшегося объёма.`,
+        ];
       } else if (startedBad){
-        diagnosis = ` Отставание присутствует уже с первого месяца факта (тогда было ${fmtPct(ordersS.firstGap,1)}, сейчас ${fmtPct(ordersS.lastGap,1)}) — это не постепенная потеря, а изначально завышенный план по объёму приобретаемого клиента. Рекомендация: пересмотреть плановые показатели заказов исходя из фактического объёма клиента на момент покупки, а не из докупочных ожиданий.`;
+        paras = [
+          opening,
+          `Отставание присутствует уже с первого месяца факта (тогда было ${fmtPct(ordersS.firstGap,1)}, сейчас ${fmtPct(ordersS.lastGap,1)}) — это не постепенная потеря, а изначально завышенный план по объёму приобретаемого клиента.`,
+          `<b>Рекомендация:</b> пересмотреть плановые показатели заказов исходя из фактического объёма клиента на момент покупки, а не из докупочных ожиданий.`,
+        ];
       } else if (worsenedSignificantly){
-        diagnosis = ` Отставание нарастает: было ${fmtPct(ordersS.firstGap,1)} в первый месяц, сейчас ${fmtPct(ordersS.lastGap,1)} — похоже, клиент стал направлять часть заказов через другие службы доставки с более низкими тарифами, а не терять объём органически. Рекомендация: сравнить наши тарифы с конкурентами и уточнить у партнёра условия — вероятно, требуется пересмотр цены или условий сотрудничества, чтобы вернуть объём.`;
+        paras = [
+          opening,
+          `Отставание нарастает: было ${fmtPct(ordersS.firstGap,1)} в первый месяц, сейчас ${fmtPct(ordersS.lastGap,1)} — похоже, клиент стал направлять часть заказов через другие службы доставки с более низкими тарифами, а не терять объём органически.`,
+          `<b>Рекомендация:</b> сравнить наши тарифы с конкурентами и уточнить у партнёра условия — вероятно, требуется пересмотр цены или условий сотрудничества, чтобы вернуть объём.`,
+        ];
       } else {
-        diagnosis = ` Отставание стабильно держится около ${fmtPct(ordersS.lastGap,1)} на протяжении периода — похоже на системное расхождение плана с реальным объёмом клиента, а не на разовый провал. Рекомендация: зафиксировать фактический объём как новую базу для плана и уточнить у партнёра, ожидается ли восстановление.`;
+        paras = [
+          opening,
+          `Отставание стабильно держится около ${fmtPct(ordersS.lastGap,1)} на протяжении периода — похоже на системное расхождение плана с реальным объёмом клиента, а не на разовый провал.`,
+          `<b>Рекомендация:</b> зафиксировать фактический объём как новую базу для плана и уточнить у партнёра, ожидается ли восстановление.`,
+        ];
       }
     } else {
-      diagnosis = ' Хорошая динамика — стоит зафиксировать, что обеспечило рост объёма, и уточнить у партнёра, устойчив ли он.';
+      paras = [ opening, `<b>Рекомендация:</b> зафиксировать, что обеспечило рост объёма, и уточнить у партнёра, устойчив ли он.` ];
     }
     cards.push({ topic:'Заказы', tone: ordersS.below?'bad':'good', icon: ordersS.below?'down':'up',
-      html: `Заказы <b>${ordersS.below?'ниже':'выше'} плана ${ordersS.streak} мес. подряд</b> (сейчас ${fmtPct(ordersS.lastGap,1)}).${diagnosis}` });
+      html: renderParas(paras) });
   }
 
   // Средний чек — реальный анализ показал устойчивый сезонный цикл (не просто "выше/ниже плана"):
@@ -881,6 +903,37 @@ function computeAllInsights(planRows, factRows, lastFact, planByDate, be){
     const pctHigher = (hypotheticalCum/lastFact.cumProfit-1)*100;
     cards.push({ topic:'Прибыль', tone:'warn', icon:'alert',
       html: `Если бы не роялти сверх плана (см. вкладку «Расходы»), накопленная чистая прибыль сейчас составляла бы ${fmtRub(hypotheticalCum,true)} вместо ${fmtRub(lastFact.cumProfit,true)} — на ${pctHigher.toFixed(0)}% больше. Это самый весомый единичный фактор, отдаляющий точку окупаемости среди всех известных отклонений.` });
+  }
+
+  // БДР — два инсайта: (1) разрыв объясняется плановой 12-месячной амортизацией суммы вложений
+  // (за вычетом НДС — та же логика, что и в расчёте окупаемости), (2) когда наступит структурный
+  // перелом (амортизация заканчивается, и весь наш прогноз прибыли идёт в БДР-результат без вычета).
+  {
+    const invRowIns = factRows.find(r => r.investment != null) || planRows.find(r => r.investment != null);
+    if (invRowIns && lastFact.finResultCum != null && lastFact.cumProfit != null){
+      const investmentGrossIns = invRowIns.investment;
+      const investmentNetIns = investmentGrossIns - investmentGrossIns*5/105;
+      const amortEndIdx = planRows.findIndex((r,i) => r.cacAmort && (!planRows[i+1] || !planRows[i+1].cacAmort));
+      const amortEndRow = amortEndIdx>=0 ? planRows[amortEndIdx] : null;
+
+      cards.push({ topic:'БДР', tone:'neutral', icon:'target',
+        html: `Накопленный финансовый результат по БДР (${fmtRub(lastFact.finResultCum,true)}) выглядит намного хуже операционной прибыли (${fmtRub(lastFact.cumProfit,true)}). Причина предусмотрена планом: в БДР равномерно списывается вся сумма вложений (${fmtRubPlain(investmentGrossIns)} ₽ за вычетом 5% НДС = ${fmtRubPlain(investmentNetIns)} ₽) как расход на привлечение клиента. Списание идёт ровно 12 месяцев${amortEndRow?` — с ${fmtMon(planRows[0].date)} по ${fmtMon(amortEndRow.date)}`:''}, а потом полностью прекращается.` });
+
+      const sortedFactBdr = factRows.slice().sort((a,b)=>a.date-b.date).filter(r=>r.finResultPeriod!=null);
+      if (sortedFactBdr.length && amortEndRow){
+        const bestMonth = sortedFactBdr.reduce((a,b)=> b.finResultPeriod>a.finResultPeriod?b:a);
+        const transitionIdx = amortEndIdx+1;
+        let transitionText = '';
+        if (transitionIdx < planRows.length && projections && projections.profit){
+          const projVal = projections.profit.dashed[transitionIdx];
+          if (projVal!=null){
+            transitionText = ` — с ${fmtMon(planRows[transitionIdx].date)} финансовый результат по БДР вырастет до ${fmtRub(projVal,true)} по нашему прогнозу (списание больше не будет его уменьшать)`;
+          }
+        }
+        cards.push({ topic:'БДР', tone:'good', icon:'up',
+          html: `Ни один месяц ещё не вышел в плюс по БДР — ближе всего был ${fmtMon(bestMonth.date)} (${fmtRub(bestMonth.finResultPeriod,true)}). Но амортизация заканчивается в ${fmtMon(amortEndRow.date)} (12-й месяц)${transitionText}. Это заранее известный структурный перелом, а не то, на что нужно как-то влиять.` });
+      }
+    }
   }
 
   return cards;
@@ -1247,7 +1300,7 @@ const payoffMarkerPlugin = {
     opts.markers.forEach((mk, i) => {
       if (mk.index == null || mk.index < 0 || mk.index >= chart.data.labels.length) return;
       const x = xScale.getPixelForValue(mk.index);
-      const y = opts.investmentValue!=null ? yScale.getPixelForValue(opts.investmentValue) : yScale.getPixelForValue(mk.value);
+      const y = yScale.getPixelForValue(mk.value);
 
       ctx.save();
       // bright dot exactly at the intersection with the investment line
@@ -1271,6 +1324,28 @@ const payoffMarkerPlugin = {
       ctx.fillText(mk.label, labelX, labelY);
       ctx.restore();
     });
+
+    // "отставание на N мес." (или "опережение", если раньше плана) — в пустом промежутке между
+    // расходящимися линиями План/Прогноз
+    if (opts.delayMonths != null && opts.delayMonths !== 0){
+      const planMk = opts.markers.find(m => m.role === 'plan');
+      const factMk = opts.markers.find(m => m.role !== 'plan');
+      let textX, textY;
+      if (planMk && factMk){
+        textX = (xScale.getPixelForValue(planMk.index) + xScale.getPixelForValue(factMk.index)) / 2;
+      } else {
+        textX = midX;
+      }
+      textY = chartArea.top + (chartArea.bottom - chartArea.top) * 0.68;
+      const isDelay = opts.delayMonths > 0;
+      ctx.save();
+      ctx.fillStyle = isDelay ? '#ff4d4d' : '#a3e635';
+      ctx.font = "400 12px 'Geologica'";
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${isDelay?'отставание':'опережение плана'} на ${Math.abs(opts.delayMonths)} мес.`, textX, textY);
+      ctx.restore();
+    }
   }
 };
 
@@ -1314,16 +1389,16 @@ function renderPayoffChart(planRows, factRows, be, projections){
   const markers = [];
   if (be && be.planBE){
     const idx = planRows.findIndex(r => +r.date === +be.planBE.date);
-    if (idx >= 0) markers.push({ index: idx, color:'#a3e635', label:fmtMonNoDot(be.planBE.date), role:'plan' });
+    if (idx >= 0) markers.push({ index: idx, value: planRows[idx].cumProfit, color:'#a3e635', label:fmtMonNoDot(be.planBE.date), role:'plan' });
   }
   if (be && be.factBE){
     const idx = planRows.findIndex(r => r.date.getFullYear()===be.factBE.date.getFullYear() && r.date.getMonth()===be.factBE.date.getMonth());
-    if (idx >= 0) markers.push({ index: idx, color:'#f97316', label:fmtMonNoDot(be.factBE.date) });
+    if (idx >= 0) markers.push({ index: idx, value: dashed[idx], color:'#f97316', label:fmtMonNoDot(be.factBE.date) });
   }
 
   if (charts.payoff) charts.payoff.destroy();
   const options = chartBaseOptions(true, '#ffffff', scale.divisor);
-  options.plugins.payoffMarkers = { markers, investmentValue: be ? be.investment : null };
+  options.plugins.payoffMarkers = { markers, investmentValue: be ? be.investment : null, delayMonths: be ? be.delta : null };
   charts.payoff = new Chart(document.getElementById('chart-payoff'), {
     type:'line', data:{ labels, datasets }, options, plugins:[payoffMarkerPlugin]
   });
@@ -1331,12 +1406,15 @@ function renderPayoffChart(planRows, factRows, be, projections){
 
 // ==================== detail table ====================
 function stickTotalsRow(thead){
-  // measure the REAL rendered header height rather than assuming a fixed px value —
-  // guarantees the totals row sticks exactly below it with no gap or overlap.
+  // measure the REAL rendered height of the FIRST header row (not the whole thead, which now
+  // also contains the totals row itself) — guarantees the totals row sticks exactly below the
+  // column-name row with no gap or overlap.
   const raf = (typeof requestAnimationFrame === 'function') ? requestAnimationFrame : (fn)=>setTimeout(fn,16);
   raf(() => {
-    const totalsRow = document.querySelector('#detail-tbody tr.row-totals');
-    if (totalsRow && thead) totalsRow.style.top = thead.offsetHeight + 'px';
+    if (!thead) return;
+    const firstRow = thead.rows && thead.rows[0];
+    const totalsRow = thead.querySelector('tr.row-totals');
+    if (totalsRow && firstRow) totalsRow.style.top = firstRow.offsetHeight + 'px';
   });
 }
 
@@ -1378,12 +1456,12 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     const totalFact = catRows.reduce((s,r)=>s+r.factSum,0);
     const totalDelta = totalFact - totalPlan;
     const totalPct = totalPlan ? totalFact/totalPlan*100 : null;
-    const totalsRow = `<tr class="row-totals">
+    thead.innerHTML += `<tr class="row-totals">
       <td>Итоги</td><td>${fmtRubPlain(totalPlan)}</td><td>${fmtRubPlain(totalFact)}</td>
       <td>${totalDelta>=0?'+':''}${fmtRubPlain(totalDelta)}</td>
       <td>${totalPct==null?'—':totalPct.toFixed(0)+'%'}</td>
     </tr>`;
-    tbody.innerHTML = totalsRow + catRows.map(r=>r.html).join('');
+    tbody.innerHTML = catRows.map(r=>r.html).join('');
     stickTotalsRow(thead);
     return;
   }
@@ -1401,8 +1479,8 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
         html: `<tr${isLastFact?' id="row-last-fact" class="row-current"':''}><td>${fmtMon(r.date)}</td><td>${cacNet!=null?fmtRubPlain(cacNet):'—'}</td><td>${r.netProfit!=null?fmtRubPlain(r.netProfit):'—'}</td><td>${r.finResultPeriod!=null?fmtRubPlain(r.finResultPeriod):'—'}</td></tr>` };
     });
     const sumOrDash = (arr, key) => { const vals = arr.map(r=>r[key]).filter(v=>v!=null); return vals.length ? fmtRubPlain(vals.reduce((s,v)=>s+v,0)) : '—'; };
-    const totalsRow = `<tr class="row-totals"><td>Итоги</td><td>${sumOrDash(bdrRows,'cacNet')}</td><td>${sumOrDash(bdrRows,'netProfit')}</td><td>${sumOrDash(bdrRows,'finResultPeriod')}</td></tr>`;
-    tbody.innerHTML = totalsRow + bdrRows.map(r=>r.html).join('');
+    thead.innerHTML += `<tr class="row-totals"><td>Итоги</td><td>${sumOrDash(bdrRows,'cacNet')}</td><td>${sumOrDash(bdrRows,'netProfit')}</td><td>${sumOrDash(bdrRows,'finResultPeriod')}</td></tr>`;
+    tbody.innerHTML = bdrRows.map(r=>r.html).join('');
     stickTotalsRow(thead);
     const lastFactRowBdr = document.getElementById('row-last-fact');
     if (lastFactRowBdr && typeof lastFactRowBdr.scrollIntoView === 'function') lastFactRowBdr.scrollIntoView({ block:'nearest' });
@@ -1450,8 +1528,8 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     if (aggPlan) totalsPctCell = `${fmtPct(d/aggPlan*100,0)}`;
   }
   const totalsLabel = isAverage ? 'В среднем' : 'Итоги';
-  const totalsRow = `<tr class="row-totals"><td>${totalsLabel}</td><td>${fmtAgg(aggPlan)}</td><td>${fmtAgg(aggFact)}</td><td>${totalsDeltaCell}</td><td>${totalsPctCell}</td></tr>`;
-  tbody.innerHTML = totalsRow + dataRows.map(r=>r.html).join('');
+  thead.innerHTML += `<tr class="row-totals"><td>${totalsLabel}</td><td>${fmtAgg(aggPlan)}</td><td>${fmtAgg(aggFact)}</td><td>${totalsDeltaCell}</td><td>${totalsPctCell}</td></tr>`;
+  tbody.innerHTML = dataRows.map(r=>r.html).join('');
   stickTotalsRow(thead);
 
   const lastFactRow = document.getElementById('row-last-fact');
