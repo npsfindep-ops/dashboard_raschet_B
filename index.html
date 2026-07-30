@@ -61,7 +61,8 @@
     display:flex; flex-direction:column; gap:12px;
   }
   ::-webkit-scrollbar{height:7px; width:7px;}
-  ::-webkit-scrollbar-thumb{background:var(--line-strong); border-radius:4px;}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.4); border-radius:4px;}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.6);}
 
   /* ---------------- header ---------------- */
   header{
@@ -135,6 +136,7 @@
   .ind-row .ind-value.good{color:#a3e635;}
   .ind-row .ind-value.bad{color:#ff4d4d;}
   .ind-row .ind-value.neutral{color:var(--text);}
+  .indicators .ind-row:nth-child(2) .ind-value{color:#ffffff;}
   .kpi-info{
     position:absolute; top:9px; right:9px; width:15px; height:15px; border-radius:50%;
     background:rgba(255,255,255,.14); color:#ffffff; font-size:9.5px; font-family:var(--sans); font-weight:700;
@@ -142,9 +144,9 @@
   }
   .kpi-info:hover{background:rgba(255,255,255,.26);}
   #kpi-tooltip{
-    position:fixed; z-index:80; max-width:230px; background:#1e1e1e; border:1px solid #333333;
+    position:fixed; z-index:80; width:220px; background:#1e1e1e; border:1px solid #333333;
     border-radius:8px; padding:10px 12px; font-size:11.5px; color:#ffffff; line-height:1.5;
-    display:none; box-shadow:0 10px 28px rgba(0,0,0,.45);
+    display:none; box-shadow:0 10px 28px rgba(0,0,0,.45); box-sizing:border-box;
   }
 
   /* ---------------- chart cards ---------------- */
@@ -200,18 +202,18 @@
   .table-scroll{overflow-y:auto; overflow-x:hidden; min-height:0; flex:1;}
   table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11.5px;}
   thead th{
-    text-align:right; font-weight:400; color:#ffffff; font-size:9.5px; height:28px; box-sizing:border-box;
+    text-align:right; font-weight:400; color:var(--m-accent,#ffffff); font-size:9.5px; height:28px; box-sizing:border-box;
     text-transform:uppercase; letter-spacing:.02em; padding:6px 10px; border-bottom:1px solid var(--line-strong);
     position:sticky; top:0; background:var(--card-bg); z-index:2;
   }
   thead th:first-child{text-align:left;}
   tbody td{padding:5px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap; font-weight:400;}
-  tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:400; color:var(--text);}
+  tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:400; color:var(--m-accent,var(--text));}
   tbody tr:hover{background:rgba(255,255,255,.025);}
   tbody tr.row-current{background:rgba(249,115,22,.14); box-shadow:inset 3px 0 0 #f97316;}
+  tbody tr.row-totals{position:sticky; top:28px; z-index:1;}
   tbody tr.row-totals td{
-    position:sticky; top:28px; z-index:1; color:#ffffff;
-    background:#292e20; border-bottom:2px solid #333333;
+    color:#ffffff; background:#292e20; border-bottom:2px solid #333333;
   }
   tbody tr.row-totals:hover td{background:#333a26;}
   tbody tr.row-current:hover{background:rgba(249,115,22,.2);}
@@ -465,7 +467,10 @@ function render(){
 // ==================== break-even engine ====================
 function computeBreakEven(planRows, factRows, lastFact, projections){
   const invRow = factRows.find(r => r.investment != null) || planRows.find(r => r.investment != null);
-  const investment = invRow ? invRow.investment : (planRows[0] ? planRows[0].loanStart : null);
+  const investmentGross = invRow ? invRow.investment : (planRows[0] ? planRows[0].loanStart : null);
+  // Сумма вложений включает НДС 5% — для сравнения с накопленной прибылью нужна сумма за вычетом
+  // НДС: investment_net = investment_gross − investment_gross×5/105 = investment_gross×100/105.
+  const investment = investmentGross!=null ? investmentGross - investmentGross*5/105 : null;
 
   const planBE = investment!=null ? (planRows.find(r => (r.cumProfit||0) >= investment) || null) : null;
   let factBE = investment!=null ? (factRows.find(r => (r.cumProfit||0) >= investment) || null) : null;
@@ -740,12 +745,30 @@ function computeAllInsights(planRows, factRows, lastFact, planByDate, be){
       }).join('') });
   }
 
-  // Выручка
-  const revS = streakInfo('revenue');
-  if (revS){
-    const driverTopic = ordersS && checkS ? (Math.abs(ordersS.lastGap) >= Math.abs(checkS.lastGap) ? 'заказы' : 'средний чек') : null;
-    cards.push({ topic:'Выручка', tone: revS.below?'bad':'good', icon: revS.below?'down':'up',
-      html: `Выручка <b>${revS.below?'ниже':'выше'} плана ${revS.streak} мес. подряд</b> (сейчас ${fmtPct(revS.lastGap,1)}).${driverTopic?` Основной драйвер — <b>${driverTopic}</b>, подробнее на соответствующей вкладке.`:''}` });
+  // Выручка — точное разложение отклонения на вклад заказов и вклад среднего чека, поскольку
+  // Выручка = Заказы × Средний чек — это тождество, а не приближение. Показывает, где выручка была
+  // бы без роста чека, и сколько рублей рост цены реально компенсировал из просадки по объёму.
+  const revFactCumIns = factRows.reduce((s,r)=>s+(r.revenue||0),0);
+  const revPlanCumIns = planCumRows.reduce((s,r)=>s+(r.revenue||0),0);
+  const ordersFactCumIns = factRows.reduce((s,r)=>s+(r.orders||0),0);
+  const ordersPlanCumIns = planCumRows.reduce((s,r)=>s+(r.orders||0),0);
+  if (revFactCumIns && revPlanCumIns && ordersFactCumIns && ordersPlanCumIns){
+    const revRatio = revFactCumIns/revPlanCumIns;
+    const ordersRatio = ordersFactCumIns/ordersPlanCumIns;
+    const checkRatio = revRatio/ordersRatio;
+    const revPct = (revRatio-1)*100;
+    const ordersPct = (ordersRatio-1)*100;
+    const checkPct = (checkRatio-1)*100;
+    const hypotheticalRev = revPlanCumIns*ordersRatio; // выручка, если бы чек остался плановым
+    const compensated = revFactCumIns - hypotheticalRev;
+    const paras = [];
+    paras.push(`Выручка ${revPct>=0?'выше':'ниже'} плана на ${Math.abs(revPct).toFixed(1)}% (${fmtRub(revFactCumIns,true)} вместо ${fmtRub(revPlanCumIns,true)}).`);
+    if (checkPct > 5 && ordersPct < -5){
+      paras.push(`Без роста среднего чека просадка была бы почти на уровне падения заказов — около ${Math.abs(ordersPct).toFixed(0)}% (то есть выручка составила бы всего ${fmtRub(hypotheticalRev,true)}). По факту чек вырос на ${checkPct.toFixed(1)}% и компенсировал ${fmtRub(Math.abs(compensated),true)} потерянной выручки — просадка заметно меньше, чем могла бы быть. Причины обоих эффектов — на вкладках «Заказы» и «Средний чек».`);
+      paras.push(`<b>Рекомендация:</b> рост цены — реальный компенсирующий механизм, а не случайность. Дальнейшее развитие ассортимента услуг доставки (дополнительные опции — страхование, экспресс-доставка, особые условия для габаритных/ценных отправлений) может ещё смягчить эффект от падения объёма, пока не решён вопрос с оттоком заказов к конкурентам.`);
+    }
+    cards.push({ topic:'Выручка', tone: revPct>=0?'good':'warn', icon: revPct>=0?'up':'down',
+      html: paras.map((p,i) => `<p style="${p.startsWith('<b>Рекомендация')?'margin:9px 0 0':(i===paras.length-1?'margin:0':'margin:0 0 7px')}">${p}</p>`).join('') });
   }
 
   // Расходы — три находки, проверенные на реальных данных и уточнённые в разговоре:
@@ -821,7 +844,16 @@ function computeAllInsights(planRows, factRows, lastFact, planByDate, be){
       if (be.requiredMonthlyProfit!=null && be.actualRecentMonthlyProfit!=null){
         if (be.requiredMonthlyProfit > be.actualRecentMonthlyProfit){
           const gap = be.requiredMonthlyProfit - be.actualRecentMonthlyProfit;
-          rec = ` Чтобы уложиться в плановый срок (${fmtMon(be.planBE.date)}), нужно нарастить среднюю чистую прибыль минимум на <b>${fmtRub(gap,true)}/мес</b> (сейчас ${fmtRub(be.actualRecentMonthlyProfit,true)}/мес, нужно ${fmtRub(be.requiredMonthlyProfit,true)}/мес).`;
+          let revNote = '';
+          if (revFactCum && netFactCum){
+            const marginNow = netFactCum/revFactCum;
+            const avgRevNow = revFactCum/factRows.length;
+            if (marginNow > 0){
+              const neededRev = be.requiredMonthlyProfit/marginNow;
+              revNote = ` Нужная выручка для планового срока — тревожная цифра. При текущей марже (${(marginNow*100).toFixed(1)}%) нужно ${fmtRub(neededRev,true)}/мес — это более чем в ${(neededRev/avgRevNow).toFixed(1)} раза больше текущего темпа (${fmtRub(avgRevNow,true)}/мес, из карточки «Ср.выручка»).`;
+            }
+          }
+          rec = ` Чтобы уложиться в плановый срок (${fmtMon(be.planBE.date)}), нужно нарастить среднюю чистую прибыль минимум на <b>${fmtRub(gap,true)}/мес</b> (сейчас ${fmtRub(be.actualRecentMonthlyProfit,true)}/мес, нужно ${fmtRub(be.requiredMonthlyProfit,true)}/мес).${revNote}`;
         } else {
           rec = ` Текущий темп прибыли (${fmtRub(be.actualRecentMonthlyProfit,true)}/мес) уже выше необходимого — задержка объясняется стартовым отставанием, а не текущей динамикой.`;
         }
@@ -831,6 +863,36 @@ function computeAllInsights(planRows, factRows, lastFact, planByDate, be){
     } else if (be.projFailed){
       cards.push({ topic:'Прибыль', tone:'bad', icon:'alert', html:`При текущем темпе чистая прибыль не растёт — окупаемость (план: ${fmtMon(be.planBE.date)}) под риском срыва. Приоритет — остановить снижение выручки и/или сократить статью с наибольшим отклонением (см. вкладку «Расходы»).` });
     }
+  }
+
+  // Прибыль падает N мес. подряд — с учётом уже найденной сезонности среднего чека
+  const sortedFactProfit = factRows.slice().sort((a,b)=>a.date-b.date);
+  {
+    let declineStreak = 0;
+    for (let i=sortedFactProfit.length-1; i>0; i--){
+      if (sortedFactProfit[i].netProfit < sortedFactProfit[i-1].netProfit) declineStreak++;
+      else break;
+    }
+    if (declineStreak >= 2 && sortedFactProfit.length >= 6){
+      const streakVals = sortedFactProfit.slice(-(declineStreak+1));
+      const seq = streakVals.map(r => `${fmtMon(r.date)}: ${fmtRub(r.netProfit,true)}`).join(' → ');
+      const isWorst = sortedFactProfit.every(r => r.netProfit >= sortedFactProfit[sortedFactProfit.length-1].netProfit);
+      const first3avg = sortedFactProfit.slice(0,3).reduce((s,r)=>s+r.netProfit,0)/3;
+      const last3avg = sortedFactProfit.slice(-3).reduce((s,r)=>s+r.netProfit,0)/3;
+      const blockNote = last3avg > first3avg
+        ? ` Это скрыто, если сравнивать средние по 3 месяцам блоками (${fmtRub(first3avg,true)} → ${fmtRub(last3avg,true)} выглядит как рост) — нужно смотреть именно на последовательный тренд, а не на агрегаты.`
+        : '';
+      cards.push({ topic:'Прибыль', tone:'neutral', icon:'down',
+        html: `Прибыль падает ${declineStreak} мес. подряд (${seq})${isWorst?', причём последний месяц — худший за весь период':''}.${blockNote} Похоже на сезонное влияние — совпадает по времени со снижением среднего чека после пика в марте (см. вкладку «Средний чек»).` });
+    }
+  }
+
+  // Влияние роялти на итоговую прибыль напрямую
+  if (catSums.royalty && catSums.royalty.factSum > 0 && catSums.royalty.planSum < revPlanCum*0.002 && lastFact.cumProfit!=null){
+    const hypotheticalCum = lastFact.cumProfit + catSums.royalty.factSum;
+    const pctHigher = (hypotheticalCum/lastFact.cumProfit-1)*100;
+    cards.push({ topic:'Прибыль', tone:'warn', icon:'alert',
+      html: `Если бы не роялти сверх плана (см. вкладку «Расходы»), накопленная чистая прибыль сейчас составляла бы ${fmtRub(hypotheticalCum,true)} вместо ${fmtRub(lastFact.cumProfit,true)} — на ${pctHigher.toFixed(0)}% больше. Это самый весомый единичный фактор, отдаляющий точку окупаемости среди всех известных отклонений.` });
   }
 
   return cards;
@@ -1098,7 +1160,7 @@ function renderMetricChart(metric, planRows, factRows, projections){
   const m = METRICS[metric];
   const accent = METRIC_COLORS[metric] || '#a3e635';
   const planColor = PLAN_COLORS[metric] || '#2dd4bf';
-  document.getElementById('metric-toggle').style.setProperty('--m-accent', accent);
+  document.getElementById('stage').style.setProperty('--m-accent', accent);
   document.getElementById('metric-chart-sub').textContent = m.sub;
 
   if (metric === 'bdr'){
@@ -1447,12 +1509,13 @@ document.getElementById('kpi-grid').addEventListener('click', (e) => {
   tip.innerHTML = btn.dataset.tip;
   tip.dataset.forBtn = btn.dataset.tip;
   tip.style.display = 'block';
-  const r = btn.getBoundingClientRect();
-  const tipWidth = 230;
-  let left = r.right - tipWidth;
+  const card = btn.closest('.kpi');
+  const cardRect = (card || btn).getBoundingClientRect();
+  const tipWidth = 220;
+  let left = cardRect.left - tipWidth;
   if (left < 8) left = 8;
   tip.style.left = left + 'px';
-  tip.style.top = (r.bottom + 6) + 'px';
+  tip.style.top = cardRect.top + 'px';
 });
 document.addEventListener('click', () => { document.getElementById('kpi-tooltip').style.display = 'none'; });
 
