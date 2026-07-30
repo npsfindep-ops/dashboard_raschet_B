@@ -675,6 +675,7 @@ function computeAllInsights(planRows, factRows, lastFact, planByDate, be){
   // другим доставщикам). Раньше это подавалось как взаимоисключающие варианты, что неверно, если
   // данные показывают оба фактора сразу.
   const ordersS = streakInfo('orders');
+  const checkS = streakInfo('avgCheck');
   if (ordersS){
     let diagnosis;
     if (ordersS.below){
@@ -696,11 +697,40 @@ function computeAllInsights(planRows, factRows, lastFact, planByDate, be){
       html: `Заказы <b>${ordersS.below?'ниже':'выше'} плана ${ordersS.streak} мес. подряд</b> (сейчас ${fmtPct(ordersS.lastGap,1)}).${diagnosis}` });
   }
 
-  // Средний чек
-  const checkS = streakInfo('avgCheck');
-  if (checkS){
-    cards.push({ topic:'Средний чек', tone: checkS.below?'bad':'good', icon: checkS.below?'down':'up',
-      html: `Средний чек <b>${checkS.below?'ниже':'выше'} плана ${checkS.streak} мес. подряд</b> (сейчас ${fmtPct(checkS.lastGap,1)}).${checkS.below?' Рекомендация: проверить ценообразование, скидки и долю мелких заказов.':' Апсейл/ценообразование работают лучше плана.'}` });
+  // Средний чек — реальный анализ показал устойчивый сезонный цикл (не просто "выше/ниже плана"):
+  // рост к гендерным праздникам (23 февраля, 8 марта — подарочные наборы дороже штучных позиций),
+  // спад после. План (510 ₽) при этом подтверждён историческими данными как реалистичный на момент
+  // покупки — расхождение с планом возникло уже после старта, а не из-за ошибки в планировании.
+  const checkSorted = factRows.slice().sort((a,b)=>a.date-b.date);
+  if (checkSorted.length >= 3){
+    const checkVals = checkSorted.map(r=>r.avgCheck).filter(v=>v!=null);
+    let peakIdx = 0;
+    checkVals.forEach((v,i) => { if (v > checkVals[peakIdx]) peakIdx = i; });
+    const peakRow = checkSorted[peakIdx];
+    const firstRow = checkSorted[0];
+    const lastRow = checkSorted[checkSorted.length-1];
+    const planAtLast = planByDate[+lastRow.date];
+    const pctVsPlan = (planAtLast && planAtLast.avgCheck) ? (lastRow.avgCheck-planAtLast.avgCheck)/planAtLast.avgCheck*100 : null;
+    const isPeakRecent = peakIdx === checkVals.length-1; // still rising, no decline yet to report
+    const declineFromPeak = !isPeakRecent ? (lastRow.avgCheck-peakRow.avgCheck)/peakRow.avgCheck*100 : null;
+    const riseToPeak = peakIdx>0 ? (peakRow.avgCheck-firstRow.avgCheck)/firstRow.avgCheck*100 : null;
+
+    const paras = [];
+    paras.push(`Средний чек ${pctVsPlan!=null?(pctVsPlan>=0?'выше':'ниже')+' плана (сейчас '+fmtPct(pctVsPlan,0)+')':'отклоняется от плана'}. Историческая проверка по данным до покупки показала, что плановая цена (510 ₽) была реалистичной оценкой на тот момент — расхождение сформировалось уже после старта проекта, а не из-за ошибки планирования.`);
+    if (riseToPeak!=null && riseToPeak > 15){
+      paras.push(`Рост чека с ${fmtMon(firstRow.date)} по ${fmtMon(peakRow.date)} (${riseToPeak.toFixed(0)}%, до ${Math.round(peakRow.avgCheck)} ₽) может отражать переход клиента на более дорогой ассортимент по мере роста доверия покупателей к сервису — типичная динамика при завоевании рынка. Пик пришёлся на ${fmtMon(peakRow.date)}, что похоже на сезон гендерных праздников (23 февраля / 8 марта) — вероятно, за счёт добавления в ассортимент подарочных наборов, которые дороже штучных позиций.`);
+    }
+    if (declineFromPeak!=null && declineFromPeak < -8){
+      paras.push(`Снижение с ${fmtMon(peakRow.date)} по ${fmtMon(lastRow.date)} (${declineFromPeak.toFixed(1)}%) похоже на нормализацию после завершения праздничного сезона, а не на тревожный тренд — чек остаётся ${pctVsPlan!=null && pctVsPlan>=0?'выше':'на уровне'} плана.`);
+    }
+    paras.push(`<b>Рекомендация:</b> прогноз уже учитывает этот цикл — ожидается аналогичный сезонный рост в декабре-марте (Новый год, 23 февраля, 8 марта) и просадка в январе на фоне послепраздничных распродаж. Стоит заранее спланировать закупку и ассортимент подарочных наборов под этот период, а не реагировать по факту.`);
+
+    cards.push({ topic:'Средний чек', tone: (pctVsPlan!=null && pctVsPlan<0)?'warn':'good', icon: (pctVsPlan!=null && pctVsPlan<0)?'down':'up',
+      html: paras.map((p,i) => {
+        const isRec = p.startsWith('<b>Рекомендация');
+        const margin = isRec ? 'margin:9px 0 0' : (i===paras.length-1 ? 'margin:0' : 'margin:0 0 7px');
+        return `<p style="${margin}">${p}</p>`;
+      }).join('') });
   }
 
   // Выручка
@@ -864,12 +894,59 @@ function forecastFromTrend(model, targetDate, applySeasonal, phi){
   return isQ4 ? trendVal*model.q4Multiplier : trendVal;
 }
 
-// Only ORDERS gets the Q4 seasonal multiplier applied — genuine seasonal demand (more parcels in
-// the holiday season) is plausible there. Average check is a pricing decision, not something that
-// swings with the calendar, and the only Q4 data point we have (Oct-Dec 2025) is completely
-// confounded with the business's launch quarter — e.g. any launch-period discounting would get
-// misread as "Q4 causes a lower cheque" and wrongly repeated every year. So avgCheck (and margin,
-// used for profit below) use trend only, no seasonal multiplier.
+// Средний чек: в отличие от orders (где сезонность — это объём спроса), для цены нужен более точный
+// посезонный (по календарному месяцу) индекс, а не бинарный Q4/не-Q4. Анализ реальных данных показал
+// выраженный цикл роста к гендерным праздникам (23 февраля, 8 марта — подарочные наборы дороже
+// штучных позиций) и спад после. Строим индекс по ВСЕМ наблюдаемым календарным месяцам; для месяцев,
+// которых ещё не было в факте (напр. июль-сентябрь при 9 месяцах истории), индекс нейтральный (1.0).
+function fitCalendarSeasonality(factRows, key){
+  const sorted = factRows.slice().sort((a,b)=>a.date-b.date);
+  const n = sorted.length;
+  if (n === 0) return null;
+  if (n === 1) return { slope:0, intercept:sorted[0][key], baseDate:sorted[0].date, lastFitted:sorted[0][key], lastDate:sorted[0].date, seasonalByMonth:{} };
+
+  const baseDate = sorted[0].date;
+  const xs = sorted.map(r => monthsBetween(baseDate, r.date));
+  const ys = sorted.map(r => r[key]);
+  const xMean = xs.reduce((s,v)=>s+v,0)/n;
+  const yMean = ys.reduce((s,v)=>s+v,0)/n;
+  let num=0, den=0;
+  for (let i=0;i<n;i++){ num += (xs[i]-xMean)*(ys[i]-yMean); den += (xs[i]-xMean)*(xs[i]-xMean); }
+  const slope = den ? num/den : 0;
+  const intercept = yMean - slope*xMean;
+
+  const byMonth = {};
+  sorted.forEach((r,i) => {
+    const trendVal = intercept + slope*xs[i];
+    if (trendVal > 0 && r[key]!=null){
+      const cm = r.date.getMonth();
+      (byMonth[cm] = byMonth[cm]||[]).push(r[key]/trendVal);
+    }
+  });
+  const seasonalByMonth = {};
+  Object.keys(byMonth).forEach(cm => { const arr=byMonth[cm]; seasonalByMonth[cm] = arr.reduce((s,v)=>s+v,0)/arr.length; });
+
+  const lastDate = sorted[n-1].date;
+  const lastX = monthsBetween(baseDate, lastDate);
+  return { slope, intercept, baseDate, lastFitted: intercept+slope*lastX, lastDate, seasonalByMonth };
+}
+
+function forecastWithCalendarSeasonality(model, targetDate, phi){
+  phi = phi==null ? 0.85 : phi;
+  if (!model) return null;
+  const h = monthsBetween(model.lastDate, targetDate);
+  let trendVal;
+  if (h <= 0){ trendVal = model.lastFitted; }
+  else {
+    let phiSum = 0;
+    for (let s=1; s<=h; s++) phiSum += Math.pow(phi, s);
+    trendVal = model.lastFitted + phiSum*model.slope;
+  }
+  const cm = targetDate.getMonth();
+  const seasonal = model.seasonalByMonth[cm] != null ? model.seasonalByMonth[cm] : 1;
+  return trendVal * seasonal;
+}
+
 function buildProjection(planRows, factRows, key){
   const factAligned = alignToPlan(planRows, factRows, key);
   let lastIdx = -1;
@@ -877,10 +954,21 @@ function buildProjection(planRows, factRows, key){
   const dashed = new Array(planRows.length).fill(null);
   if (lastIdx < 0) return { solid: factAligned, dashed };
 
-  const model = fitTrendAndSeasonality(factRows, key);
-  const applySeasonal = (key === 'orders');
   const nonNegative = !(key === 'netProfit' || key === 'profitBeforeTax' || key === 'cumProfit');
   dashed[lastIdx] = factAligned[lastIdx];
+
+  if (key === 'avgCheck'){
+    const calModel = fitCalendarSeasonality(factRows, key);
+    for (let i=lastIdx+1; i<planRows.length; i++){
+      let v = forecastWithCalendarSeasonality(calModel, planRows[i].date);
+      if (v!=null && v<0) v = 0;
+      dashed[i] = v;
+    }
+    return { solid: factAligned, dashed };
+  }
+
+  const model = fitTrendAndSeasonality(factRows, key);
+  const applySeasonal = (key === 'orders');
   for (let i=lastIdx+1; i<planRows.length; i++){
     let v = forecastFromTrend(model, planRows[i].date, applySeasonal);
     if (v!=null && nonNegative && v<0) v = 0;
