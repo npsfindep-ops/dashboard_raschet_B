@@ -1187,8 +1187,11 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     const sortedFact = factRows.slice().sort((a,b)=>a.date-b.date);
     tbody.innerHTML = sortedFact.map(r => {
       const cacNet = (r.cacAmort!=null && r.cacVat!=null) ? (r.cacAmort - r.cacVat) : null;
-      return `<tr><td>${fmtMon(r.date)}</td><td>${cacNet!=null?fmtRubPlain(cacNet):'—'}</td><td>${r.netProfit!=null?fmtRubPlain(r.netProfit):'—'}</td><td>${r.finResultPeriod!=null?fmtRubPlain(r.finResultPeriod):'—'}</td></tr>`;
+      const isLastFact = lastFact && +r.date === +lastFact.date;
+      return `<tr${isLastFact?' id="row-last-fact" class="row-current"':''}><td>${fmtMon(r.date)}</td><td>${cacNet!=null?fmtRubPlain(cacNet):'—'}</td><td>${r.netProfit!=null?fmtRubPlain(r.netProfit):'—'}</td><td>${r.finResultPeriod!=null?fmtRubPlain(r.finResultPeriod):'—'}</td></tr>`;
     }).join('');
+    const lastFactRowBdr = document.getElementById('row-last-fact');
+    if (lastFactRowBdr && typeof lastFactRowBdr.scrollIntoView === 'function') lastFactRowBdr.scrollIntoView({ block:'nearest' });
     return;
   }
 
