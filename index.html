@@ -741,35 +741,56 @@ function computeAllInsights(planRows, factRows, lastFact, planByDate, be){
       html: `Выручка <b>${revS.below?'ниже':'выше'} плана ${revS.streak} мес. подряд</b> (сейчас ${fmtPct(revS.lastGap,1)}).${driverTopic?` Основной драйвер — <b>${driverTopic}</b>, подробнее на соответствующей вкладке.`:''}` });
   }
 
-  // Расходы: unplanned + ratio-worst
+  // Расходы — три находки, проверенные на реальных данных и уточнённые в разговоре:
   const catDefs = [
     ['partnerPrice','Партнерский прайс'], ['royalty','Роялти'],
     ['salary','ЗП с ФОТ'], ['salaryTax','Зарплатные налоги'], ['loanInterest','Проценты по займу'],
   ];
-  let unplanned = null, worstRatio = null;
+  const catSums = {};
   catDefs.forEach(([key,label]) => {
-    const factSum = factRows.reduce((s,r)=>s+(r[key]||0),0);
-    const planSum = planCumRows.reduce((s,r)=>s+(r[key]||0),0);
-    if (!factSum && !planSum) return;
-    const factRatio = revFactCum ? factSum/revFactCum*100 : 0;
-    const planRatio = revPlanCum ? planSum/revPlanCum*100 : 0;
-    const isUnplanned = planSum < revPlanCum*0.002 && factSum > revFactCum*0.01;
-    if (isUnplanned && (!unplanned || factSum > unplanned.factSum)) unplanned = { label, factSum, factRatio };
-    const ratioDelta = factRatio - planRatio;
-    if (!isUnplanned && (!worstRatio || ratioDelta > worstRatio.ratioDelta)) worstRatio = { label, ratioDelta, factRatio, planRatio, factSum, planSum };
+    catSums[key] = {
+      label,
+      factSum: factRows.reduce((s,r)=>s+(r[key]||0),0),
+      planSum: planCumRows.reduce((s,r)=>s+(r[key]||0),0),
+    };
   });
-  if (unplanned){
-    cards.push({ topic:'Расходы', tone:'bad', icon:'alert',
-      html: `Статья <b>«${unplanned.label}»</b> не заложена в план на этот период, но по факту уже составляет <b>${unplanned.factRatio.toFixed(1)}% выручки</b> (${fmtRub(unplanned.factSum,true)}) — внеплановые расходы. Рекомендация: уточнить условия начисления у контрагента и внести статью в план.` });
-  }
-  if (worstRatio && worstRatio.ratioDelta > 1.5){
+
+  // 1) Роялти — известная причина (условия партнёрского договора изменились, роялти начисляется
+  // с 1-го дня вместо 14-го месяца по плану). Партнёрский прайс упомянут как отдельный, не связанный
+  // фактор (план использовал среднюю долю, факт зависит от реального микса направлений/весогабаритов).
+  const royaltyC = catSums.royalty;
+  if (royaltyC.factSum > 0 && royaltyC.planSum < revPlanCum*0.002){
+    const royaltyRatio = revFactCum ? royaltyC.factSum/revFactCum*100 : 0;
+    const partnerC = catSums.partnerPrice;
+    const partnerFactRatio = revFactCum ? partnerC.factSum/revFactCum*100 : 0;
+    const partnerPlanRatio = revPlanCum ? partnerC.planSum/revPlanCum*100 : 0;
     cards.push({ topic:'Расходы', tone:'warn', icon:'alert',
-      html: `Статья <b>«${worstRatio.label}»</b> растёт как доля выручки: план ${worstRatio.planRatio.toFixed(1)}% → факт ${worstRatio.factRatio.toFixed(1)}% (+${worstRatio.ratioDelta.toFixed(1)} п.п.). Рекомендация: пересмотреть условия/тариф по «${worstRatio.label}».` });
+      html: `Роялти начисляется с первого дня вместо 14-го месяца по плану (${fmtRub(royaltyC.factSum,true)} за ${factRows.length} мес., ${royaltyRatio.toFixed(1)}% выручки) — условия партнёрского договора изменились после утверждения плана. Партнёрский прайс при этом на ${(partnerPlanRatio-partnerFactRatio).toFixed(1)} п.п. эффективнее плана к выручке (${partnerFactRatio.toFixed(1)}% факт против ${partnerPlanRatio.toFixed(1)}% план) — это отдельный, не связанный с роялти эффект: план использовал среднюю долю партнёрского прайса, а по факту она зависит от реального микса направлений доставки и весогабаритных характеристик, где часть маршрутов дешевле среднего.` });
   }
-  const expS = streakInfo('expenses');
-  if (expS){
-    cards.push({ topic:'Расходы', tone: expS.below?'good':'bad', icon: expS.below?'down':'up',
-      html: `Расходы нарастающим итогом ${expS.below?'ниже':'выше'} плана (сейчас отклонение ${fmtPct(expS.lastGap,1)} за последний месяц).` });
+
+  // 2) ЗП с ФОТ отсутствует — осознанная экономия, а не провал (штат не масштабируют, пока не хватает объёма)
+  const salaryC = catSums.salary;
+  if (salaryC.planSum > revPlanCum*0.01 && salaryC.factSum < salaryC.planSum*0.05){
+    cards.push({ topic:'Расходы', tone:'good', icon:'up',
+      html: `Зарплата менеджера сервиса не начислялась весь период факта — осознанное решение обойтись текущими ресурсами без найма отдельного менеджера, что дало экономию ${fmtRub(salaryC.planSum,true)} (${(salaryC.planSum/revPlanCum*100).toFixed(1)}% плановой выручки). Логично: раз объём заказов ниже плана (см. вкладку «Заказы»), отдельный сотрудник для его обслуживания пока не требуется — штат масштабируется под реальную нагрузку. Рекомендация: определить, при каком объёме заказов найм менеджера станет оправданным, и заложить это как условие в план, а не фиксированный месяц.` });
+  }
+
+  // 3) Юнит-экономика: расход на 1 заказ. Доля расходов от выручки может выглядеть лучше плана только
+  // из-за роста среднего чека (см. вкладку «Средний чек») — это может маскировать реальный рост
+  // удельных издержек при меньшем объёме заказов (фиксированная часть расходов распределяется на
+  // меньшее число заказов).
+  const planOrdersCum = planCumRows.reduce((s,r)=>s+(r.orders||0),0);
+  const factOrdersCum = factRows.reduce((s,r)=>s+(r.orders||0),0);
+  const planExpCum = planCumRows.reduce((s,r)=>s+(r.expenses||0),0);
+  const factExpCum = factRows.reduce((s,r)=>s+(r.expenses||0),0);
+  if (planOrdersCum && factOrdersCum){
+    const planPerOrder = planExpCum/planOrdersCum;
+    const factPerOrder = factExpCum/factOrdersCum;
+    const perOrderDeltaPct = (factPerOrder-planPerOrder)/planPerOrder*100;
+    if (Math.abs(perOrderDeltaPct) > 8){
+      cards.push({ topic:'Расходы', tone: perOrderDeltaPct>0?'bad':'good', icon: perOrderDeltaPct>0?'up':'down',
+        html: `Расход на 1 заказ по факту ${perOrderDeltaPct>0?'выше':'ниже'} плана на ${Math.abs(perOrderDeltaPct).toFixed(0)}% (${Math.round(factPerOrder)} ₽ против ${Math.round(planPerOrder)} ₽).${perOrderDeltaPct>0?' Доля расходов от выручки при этом выглядит эффективнее плана — но это эффект выросшего среднего чека, который маскирует реальный рост удельных издержек: при факте в '+fmtNum(factOrdersCum)+' заказов вместо плановых '+fmtNum(planOrdersCum)+' фиксированная часть расходов (проценты по займу, роялти) распределяется на меньший объём. Рекомендация: ориентироваться на расход/заказ, а не долю от выручки, при оценке операционной эффективности — рост объёма заказов сам по себе снизит удельную себестоимость.':''}` });
+    }
   }
 
   // Прибыль: rentability + BDR-adjusted + breakeven/recommendation
