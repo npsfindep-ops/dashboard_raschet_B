@@ -679,7 +679,7 @@ function computeAllInsights(planRows, factRows, lastFact, planByDate, be){
     let diagnosis;
     if (ordersS.below){
       const startedBad = ordersS.firstGap < -15;
-      const worsenedSignificantly = ordersS.lastGap < ordersS.firstGap - 10;
+      const worsenedSignificantly = ordersS.lastGap < ordersS.firstGap - 6;
       if (startedBad && worsenedSignificantly){
         diagnosis = ` Здесь два фактора одновременно: часть отставания структурная — уже в первый месяц факт был на ${fmtPct(ordersS.firstGap,1)} ниже плана, то есть план изначально был завышен по объёму приобретаемого клиента. Но с тех пор разрыв дополнительно увеличился до ${fmtPct(ordersS.lastGap,1)} — похоже, что часть заказов клиент стал направлять через другие службы доставки с более низкими тарифами. Рекомендация: (1) пересмотреть плановые показатели на основе фактического объёма клиента на момент покупки, и (2) сравнить наши тарифы с конкурентами, чтобы оценить, нужен ли пересмотр условий для удержания оставшегося объёма.`;
       } else if (startedBad){
