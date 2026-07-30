@@ -200,18 +200,20 @@
   .table-scroll{overflow-y:auto; overflow-x:hidden; min-height:0; flex:1;}
   table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11.5px;}
   thead th{
-    text-align:right; font-weight:400; color:#ffffff; font-size:9.5px;
+    text-align:right; font-weight:400; color:#ffffff; font-size:9.5px; height:28px; box-sizing:border-box;
     text-transform:uppercase; letter-spacing:.02em; padding:6px 10px; border-bottom:1px solid var(--line-strong);
-    position:sticky; top:0; background:var(--card-bg);
+    position:sticky; top:0; background:var(--card-bg); z-index:2;
   }
   thead th:first-child{text-align:left;}
   tbody td{padding:5px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap; font-weight:400;}
   tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:400; color:var(--text);}
   tbody tr:hover{background:rgba(255,255,255,.025);}
   tbody tr.row-current{background:rgba(249,115,22,.14); box-shadow:inset 3px 0 0 #f97316;}
-  tbody tr.row-totals{background:rgba(163,230,53,.08); border-bottom:2px solid #333333;}
-  tbody tr.row-totals td{color:#ffffff; border-bottom:2px solid #333333;}
-  tbody tr.row-totals:hover{background:rgba(163,230,53,.13);}
+  tbody tr.row-totals td{
+    position:sticky; top:28px; z-index:1; color:#ffffff;
+    background:#292e20; border-bottom:2px solid #333333;
+  }
+  tbody tr.row-totals:hover td{background:#333a26;}
   tbody tr.row-current:hover{background:rgba(249,115,22,.2);}
   .cell-pct{border-radius:5px; padding:1px 7px; font-weight:700;}
   .delta-pos{color:var(--good);} .delta-neg{color:var(--danger);}
@@ -583,7 +585,7 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const neededRevF = fmtAdaptive(neededRevenue);
     const avgRevF = fmtAdaptive(avgRevFact);
     cards.push({ label:`СР.ВЫРУЧКА, ${avgRevF.unit.toUpperCase()}/МЕС.`, value: avgRevF.value,
-      info:'Средняя выручка в месяц, при текущей рентабельности, нужная для выхода на окупаемость в плановый срок.', rows:[
+      info:'<b>Ср.выручка</b> — суммарная выручка за весь период факта, делённая на число месяцев.<br><br><b>Нужно для окуп.</b> — какая выручка в среднем нужна (при текущей рентабельности), чтобы уложиться в плановый срок окупаемости.', rows:[
       { label:'к плану', value: pct!=null?fmtPct(pct,0):'—', tone: pct!=null?(pct>=0?'good':'bad'):'neutral' },
       { label:'нужно для окуп.', value: neededRevenue!=null?`${neededRevF.value} ${neededRevF.unit}`:'—', tone: (neededRevenue!=null&&avgRevFact!=null)?(avgRevFact>=neededRevenue?'good':'bad'):'neutral' },
     ]});
@@ -601,7 +603,7 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const avgRevFactRow5 = factRows.length ? revFactCum/factRows.length : null;
     const neededMargin = (be.requiredMonthlyProfit!=null && avgRevFactRow5) ? be.requiredMonthlyProfit/avgRevFactRow5*100 : null;
     cards.push({ label:'РЕНТАБЕЛЬНОСТЬ, %', value: rFact!=null?rFact.toFixed(1):'—',
-      info:'Минимальная рентабельность, при текущей выручке, необходимая для выхода на окупаемость в плановый срок.', rows:[
+      info:'<b>Рентабельность</b> — отношение чистой прибыли к выручке нарастающим итогом с начала проекта.<br><br><b>Мин. для окуп.</b> — минимальная рентабельность (при текущей выручке), необходимая для выхода на окупаемость в плановый срок.', rows:[
       { label:'к плану', value: (rFact!=null&&rPlan!=null)?fmtPP(rFact-rPlan):'—', tone: (rFact!=null&&rPlan!=null)?(rFact>=rPlan?'good':'bad'):'neutral' },
       { label:'мин. для окуп.', value: neededMargin!=null?neededMargin.toFixed(1)+'%':'—', tone: (neededMargin!=null&&rFact!=null)?(rFact>=neededMargin?'good':'bad'):'neutral' },
     ]});
@@ -619,7 +621,7 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const neededRevenueRow6 = (be.requiredMonthlyProfit!=null && currentMarginRow6>0) ? be.requiredMonthlyProfit/currentMarginRow6 : null;
     const neededCheck = (neededRevenueRow6!=null && avgOrdersFactRow6) ? neededRevenueRow6/avgOrdersFactRow6 : null;
     cards.push({ label:'СРЕДНИЙ ЧЕК, ₽', value: fmtNum(lastFact.avgCheck),
-      info:'Средний чек, при текущем количестве заказов, нужный для выхода на окупаемость в плановый срок.', rows:[
+      info:'<b>Средний чек</b> — выручка последнего месяца, делённая на количество заказов в этом месяце.<br><br><b>Нужно для окуп.</b> — какой чек нужен (при текущем количестве заказов), чтобы уложиться в плановый срок окупаемости.', rows:[
       { label:'к плану', value: pct!=null?fmtPct(pct,1):'—', tone: pct!=null?(pct>=0?'good':'bad'):'neutral' },
       { label:'нужно для окуп.', value: neededCheck!=null?fmtNum(neededCheck)+' ₽':'—', tone: (neededCheck!=null)?(lastFact.avgCheck>=neededCheck?'good':'bad'):'neutral' },
     ]});
@@ -639,7 +641,7 @@ function renderKPIs(planRows, factRows, lastFact, planByDate, be){
     const neededRevenueRow7 = (be.requiredMonthlyProfit!=null && currentMarginRow7>0) ? be.requiredMonthlyProfit/currentMarginRow7 : null;
     const neededOrders = (neededRevenueRow7!=null && avgCheckRow7) ? neededRevenueRow7/avgCheckRow7 : null;
     cards.push({ label:'ЗАКАЗЫ, СРЕД./МЕС.', value: fmtNum(Math.round(avgOrdersFact)),
-      info:'Среднее число заказов в месяц, при текущем среднем чеке, нужное для выхода на окупаемость в плановый срок.', rows:[
+      info:'<b>Заказы</b> — среднее количество заказов в месяц за весь период факта.<br><br><b>Нужно для окуп.</b> — сколько заказов в среднем нужно (при текущем среднем чеке), чтобы уложиться в плановый срок окупаемости.', rows:[
       { label:'к плану', value: pct!=null?fmtPct(pct,1):'—', tone: pct!=null?(pct>=0?'good':'bad'):'neutral' },
       { label:'нужно для окуп.', value: neededOrders!=null?fmtNum(Math.round(neededOrders))+' шт':'—', tone: (neededOrders!=null)?(avgOrdersFact>=neededOrders?'good':'bad'):'neutral' },
     ]});
@@ -1442,7 +1444,7 @@ document.getElementById('kpi-grid').addEventListener('click', (e) => {
     tip.style.display = 'none';
     return;
   }
-  tip.textContent = btn.dataset.tip;
+  tip.innerHTML = btn.dataset.tip;
   tip.dataset.forBtn = btn.dataset.tip;
   tip.style.display = 'block';
   const r = btn.getBoundingClientRect();
