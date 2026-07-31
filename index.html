@@ -112,7 +112,7 @@
     background:var(--tone-soft, var(--fact-soft)); color:var(--tone, var(--fact));
   }
   .insight .ic svg{width:13px; height:13px;}
-  .insight .body{font-size:12px; line-height:1.45; color:var(--text);}
+  .insight .body{font-size:12px; font-weight:400; line-height:1.5; color:rgba(255,255,255,.88);}
   .insight .body b{color:var(--text-hi); font-weight:400;}
   .insight.tone-good{--tone:var(--good); --tone-soft:var(--plan-soft);}
   .insight.tone-bad{--tone:var(--danger); --tone-soft:var(--danger-soft);}
@@ -145,7 +145,7 @@
   .kpi-info:hover{background:rgba(255,255,255,.26);}
   #kpi-tooltip{
     position:fixed; z-index:80; width:220px; background:#1e1e1e; border:1px solid #333333;
-    border-radius:8px; padding:10px 12px; font-size:11.5px; font-weight:400; color:#ffffff; line-height:1.5;
+    border-radius:8px; padding:10px 12px; font-size:11.5px; font-weight:400; color:#888888; line-height:1.5;
     display:none; box-shadow:0 10px 28px rgba(0,0,0,.45); box-sizing:border-box;
   }
 
@@ -214,6 +214,7 @@
   thead tr.row-totals{position:sticky; top:28px; z-index:1;}
   thead tr.row-totals td{
     color:#ffffff; background:#292e20; border-bottom:2px solid #333333; font-weight:400;
+    text-align:right; padding:5px 10px; white-space:nowrap;
   }
   thead tr.row-totals td:first-child{text-align:left;}
   thead tr.row-totals:hover td{background:#333a26;}
