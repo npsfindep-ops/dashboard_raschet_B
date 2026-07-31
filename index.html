@@ -1262,7 +1262,9 @@ function renderMetricChart(metric, planRows, factRows, projections){
   const planVals = planRows.map(r=>r[m.field]);
 
   const allVals = [].concat(planVals, solid, dashed).filter(v => v!=null && !isNaN(v));
-  const scale = m.money ? pickScale(allVals.length ? Math.max(...allVals.map(Math.abs)) : 0) : { divisor:1, unit:'шт' };
+  const scale = metric === 'avgCheck' ? { divisor:1, unit:'₽' }
+    : (metric === 'revenue' || metric === 'expenses') ? { divisor:1000, unit:'тыс ₽' }
+    : m.money ? pickScale(allVals.length ? Math.max(...allVals.map(Math.abs)) : 0) : { divisor:1, unit:'шт' };
   document.getElementById('metric-chart-title').textContent = `${m.label}, ${scale.unit}`;
 
   const options = chartBaseOptions(m.money, accent, scale.divisor);
@@ -1431,6 +1433,25 @@ function renderPayoffChart(planRows, factRows, be, projections){
 }
 
 // ==================== detail table ====================
+function scrollToRowSnapped(scrollContainer, targetRow){
+  if (!scrollContainer || !targetRow) return;
+  const raf = (typeof requestAnimationFrame === 'function') ? requestAnimationFrame : (fn)=>setTimeout(fn,16);
+  raf(() => {
+    if (typeof targetRow.scrollIntoView === 'function') targetRow.scrollIntoView({ block:'nearest' });
+    raf(() => {
+      const firstDataRow = scrollContainer.querySelector('tbody tr');
+      if (!firstDataRow) return;
+      const rowHeight = firstDataRow.offsetHeight;
+      if (!rowHeight) return;
+      const current = scrollContainer.scrollTop;
+      const remainder = current % rowHeight;
+      // if a row is only partially visible at the top (cut off under the sticky header), scroll
+      // past it entirely so the topmost visible row is always a whole one — never a sliver.
+      if (remainder > 1) scrollContainer.scrollTop = current + (rowHeight - remainder);
+    });
+  });
+}
+
 function stickTotalsRow(thead){
   // measure the REAL rendered height of the FIRST header row (not the whole thead, which now
   // also contains the totals row itself) — guarantees the totals row sticks exactly below the
@@ -1513,7 +1534,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     tbody.innerHTML = bdrRows.map(r=>r.html).join('');
     stickTotalsRow(thead);
     const lastFactRowBdr = document.getElementById('row-last-fact');
-    if (lastFactRowBdr && typeof lastFactRowBdr.scrollIntoView === 'function') lastFactRowBdr.scrollIntoView({ block:'nearest' });
+    if (lastFactRowBdr) scrollToRowSnapped(document.querySelector('.table-scroll'), lastFactRowBdr);
     return;
   }
 
@@ -1563,7 +1584,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
   stickTotalsRow(thead);
 
   const lastFactRow = document.getElementById('row-last-fact');
-  if (lastFactRow && typeof lastFactRow.scrollIntoView === 'function') lastFactRow.scrollIntoView({ block:'nearest' });
+  if (lastFactRow) scrollToRowSnapped(document.querySelector('.table-scroll'), lastFactRow);
 }
 
 // ==================== expense-by-month modal ====================
