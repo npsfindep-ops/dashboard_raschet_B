@@ -201,18 +201,20 @@
   #expense-modal-table tr.modal-total td{font-weight:400; border-top:1px solid #333333; border-bottom:none;}
   .table-scroll{overflow-y:auto; overflow-x:hidden; min-height:0; flex:1;}
   table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11.5px;}
+  #detail-thead-table, #detail-body-table{table-layout:fixed; flex:none;}
+  #detail-thead-table{margin-bottom:0;}
   thead th{
     text-align:right; font-weight:400; color:var(--m-accent,#ffffff); font-size:9.5px; height:28px; box-sizing:border-box;
     text-transform:uppercase; letter-spacing:.02em; padding:6px 10px; border-bottom:1px solid var(--line-strong);
-    position:sticky; top:0; background:var(--card-bg); z-index:2;
+    background:var(--card-bg);
   }
   thead th:first-child{text-align:left;}
   tbody td{padding:5px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap; font-weight:400;}
+  tbody td:nth-child(4), thead tr.row-totals td:nth-child(4){padding-right:22px; position:relative;}
   tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:400; color:var(--m-accent,var(--text));}
   tbody tr:hover{background:rgba(255,255,255,.025);}
   tbody tr.row-current{background:rgba(249,115,22,.14); box-shadow:inset 3px 0 0 #f97316;}
   thead tr.row-totals td{
-    position:sticky; top:28px; z-index:2;
     color:#ffffff; background:#292e20; border-bottom:2px solid #333333; font-weight:400;
     text-align:right; padding:5px 10px; white-space:nowrap;
   }
@@ -221,7 +223,7 @@
   tbody tr.row-current:hover{background:rgba(249,115,22,.2);}
   .cell-pct{border-radius:5px; padding:1px 7px; font-weight:700;}
   .delta-pos{color:var(--good);} .delta-neg{color:var(--danger);}
-  .delta-arrow{width:9px; height:9px; vertical-align:-1px; margin-left:4px;}
+  .delta-arrow{width:9px; height:9px; position:absolute; right:6px; top:50%; transform:translateY(-50%);}
 
   @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
 </style>
@@ -269,7 +271,8 @@
         <div><h3 id="detail-table-title" style="display:inline">Прибыль по месяцам</h3><span id="detail-table-period"></span></div>
         <button id="expand-btn" class="expand-btn" type="button" style="display:none">Развернуть</button>
       </div>
-      <div class="table-scroll"><table><thead id="detail-thead"></thead><tbody id="detail-tbody"></tbody></table></div>
+      <table id="detail-thead-table"><thead id="detail-thead"></thead></table>
+      <div class="table-scroll"><table id="detail-body-table"><tbody id="detail-tbody"></tbody></table></div>
     </div>
     <div class="chart-card">
       <div class="chart-head">
@@ -1453,27 +1456,41 @@ function scrollToRowSnapped(scrollContainer, targetRow){
 }
 
 function stickTotalsRow(thead, onDone){
-  // measure the REAL rendered height of the FIRST header row (not the whole thead, which now
-  // also contains the totals row itself) — guarantees the totals row sticks exactly below the
-  // column-name row with no gap or overlap. Applied per-cell (not on the <tr>), matching the
-  // same reliable sticky pattern already used for the header cells themselves.
-  // Also resets scroll to top first — .table-scroll is the SAME element reused across every
-  // metric tab, so switching from a longer table (e.g. Прибыль, scrolled down) to a shorter one
-  // (e.g. БДР, only 9 rows) could otherwise carry over a stale scroll position that doesn't match
-  // the new table's actual row layout.
+  // No more position:sticky — the header+totals table is now a completely separate, non-scrolling
+  // element from the body table (see the two-table split in the HTML). This function now instead
+  // syncs column widths between the two tables (fixed table-layout, matching colgroup) so they
+  // stay pixel-aligned regardless of each table's own content length. Also resets scroll to top —
+  // .table-scroll is the SAME element reused across every metric tab, so switching from a longer
+  // table to a shorter one could otherwise carry over a stale scroll position.
   const scrollContainer = document.querySelector('.table-scroll');
   if (scrollContainer) scrollContainer.scrollTop = 0;
-  const raf = (typeof requestAnimationFrame === 'function') ? requestAnimationFrame : (fn)=>setTimeout(fn,16);
-  raf(() => {
-    if (!thead){ if (onDone) onDone(); return; }
-    const firstRow = thead.rows && thead.rows[0];
-    const totalsRow = thead.querySelector('tr.row-totals');
-    if (totalsRow && firstRow){
-      const topPx = firstRow.offsetHeight + 'px';
-      Array.from(totalsRow.cells).forEach(td => { td.style.top = topPx; });
+
+  const headTable = document.getElementById('detail-thead-table');
+  const bodyTable = document.getElementById('detail-body-table');
+  if (thead && headTable && bodyTable){
+    const headerRow = thead.rows[0];
+    const numCols = headerRow ? headerRow.cells.length : 0;
+    if (numCols > 0){
+      const firstPct = 22;
+      const restPct = (100 - firstPct) / (numCols - 1 || 1);
+      const buildColgroup = () => {
+        const cg = document.createElement('colgroup');
+        for (let i=0; i<numCols; i++){
+          const col = document.createElement('col');
+          col.style.width = (i===0 ? firstPct : restPct) + '%';
+          cg.appendChild(col);
+        }
+        return cg;
+      };
+      headTable.querySelectorAll('colgroup').forEach(el=>el.remove());
+      bodyTable.querySelectorAll('colgroup').forEach(el=>el.remove());
+      headTable.insertBefore(buildColgroup(), headTable.firstChild);
+      bodyTable.insertBefore(buildColgroup(), bodyTable.firstChild);
     }
-    if (onDone) onDone();
-  });
+  }
+
+  const raf = (typeof requestAnimationFrame === 'function') ? requestAnimationFrame : (fn)=>setTimeout(fn,16);
+  raf(() => { if (onDone) onDone(); });
 }
 
 function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
