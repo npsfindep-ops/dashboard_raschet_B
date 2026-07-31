@@ -1452,20 +1452,27 @@ function scrollToRowSnapped(scrollContainer, targetRow){
   });
 }
 
-function stickTotalsRow(thead){
+function stickTotalsRow(thead, onDone){
   // measure the REAL rendered height of the FIRST header row (not the whole thead, which now
   // also contains the totals row itself) — guarantees the totals row sticks exactly below the
   // column-name row with no gap or overlap. Applied per-cell (not on the <tr>), matching the
   // same reliable sticky pattern already used for the header cells themselves.
+  // Also resets scroll to top first — .table-scroll is the SAME element reused across every
+  // metric tab, so switching from a longer table (e.g. Прибыль, scrolled down) to a shorter one
+  // (e.g. БДР, only 9 rows) could otherwise carry over a stale scroll position that doesn't match
+  // the new table's actual row layout.
+  const scrollContainer = document.querySelector('.table-scroll');
+  if (scrollContainer) scrollContainer.scrollTop = 0;
   const raf = (typeof requestAnimationFrame === 'function') ? requestAnimationFrame : (fn)=>setTimeout(fn,16);
   raf(() => {
-    if (!thead) return;
+    if (!thead){ if (onDone) onDone(); return; }
     const firstRow = thead.rows && thead.rows[0];
     const totalsRow = thead.querySelector('tr.row-totals');
     if (totalsRow && firstRow){
       const topPx = firstRow.offsetHeight + 'px';
       Array.from(totalsRow.cells).forEach(td => { td.style.top = topPx; });
     }
+    if (onDone) onDone();
   });
 }
 
@@ -1499,7 +1506,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
       const pct = planSum ? factSum/planSum*100 : (factSum?Infinity:null);
       return { planSum, factSum, html: `<tr>
         <td>${label}</td><td>${fmtRubPlain(planSum)}</td><td>${fmtRubPlain(factSum)}</td>
-        <td style="position:relative"><span style="color:#ffffff">${delta>=0?'+':''}${fmtRubPlain(delta)}</span>${ICONS[delta>0?'arrowDown':'arrowUp'].replace('<svg ',`<svg class="delta-arrow" style="position:absolute; right:1px; top:50%; transform:translateY(-50%); color:${delta>0?'#ff4d4d':'#a3e635'}" `)}</td>
+        <td><span style="color:#ffffff">${delta>=0?'+':''}${fmtRubPlain(delta)}</span>${ICONS[delta>0?'arrowDown':'arrowUp'].replace('<svg ',`<svg class="delta-arrow" style="color:${delta>0?'#ff4d4d':'#a3e635'}" `)}</td>
         <td>${pct==null?'—':(pct===Infinity?'внеплан.':pct.toFixed(0)+'%')}</td>
       </tr>` };
     });
@@ -1532,9 +1539,10 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     const sumOrDash = (arr, key) => { const vals = arr.map(r=>r[key]).filter(v=>v!=null); return vals.length ? fmtRubPlain(vals.reduce((s,v)=>s+v,0)) : '—'; };
     thead.innerHTML += `<tr class="row-totals"><td>Итоги</td><td>${sumOrDash(bdrRows,'cacNet')}</td><td>${sumOrDash(bdrRows,'netProfit')}</td><td>${sumOrDash(bdrRows,'finResultPeriod')}</td></tr>`;
     tbody.innerHTML = bdrRows.map(r=>r.html).join('');
-    stickTotalsRow(thead);
-    const lastFactRowBdr = document.getElementById('row-last-fact');
-    if (lastFactRowBdr) scrollToRowSnapped(document.querySelector('.table-scroll'), lastFactRowBdr);
+    stickTotalsRow(thead, () => {
+      const lastFactRowBdr = document.getElementById('row-last-fact');
+      if (lastFactRowBdr) scrollToRowSnapped(document.querySelector('.table-scroll'), lastFactRowBdr);
+    });
     return;
   }
 
@@ -1553,7 +1561,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     if (factVal!=null && planVal!=null){
       const deltaAbs = factVal - planVal;
       const fmtDelta = (v) => m.money ? fmtRubPlain(v) : fmtNum(v);
-      deltaAbsCell = `<span style="position:relative; display:inline-block; width:100%"><span style="color:#ffffff">${deltaAbs>=0?'+':''}${fmtDelta(deltaAbs)}</span>${ICONS[deltaAbs>=0?'arrowUp':'arrowDown'].replace('<svg ',`<svg class="delta-arrow" style="position:absolute; right:-1px; top:50%; transform:translateY(-50%); color:${deltaAbs>=0?'#a3e635':'#ff4d4d'}" `)}</span>`;
+      deltaAbsCell = `<span style="color:#ffffff">${deltaAbs>=0?'+':''}${fmtDelta(deltaAbs)}</span>${ICONS[deltaAbs>=0?'arrowUp':'arrowDown'].replace('<svg ',`<svg class="delta-arrow" style="color:${deltaAbs>=0?'#a3e635':'#ff4d4d'}" `)}`;
       if (planVal){
         const pct = deltaAbs/planVal*100;
         deltaPctCell = `<span class="${pct>=0?'delta-pos':'delta-neg'}">${fmtPct(pct,0)}</span>`;
@@ -1581,10 +1589,10 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
   const totalsLabel = isAverage ? 'В среднем' : 'Итоги';
   thead.innerHTML += `<tr class="row-totals"><td>${totalsLabel}</td><td>${fmtAgg(aggPlan)}</td><td>${fmtAgg(aggFact)}</td><td>${totalsDeltaCell}</td><td>${totalsPctCell}</td></tr>`;
   tbody.innerHTML = dataRows.map(r=>r.html).join('');
-  stickTotalsRow(thead);
-
-  const lastFactRow = document.getElementById('row-last-fact');
-  if (lastFactRow) scrollToRowSnapped(document.querySelector('.table-scroll'), lastFactRow);
+  stickTotalsRow(thead, () => {
+    const lastFactRow = document.getElementById('row-last-fact');
+    if (lastFactRow) scrollToRowSnapped(document.querySelector('.table-scroll'), lastFactRow);
+  });
 }
 
 // ==================== expense-by-month modal ====================
