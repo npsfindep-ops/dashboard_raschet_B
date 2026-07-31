@@ -211,8 +211,8 @@
   tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:400; color:var(--m-accent,var(--text));}
   tbody tr:hover{background:rgba(255,255,255,.025);}
   tbody tr.row-current{background:rgba(249,115,22,.14); box-shadow:inset 3px 0 0 #f97316;}
-  thead tr.row-totals{position:sticky; top:28px; z-index:1;}
   thead tr.row-totals td{
+    position:sticky; top:28px; z-index:2;
     color:#ffffff; background:#292e20; border-bottom:2px solid #333333; font-weight:400;
     text-align:right; padding:5px 10px; white-space:nowrap;
   }
@@ -825,7 +825,7 @@ function computeAllInsights(planRows, factRows, lastFact, planByDate, be, projec
   const salaryC = catSums.salary;
   if (salaryC.planSum > revPlanCum*0.01 && salaryC.factSum < salaryC.planSum*0.05){
     cards.push({ topic:'Расходы', tone:'good', icon:'up',
-      html: `Зарплата менеджера сервиса не начислялась весь период факта — осознанное решение обойтись текущими ресурсами без найма отдельного менеджера, что дало экономию ${fmtRub(salaryC.planSum,true)} (${(salaryC.planSum/revPlanCum*100).toFixed(1)}% плановой выручки). Логично: раз объём заказов ниже плана (см. вкладку «Заказы»), отдельный сотрудник для его обслуживания пока не требуется — штат масштабируется под реальную нагрузку. Рекомендация: определить, при каком объёме заказов найм менеджера станет оправданным, и заложить это как условие в план, а не фиксированный месяц.` });
+      html: `Зарплата менеджера сервиса не начислялась весь период — осознанная экономия (${fmtRub(salaryC.planSum,true)}, ${(salaryC.planSum/revPlanCum*100).toFixed(1)}% плановой выручки), пока объём заказов ниже плана и отдельный сотрудник не требуется. Рекомендация: определить порог по заказам, при котором найм станет оправданным, и заложить в план.` });
   }
 
   // 3) Юнит-экономика: расход на 1 заказ. Доля расходов от выручки может выглядеть лучше плана только
@@ -1298,9 +1298,16 @@ const payoffMarkerPlugin = {
     const midX = (chartArea.left + chartArea.right) / 2;
     const spanX = chartArea.right - chartArea.left;
 
+    const pixelForIndex = (idx) => {
+      const i0 = Math.floor(idx), i1 = Math.min(Math.ceil(idx), chart.data.labels.length-1);
+      const px0 = xScale.getPixelForValue(i0), px1 = xScale.getPixelForValue(i1);
+      const frac = idx - i0;
+      return i0===i1 ? px0 : px0 + (px1-px0)*frac;
+    };
+
     opts.markers.forEach((mk, i) => {
       if (mk.index == null || mk.index < 0 || mk.index >= chart.data.labels.length) return;
-      const x = xScale.getPixelForValue(mk.index);
+      const x = pixelForIndex(mk.index);
       const y = yScale.getPixelForValue(mk.value);
 
       ctx.save();
@@ -1333,7 +1340,7 @@ const payoffMarkerPlugin = {
       const factMk = opts.markers.find(m => m.role !== 'plan');
       let textX, textY;
       if (planMk && factMk){
-        textX = (xScale.getPixelForValue(planMk.index) + xScale.getPixelForValue(factMk.index)) / 2;
+        textX = (pixelForIndex(planMk.index) + pixelForIndex(factMk.index)) / 2;
       } else {
         textX = midX;
       }
@@ -1387,14 +1394,32 @@ function renderPayoffChart(planRows, factRows, be, projections){
   const scale = pickScale(allVals.length ? Math.max(...allVals.map(Math.abs)) : 0);
   document.getElementById('payoff-chart-title').textContent = `Окупаемость, ${scale.unit}`;
 
-  const markers = [];
-  if (be && be.planBE){
-    const idx = planRows.findIndex(r => +r.date === +be.planBE.date);
-    if (idx >= 0) markers.push({ index: idx, value: planRows[idx].cumProfit, color:'#a3e635', label:fmtMonNoDot(be.planBE.date), role:'plan' });
+  // Находим ИСТИННУЮ точку пересечения линии с порогом вложений — линейная интерполяция между
+  // двумя соседними месяцами, а не просто узел месяца, где значение впервые превысило порог
+  // (между этими двумя месяцами могло быть заметное скачкообразное превышение).
+  function findCrossing(values, threshold){
+    if (values[0]!=null && values[0] >= threshold) return 0;
+    for (let i=1;i<values.length;i++){
+      if (values[i-1]!=null && values[i]!=null && values[i-1] < threshold && values[i] >= threshold){
+        const frac = (threshold - values[i-1]) / (values[i] - values[i-1]);
+        return (i-1) + frac;
+      }
+    }
+    return null;
   }
-  if (be && be.factBE){
-    const idx = planRows.findIndex(r => r.date.getFullYear()===be.factBE.date.getFullYear() && r.date.getMonth()===be.factBE.date.getMonth());
-    if (idx >= 0) markers.push({ index: idx, value: dashed[idx], color:'#f97316', label:fmtMonNoDot(be.factBE.date) });
+
+  const markers = [];
+  if (be && be.investment!=null){
+    if (be.planBE){
+      const planVals = planRows.map(r=>r.cumProfit);
+      const cross = findCrossing(planVals, be.investment);
+      if (cross!=null) markers.push({ index: cross, value: be.investment, color:'#a3e635', label:fmtMonNoDot(be.planBE.date), role:'plan' });
+    }
+    if (be.factBE){
+      const combinedCum = planRows.map((r,i) => solid[i]!=null ? solid[i] : dashed[i]);
+      const cross = findCrossing(combinedCum, be.investment);
+      if (cross!=null) markers.push({ index: cross, value: be.investment, color:'#f97316', label:fmtMonNoDot(be.factBE.date) });
+    }
   }
 
   if (charts.payoff) charts.payoff.destroy();
@@ -1409,13 +1434,17 @@ function renderPayoffChart(planRows, factRows, be, projections){
 function stickTotalsRow(thead){
   // measure the REAL rendered height of the FIRST header row (not the whole thead, which now
   // also contains the totals row itself) — guarantees the totals row sticks exactly below the
-  // column-name row with no gap or overlap.
+  // column-name row with no gap or overlap. Applied per-cell (not on the <tr>), matching the
+  // same reliable sticky pattern already used for the header cells themselves.
   const raf = (typeof requestAnimationFrame === 'function') ? requestAnimationFrame : (fn)=>setTimeout(fn,16);
   raf(() => {
     if (!thead) return;
     const firstRow = thead.rows && thead.rows[0];
     const totalsRow = thead.querySelector('tr.row-totals');
-    if (totalsRow && firstRow) totalsRow.style.top = firstRow.offsetHeight + 'px';
+    if (totalsRow && firstRow){
+      const topPx = firstRow.offsetHeight + 'px';
+      Array.from(totalsRow.cells).forEach(td => { td.style.top = topPx; });
+    }
   });
 }
 
@@ -1430,7 +1459,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
   const CAT_DEFS = [
     ['partnerPrice','Партнерский прайс'], ['royalty','Роялти'], ['salary','ЗП с ФОТ'],
     ['salaryTax','Зарплатные налоги'], ['loanInterest','Проценты по займу'],
-    ['vatOut','НДС исходящий'], ['vatIn','НДС вход'],
+    ['vatOut','НДС исходящий'], ['vatIn','НДС вход'], ['incomeTax','Налог на прибыль'],
   ];
 
   if (metric === 'expenses'){
@@ -1449,7 +1478,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
       const pct = planSum ? factSum/planSum*100 : (factSum?Infinity:null);
       return { planSum, factSum, html: `<tr>
         <td>${label}</td><td>${fmtRubPlain(planSum)}</td><td>${fmtRubPlain(factSum)}</td>
-        <td style="color:#ffffff">${delta>=0?'+':''}${fmtRubPlain(delta)}${ICONS[delta>0?'arrowDown':'arrowUp'].replace('<svg ',`<svg class="delta-arrow" style="color:${delta>0?'#ff4d4d':'#a3e635'}" `)}</td>
+        <td style="position:relative"><span style="color:#ffffff">${delta>=0?'+':''}${fmtRubPlain(delta)}</span>${ICONS[delta>0?'arrowDown':'arrowUp'].replace('<svg ',`<svg class="delta-arrow" style="position:absolute; right:1px; top:50%; transform:translateY(-50%); color:${delta>0?'#ff4d4d':'#a3e635'}" `)}</td>
         <td>${pct==null?'—':(pct===Infinity?'внеплан.':pct.toFixed(0)+'%')}</td>
       </tr>` };
     });
@@ -1503,7 +1532,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     if (factVal!=null && planVal!=null){
       const deltaAbs = factVal - planVal;
       const fmtDelta = (v) => m.money ? fmtRubPlain(v) : fmtNum(v);
-      deltaAbsCell = `<span style="color:#ffffff">${deltaAbs>=0?'+':''}${fmtDelta(deltaAbs)}${ICONS[deltaAbs>=0?'arrowUp':'arrowDown'].replace('<svg ',`<svg class="delta-arrow" style="color:${deltaAbs>=0?'#a3e635':'#ff4d4d'}" `)}</span>`;
+      deltaAbsCell = `<span style="position:relative; display:inline-block; width:100%"><span style="color:#ffffff">${deltaAbs>=0?'+':''}${fmtDelta(deltaAbs)}</span>${ICONS[deltaAbs>=0?'arrowUp':'arrowDown'].replace('<svg ',`<svg class="delta-arrow" style="position:absolute; right:-1px; top:50%; transform:translateY(-50%); color:${deltaAbs>=0?'#a3e635':'#ff4d4d'}" `)}</span>`;
       if (planVal){
         const pct = deltaAbs/planVal*100;
         deltaPctCell = `<span class="${pct>=0?'delta-pos':'delta-neg'}">${fmtPct(pct,0)}</span>`;
