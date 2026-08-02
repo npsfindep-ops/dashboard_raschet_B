@@ -210,7 +210,7 @@
   }
   thead th:first-child{text-align:left;}
   tbody td{padding:5px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap; font-weight:400;}
-  tbody td:nth-child(4), thead tr.row-totals td:nth-child(4){padding-right:22px; position:relative;}
+  td.col-arrow, th.col-arrow{padding-left:0; padding-right:6px; text-align:left; white-space:nowrap;}
   tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:400; color:var(--m-accent,var(--text));}
   tbody tr:hover{background:rgba(255,255,255,.025);}
   tbody tr.row-current{background:rgba(249,115,22,.14); box-shadow:inset 3px 0 0 #f97316;}
@@ -223,7 +223,7 @@
   tbody tr.row-current:hover{background:rgba(249,115,22,.2);}
   .cell-pct{border-radius:5px; padding:1px 7px; font-weight:700;}
   .delta-pos{color:var(--good);} .delta-neg{color:var(--danger);}
-  .delta-arrow{width:9px; height:9px; position:absolute; right:6px; top:50%; transform:translateY(-50%);}
+  .delta-arrow{width:9px; height:9px; display:inline-block; vertical-align:middle;}
 
   @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
 </style>
@@ -1471,13 +1471,17 @@ function stickTotalsRow(thead, onDone){
     const headerRow = thead.rows[0];
     const numCols = headerRow ? headerRow.cells.length : 0;
     if (numCols > 0){
+      const cells = Array.from(headerRow.cells);
+      const narrowIdx = new Set(cells.map((c,i)=> c.classList.contains('col-arrow') ? i : -1).filter(i=>i>=0));
+      const narrowPct = 3;
       const firstPct = 22;
-      const restPct = (100 - firstPct) / (numCols - 1 || 1);
+      const wideCols = numCols - narrowIdx.size - 1; // minus first column, minus narrow columns
+      const restPct = (100 - firstPct - narrowPct*narrowIdx.size) / (wideCols || 1);
       const buildColgroup = () => {
         const cg = document.createElement('colgroup');
         for (let i=0; i<numCols; i++){
           const col = document.createElement('col');
-          col.style.width = (i===0 ? firstPct : restPct) + '%';
+          col.style.width = (narrowIdx.has(i) ? narrowPct : (i===0 ? firstPct : restPct)) + '%';
           cg.appendChild(col);
         }
         return cg;
@@ -1515,15 +1519,17 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     expandBtn.style.display = '';
     cachedExpenseModalData = { factRows: factRows.slice().sort((a,b)=>a.date-b.date), planRows: planRows.slice().sort((a,b)=>a.date-b.date), catDefs: CAT_DEFS };
 
-    thead.innerHTML = `<tr><th>Статья</th><th>План, ₽</th><th>Факт, ₽</th><th>Отклонение, ₽</th><th>% к плану</th></tr>`;
+    thead.innerHTML = `<tr><th>Статья</th><th>План, ₽</th><th>Факт, ₽</th><th>Отклонение, ₽</th><th class="col-arrow"></th><th>% к плану</th></tr>`;
     const catRows = CAT_DEFS.map(([key,label]) => {
       const planSum = planCum.reduce((s,r)=>s+(r[key]||0),0);
       const factSum = factRows.reduce((s,r)=>s+(r[key]||0),0);
       const delta = factSum - planSum;
       const pct = planSum ? factSum/planSum*100 : (factSum?Infinity:null);
+      const arrowHtml = ICONS[delta>0?'arrowDown':'arrowUp'].replace('<svg ',`<svg class="delta-arrow" style="color:${delta>0?'#ff4d4d':'#a3e635'}" `);
       return { planSum, factSum, html: `<tr>
         <td>${label}</td><td>${fmtRubPlain(planSum)}</td><td>${fmtRubPlain(factSum)}</td>
-        <td><span style="color:#ffffff">${delta>=0?'+':''}${fmtRubPlain(delta)}</span>${ICONS[delta>0?'arrowDown':'arrowUp'].replace('<svg ',`<svg class="delta-arrow" style="color:${delta>0?'#ff4d4d':'#a3e635'}" `)}</td>
+        <td><span style="color:#ffffff">${delta>=0?'+':''}${fmtRubPlain(delta)}</span></td>
+        <td class="col-arrow">${arrowHtml}</td>
         <td>${pct==null?'—':(pct===Infinity?'внеплан.':pct.toFixed(0)+'%')}</td>
       </tr>` };
     });
@@ -1568,17 +1574,18 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
 
   const unit = m.money ? '₽' : 'шт';
   title.textContent = m.label + ' по месяцам';
-  thead.innerHTML = `<tr><th>Дата</th><th>План, ${unit}</th><th>Факт, ${unit}</th><th>Откл., ${unit}</th><th>Откл., %</th></tr>`;
+  thead.innerHTML = `<tr><th>Дата</th><th>План, ${unit}</th><th>Факт, ${unit}</th><th>Откл., ${unit}</th><th class="col-arrow"></th><th>Откл., %</th></tr>`;
   const factByDate = {}; factRows.forEach(r=>factByDate[+r.date]=r);
   const dataRows = planRows.map(pr => {
     const fr = factByDate[+pr.date];
     const planVal = pr[m.field];
     const factVal = fr ? fr[m.field] : null;
-    let deltaAbsCell = '—', deltaPctCell = '—';
+    let deltaAbsCell = '—', deltaArrowCell = '', deltaPctCell = '—';
     if (factVal!=null && planVal!=null){
       const deltaAbs = factVal - planVal;
       const fmtDelta = (v) => m.money ? fmtRubPlain(v) : fmtNum(v);
-      deltaAbsCell = `<span style="color:#ffffff">${deltaAbs>=0?'+':''}${fmtDelta(deltaAbs)}</span>${ICONS[deltaAbs>=0?'arrowUp':'arrowDown'].replace('<svg ',`<svg class="delta-arrow" style="color:${deltaAbs>=0?'#a3e635':'#ff4d4d'}" `)}`;
+      deltaAbsCell = `<span style="color:#ffffff">${deltaAbs>=0?'+':''}${fmtDelta(deltaAbs)}</span>`;
+      deltaArrowCell = ICONS[deltaAbs>=0?'arrowUp':'arrowDown'].replace('<svg ',`<svg class="delta-arrow" style="color:${deltaAbs>=0?'#a3e635':'#ff4d4d'}" `);
       if (planVal){
         const pct = deltaAbs/planVal*100;
         deltaPctCell = `<span class="${pct>=0?'delta-pos':'delta-neg'}">${fmtPct(pct,0)}</span>`;
@@ -1586,7 +1593,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     }
     const fmtVal = (v) => v==null ? '—' : (m.money ? fmtRubPlain(v) : fmtNum(v));
     const isLastFact = lastFact && +pr.date === +lastFact.date;
-    return { planVal, factVal, html: `<tr${isLastFact?' id="row-last-fact" class="row-current"':''}><td>${fmtMon(pr.date)}</td><td>${fmtVal(planVal)}</td><td>${fmtVal(factVal)}</td><td>${deltaAbsCell}</td><td>${deltaPctCell}</td></tr>` };
+    return { planVal, factVal, html: `<tr${isLastFact?' id="row-last-fact" class="row-current"':''}><td>${fmtMon(pr.date)}</td><td>${fmtVal(planVal)}</td><td>${fmtVal(factVal)}</td><td>${deltaAbsCell}</td><td class="col-arrow">${deltaArrowCell}</td><td>${deltaPctCell}</td></tr>` };
   });
 
   // Итоги: суммируем потоковые метрики (прибыль/выручка/расходы/заказы), но для среднего чека
@@ -1604,7 +1611,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     if (aggPlan) totalsPctCell = `${fmtPct(d/aggPlan*100,0)}`;
   }
   const totalsLabel = isAverage ? 'В среднем' : 'Итоги';
-  thead.innerHTML += `<tr class="row-totals"><td>${totalsLabel}</td><td>${fmtAgg(aggPlan)}</td><td>${fmtAgg(aggFact)}</td><td>${totalsDeltaCell}</td><td>${totalsPctCell}</td></tr>`;
+  thead.innerHTML += `<tr class="row-totals"><td>${totalsLabel}</td><td>${fmtAgg(aggPlan)}</td><td>${fmtAgg(aggFact)}</td><td>${totalsDeltaCell}</td><td class="col-arrow"></td><td>${totalsPctCell}</td></tr>`;
   tbody.innerHTML = dataRows.map(r=>r.html).join('');
   stickTotalsRow(thead, () => {
     const lastFactRow = document.getElementById('row-last-fact');
