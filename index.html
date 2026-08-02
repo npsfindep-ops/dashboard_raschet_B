@@ -1444,20 +1444,19 @@ function scrollToRowSnapped(scrollContainer, targetRow){
   if (!scrollContainer || !targetRow) return;
   const raf = (typeof requestAnimationFrame === 'function') ? requestAnimationFrame : (fn)=>setTimeout(fn,16);
   raf(() => {
-    if (typeof targetRow.scrollIntoView === 'function') targetRow.scrollIntoView({ block:'nearest' });
-    raf(() => {
-      const firstDataRow = scrollContainer.querySelector('tbody tr');
-      if (!firstDataRow) return;
-      const rowHeight = firstDataRow.offsetHeight;
-      if (!rowHeight) return;
-      const current = scrollContainer.scrollTop;
-      const remainder = current % rowHeight;
-      // scrollIntoView only guarantees the TARGET row is visible — it doesn't guarantee the
-      // container's scroll position lands on a clean row boundary, so whichever row ends up at
-      // the opposite edge can be partially cut off. Snap forward to the next full row so nothing
-      // is ever shown as a sliver.
-      if (remainder > 1) scrollContainer.scrollTop = current + (rowHeight - remainder);
-    });
+    const rows = Array.from(scrollContainer.querySelectorAll('tbody tr'));
+    const rowHeight = rows[0] ? rows[0].offsetHeight : 0;
+    const targetIndex = rows.indexOf(targetRow);
+    if (!rowHeight || targetIndex < 0){
+      if (typeof targetRow.scrollIntoView === 'function') targetRow.scrollIntoView({ block:'nearest' });
+      return;
+    }
+    const containerHeight = scrollContainer.clientHeight;
+    const visibleRows = Math.max(1, Math.floor(containerHeight / rowHeight));
+    // Scroll in whole-row increments only, so the target row becomes the last FULLY visible row —
+    // never a fractional amount that could leave some other row cut off at the opposite edge.
+    const targetScrollRows = Math.max(0, targetIndex - visibleRows + 1);
+    scrollContainer.scrollTop = targetScrollRows * rowHeight;
   });
 }
 
