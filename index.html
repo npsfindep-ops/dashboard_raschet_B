@@ -199,10 +199,13 @@
   #expense-modal-table td{padding:6px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap; font-weight:400; color:#ffffff;}
   #expense-modal-table td:first-child{text-align:left; font-family:var(--sans); font-weight:400; color:#ffffff;}
   #expense-modal-table tr.modal-total td{font-weight:400; border-top:1px solid #333333; border-bottom:none;}
-  .table-scroll{overflow-y:auto; overflow-x:hidden; min-height:0; flex:1;}
+  .table-scroll{overflow-y:auto; overflow-x:hidden; min-height:0; flex:1; scrollbar-gutter:stable;}
+  @supports not (scrollbar-gutter: stable){
+    .table-scroll{overflow-y:scroll;}
+  }
   table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11.5px;}
   #detail-thead-table, #detail-body-table{table-layout:fixed; flex:none;}
-  #detail-thead-table{margin-bottom:0;}
+  #detail-thead-table{margin-bottom:0; width:calc(100% - 7px);}
   thead th{
     text-align:right; font-weight:400; color:var(--m-accent,#ffffff); font-size:9.5px; height:28px; box-sizing:border-box;
     text-transform:uppercase; letter-spacing:.02em; padding:6px 10px; border-bottom:1px solid var(--line-strong);
