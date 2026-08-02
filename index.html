@@ -1540,6 +1540,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     thead.innerHTML += `<tr class="row-totals">
       <td>Итоги</td><td>${fmtRubPlain(totalPlan)}</td><td>${fmtRubPlain(totalFact)}</td>
       <td>${totalDelta>=0?'+':''}${fmtRubPlain(totalDelta)}</td>
+      <td class="col-arrow"></td>
       <td>${totalPct==null?'—':totalPct.toFixed(0)+'%'}</td>
     </tr>`;
     tbody.innerHTML = catRows.map(r=>r.html).join('');
