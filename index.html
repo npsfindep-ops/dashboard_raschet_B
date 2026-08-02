@@ -1439,24 +1439,6 @@ function renderPayoffChart(planRows, factRows, be, projections){
 }
 
 // ==================== detail table ====================
-function scrollToRowSnapped(scrollContainer, targetRow){
-  if (!scrollContainer || !targetRow) return;
-  const raf = (typeof requestAnimationFrame === 'function') ? requestAnimationFrame : (fn)=>setTimeout(fn,16);
-  raf(() => {
-    if (typeof targetRow.scrollIntoView === 'function') targetRow.scrollIntoView({ block:'nearest' });
-    raf(() => {
-      const firstDataRow = scrollContainer.querySelector('tbody tr');
-      if (!firstDataRow) return;
-      const rowHeight = firstDataRow.offsetHeight;
-      if (!rowHeight) return;
-      const current = scrollContainer.scrollTop;
-      const remainder = current % rowHeight;
-      // if a row is only partially visible at the top (cut off under the sticky header), scroll
-      // past it entirely so the topmost visible row is always a whole one — never a sliver.
-      if (remainder > 1) scrollContainer.scrollTop = current + (rowHeight - remainder);
-    });
-  });
-}
 
 function stickTotalsRow(thead, onDone){
   // No more position:sticky — the header+totals table is now a completely separate, non-scrolling
@@ -1568,7 +1550,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     tbody.innerHTML = bdrRows.map(r=>r.html).join('');
     stickTotalsRow(thead, () => {
       const lastFactRowBdr = document.getElementById('row-last-fact');
-      if (lastFactRowBdr) scrollToRowSnapped(document.querySelector('.table-scroll'), lastFactRowBdr);
+      if (lastFactRowBdr && typeof lastFactRowBdr.scrollIntoView === 'function') lastFactRowBdr.scrollIntoView({ block:'nearest' });
     });
     return;
   }
@@ -1619,7 +1601,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
   tbody.innerHTML = dataRows.map(r=>r.html).join('');
   stickTotalsRow(thead, () => {
     const lastFactRow = document.getElementById('row-last-fact');
-    if (lastFactRow) scrollToRowSnapped(document.querySelector('.table-scroll'), lastFactRow);
+    if (lastFactRow && typeof lastFactRow.scrollIntoView === 'function') lastFactRow.scrollIntoView({ block:'nearest' });
   });
 }
 
