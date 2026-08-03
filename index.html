@@ -242,7 +242,6 @@
   <div id="status-banner"></div>
 
   <section class="kpis" id="kpi-grid"></section>
-  <div id="kpi-tooltip"></div>
 
   <div class="metric-toggle" id="metric-toggle">
     <button data-m="profit" class="active">Прибыль</button>
@@ -292,6 +291,8 @@
   </div>
 
 </div>
+
+<div id="kpi-tooltip"></div>
 
 <div id="expense-modal" class="modal-overlay">
   <div class="modal-panel">
@@ -1568,10 +1569,7 @@ function renderDetailTable(metric, planRows, factRows, lastFact, planByDate){
     const sumOrDash = (arr, key) => { const vals = arr.map(r=>r[key]).filter(v=>v!=null); return vals.length ? fmtRubPlain(vals.reduce((s,v)=>s+v,0)) : '—'; };
     thead.innerHTML += `<tr class="row-totals"><td>Итоги</td><td>${sumOrDash(bdrRows,'cacNet')}</td><td>${sumOrDash(bdrRows,'netProfit')}</td><td>${sumOrDash(bdrRows,'finResultPeriod')}</td></tr>`;
     tbody.innerHTML = bdrRows.map(r=>r.html).join('');
-    stickTotalsRow(thead, () => {
-      const lastFactRowBdr = document.getElementById('row-last-fact');
-      if (lastFactRowBdr) scrollToRowSnapped(document.querySelector('.table-scroll'), lastFactRowBdr);
-    });
+    stickTotalsRow(thead);
     return;
   }
 
