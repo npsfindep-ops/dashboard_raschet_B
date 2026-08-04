@@ -144,7 +144,7 @@
   }
   .kpi-info:hover{background:rgba(255,255,255,.26);}
   #kpi-tooltip{
-    position:fixed; z-index:80; width:220px; background:#1e1e1e; border:1px solid #333333;
+    position:absolute; right:100%; top:0; margin-right:8px; z-index:80; width:220px; background:#1e1e1e; border:1px solid #333333;
     border-radius:8px; padding:10px 12px; font-size:11.5px; font-weight:400; color:#888888; line-height:1.5;
     display:none; box-shadow:0 10px 28px rgba(0,0,0,.45); box-sizing:border-box;
   }
@@ -1680,7 +1680,7 @@ document.getElementById('kpi-grid').addEventListener('click', (e) => {
   const cardRect = (card || btn).getBoundingClientRect();
   const tipWidth = 220;
   let left = cardRect.left - tipWidth;
-  if (left < 8) left = 8;
+  if (left < 8) left = cardRect.right + 8; // not enough room on the left — flip to the right of the card instead
   tip.style.left = left + 'px';
   tip.style.top = cardRect.top + 'px';
 });
