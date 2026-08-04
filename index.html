@@ -216,14 +216,14 @@
   td.col-arrow, th.col-arrow{padding-left:0; padding-right:6px; text-align:left; white-space:nowrap;}
   tbody td:first-child{text-align:left; font-family:var(--sans); font-weight:400; color:var(--m-accent,var(--text));}
   tbody tr:hover{background:rgba(255,255,255,.025);}
-  tbody tr.row-current{background:rgba(249,115,22,.14); box-shadow:inset 3px 0 0 #f97316;}
+  tbody tr.row-current{background:rgba(249,115,22,.28); box-shadow:inset 4px 0 0 #f97316;}
   thead tr.row-totals td{
     color:#ffffff; background:#292e20; border-bottom:2px solid #333333; font-weight:400;
     text-align:right; padding:5px 10px; white-space:nowrap;
   }
   thead tr.row-totals td:first-child{text-align:left;}
   thead tr.row-totals:hover td{background:#333a26;}
-  tbody tr.row-current:hover{background:rgba(249,115,22,.2);}
+  tbody tr.row-current:hover{background:rgba(249,115,22,.36);}
   .cell-pct{border-radius:5px; padding:1px 7px; font-weight:700;}
   .delta-pos{color:var(--good);} .delta-neg{color:var(--danger);}
   .delta-arrow{width:9px; height:9px; display:inline-block; vertical-align:middle;}
@@ -1679,10 +1679,10 @@ document.getElementById('kpi-grid').addEventListener('click', (e) => {
   const card = btn.closest('.kpi');
   const cardRect = (card || btn).getBoundingClientRect();
   const tipWidth = 220;
-  let left = cardRect.left - tipWidth;
-  if (left < 8) left = cardRect.right + 8; // not enough room on the left — flip to the right of the card instead
+  let left = cardRect.right - tipWidth; // right edge of tooltip = right edge of THIS card
+  if (left < 8) left = 8;
   tip.style.left = left + 'px';
-  tip.style.top = cardRect.top + 'px';
+  tip.style.top = (cardRect.bottom + 6) + 'px'; // below the card
 });
 document.addEventListener('click', () => { document.getElementById('kpi-tooltip').style.display = 'none'; });
 
